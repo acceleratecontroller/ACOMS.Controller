@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Tasks — the core of the To-Do / Recurring Tasks app
+// ============================================================
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("todo")     // "todo" | "in_progress" | "done"
+  priority    String    @default("medium")   // "low" | "medium" | "high" | "urgent"
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Recurrence — links to a rule that defines the pattern
+  recurrenceRule   RecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id])
+  recurrenceRuleId String?
+
+  // Self-relation: recurring tasks spawn child instances
+  parentTaskId String?
+  parentTask   Task?  @relation("RecurringInstances", fields: [parentTaskId], references: [id])
+  childTasks   Task[] @relation("RecurringInstances")
+
+  // Categories (many-to-many)
+  categories TaskCategory[]
+}
+
+// ============================================================
+// Recurrence rules — defines how often a task repeats
+// ============================================================
+model RecurrenceRule {
+  id         String    @id @default(cuid())
+  frequency  String    // "daily" | "weekly" | "monthly"
+  interval   Int       @default(1)  // every N days/weeks/months
+  daysOfWeek String?   // comma-separated: "1,3,5" for Mon/Wed/Fri
+  dayOfMonth Int?      // for monthly: which day (1-31)
+  endDate    DateTime? // when to stop creating new instances
+  tasks      Task[]
+}
+
+// ============================================================
+// Categories — for organising tasks (e.g. "Safety", "Maintenance")
+// ============================================================
+model Category {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  color String? // hex colour for UI display, e.g. "#3b82f6"
+  tasks TaskCategory[]
+}
+
+// Junction table for Task <-> Category (many-to-many)
+model TaskCategory {
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId     String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+
+  @@id([taskId, categoryId])
+}

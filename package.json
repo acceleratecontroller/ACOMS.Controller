@@ -1,0 +1,17 @@
+{
+  "name": "acoms-controller",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/todo",
+    "build": "npm run build --workspace=apps/todo",
+    "lint": "npm run lint --workspace=apps/todo"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
