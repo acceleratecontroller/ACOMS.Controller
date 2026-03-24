@@ -57,10 +57,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Derive ownership from supplier
+  let ownershipType = "COMPANY";
+  let clientName: string | null = null;
+  if (parsed.data.supplierId) {
+    const supplier = await prisma.supplier.findUnique({ where: { id: parsed.data.supplierId } });
+    if (supplier?.isFreeIssue) {
+      ownershipType = "CLIENT_FREE_ISSUE";
+      clientName = supplier.clientName;
+    }
+  }
+
   const { result: item, error } = await withPrismaError("Failed to create item", () =>
     prisma.item.create({
       data: {
         ...parsed.data,
+        ownershipType: ownershipType as never,
+        clientName,
         createdById: session.user.id,
       },
     }),

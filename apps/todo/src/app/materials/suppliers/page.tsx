@@ -13,6 +13,8 @@ interface Supplier {
   phone: string | null;
   email: string | null;
   notes: string | null;
+  isFreeIssue: boolean;
+  clientName: string | null;
   isArchived: boolean;
   _count: { items: number };
 }
@@ -32,6 +34,8 @@ export default function SuppliersPage() {
     phone: "",
     email: "",
     notes: "",
+    isFreeIssue: false,
+    clientName: "",
   });
 
   const fetchSuppliers = useCallback(async () => {
@@ -48,7 +52,7 @@ export default function SuppliersPage() {
 
   function openCreate() {
     setEditingSupplier(null);
-    setForm({ name: "", contactName: "", phone: "", email: "", notes: "" });
+    setForm({ name: "", contactName: "", phone: "", email: "", notes: "", isFreeIssue: false, clientName: "" });
     setShowModal(true);
   }
 
@@ -60,6 +64,8 @@ export default function SuppliersPage() {
       phone: supplier.phone || "",
       email: supplier.email || "",
       notes: supplier.notes || "",
+      isFreeIssue: supplier.isFreeIssue,
+      clientName: supplier.clientName || "",
     });
     setShowModal(true);
   }
@@ -72,6 +78,8 @@ export default function SuppliersPage() {
       phone: form.phone || null,
       email: form.email || null,
       notes: form.notes || null,
+      isFreeIssue: form.isFreeIssue,
+      clientName: form.isFreeIssue ? (form.clientName || null) : null,
     };
 
     const url = editingSupplier ? `/api/materials/suppliers/${editingSupplier.id}` : "/api/materials/suppliers";
@@ -131,6 +139,7 @@ export default function SuppliersPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Contact</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Phone</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Email</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Items</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
               </tr>
@@ -146,6 +155,15 @@ export default function SuppliersPage() {
                   <td className="px-4 py-3 text-gray-500">{s.contactName || "—"}</td>
                   <td className="px-4 py-3 text-gray-500">{s.phone || "—"}</td>
                   <td className="px-4 py-3 text-gray-500">{s.email || "—"}</td>
+                  <td className="px-4 py-3">
+                    {s.isFreeIssue ? (
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                        Free Issue{s.clientName ? ` — ${s.clientName}` : ""}
+                      </span>
+                    ) : (
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Company</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right text-gray-500">{s._count.items}</td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => openEdit(s)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">Edit</button>
@@ -179,6 +197,24 @@ export default function SuppliersPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div className="border-t border-gray-200 pt-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <input
+                type="checkbox"
+                checked={form.isFreeIssue}
+                onChange={(e) => setForm({ ...form, isFreeIssue: e.target.checked, clientName: e.target.checked ? form.clientName : "" })}
+                className="rounded border-gray-300"
+              />
+              Free Issue Supplier
+            </label>
+            <p className="text-xs text-gray-500 mb-2">When enabled, all items from this supplier will be marked as client free issue.</p>
+            {form.isFreeIssue && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client Name *</label>
+                <input type="text" required value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Which client provides these items?" />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>

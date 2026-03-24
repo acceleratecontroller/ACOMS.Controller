@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 
-interface Supplier { id: string; name: string }
+interface Supplier { id: string; name: string; isFreeIssue: boolean; clientName: string | null }
 
 interface ImportResult {
   success: number;
@@ -141,6 +141,23 @@ export default function ImportItemsPage() {
               <option value="">No supplier</option>
               {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
+            {(() => {
+              const selected = suppliers.find((s) => s.id === supplierId);
+              if (!selected) return null;
+              return (
+                <div className="mt-2">
+                  {selected.isFreeIssue ? (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                      Free Issue — {selected.clientName} (all imported items will be marked as client free issue)
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                      Company Owned
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           <div>

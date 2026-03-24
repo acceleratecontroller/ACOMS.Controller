@@ -171,6 +171,10 @@ model Supplier {
   email       String?
   notes       String?
 
+  // Free-issue flag — when true, all linked items are CLIENT_FREE_ISSUE
+  isFreeIssue Boolean @default(false)
+  clientName  String?
+
   isArchived   Boolean   @default(false)
   archivedAt   DateTime?
   archivedById String?

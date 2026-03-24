@@ -43,10 +43,24 @@ export async function PUT(
   );
   if (fetchErr) return fetchErr;
 
+  // Derive ownership from supplier
+  const updateData = { ...parsed.data };
+  const supplierId = updateData.supplierId !== undefined ? updateData.supplierId : before.supplierId;
+  if (supplierId) {
+    const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
+    if (supplier) {
+      updateData.ownershipType = supplier.isFreeIssue ? "CLIENT_FREE_ISSUE" : "COMPANY";
+      updateData.clientName = supplier.isFreeIssue ? (supplier.clientName || null) : null;
+    }
+  } else {
+    updateData.ownershipType = "COMPANY";
+    updateData.clientName = null;
+  }
+
   const { result: item, error } = await withPrismaError("Failed to update item", () =>
     prisma.item.update({
       where: { id: params.id },
-      data: parsed.data,
+      data: updateData,
     }),
   );
   if (error) return error;

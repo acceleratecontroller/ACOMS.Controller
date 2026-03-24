@@ -35,6 +35,17 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
   }
 
+  // Derive ownership from supplier
+  let ownershipType: string = "COMPANY";
+  let clientName: string | null = null;
+  if (supplierId) {
+    const supplier = await prisma.supplier.findUnique({ where: { id: supplierId } });
+    if (supplier?.isFreeIssue) {
+      ownershipType = "CLIENT_FREE_ISSUE";
+      clientName = supplier.clientName;
+    }
+  }
+
   let created = 0;
   const skipped: string[] = [];
   const createErrors: { code: string; message: string }[] = [];
@@ -54,6 +65,8 @@ export async function POST(request: NextRequest) {
             minimumStockLevel: item.minimumStockLevel,
             notes: item.notes,
             supplierId: supplierId,
+            ownershipType: ownershipType as never,
+            clientName: clientName,
             createdById: session.user.id,
           },
         }),

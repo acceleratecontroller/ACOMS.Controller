@@ -127,6 +127,22 @@ export const createSupplierSchema = z.object({
   phone: optionalString,
   email: optionalString,
   notes: optionalString,
-});
+  isFreeIssue: z.boolean().default(false),
+  clientName: optionalString,
+}).refine(
+  (data) => !data.isFreeIssue || (data.clientName && data.clientName.trim().length > 0),
+  { message: "Client name is required for free-issue suppliers", path: ["clientName"] },
+);
 
-export const updateSupplierSchema = createSupplierSchema.partial();
+export const updateSupplierSchema = z.object({
+  name: z.string().min(1, "Supplier name is required").optional(),
+  contactName: optionalString,
+  phone: optionalString,
+  email: optionalString,
+  notes: optionalString,
+  isFreeIssue: z.boolean().optional(),
+  clientName: optionalString,
+}).refine(
+  (data) => data.isFreeIssue === undefined || !data.isFreeIssue || (data.clientName && data.clientName.trim().length > 0),
+  { message: "Client name is required for free-issue suppliers", path: ["clientName"] },
+);

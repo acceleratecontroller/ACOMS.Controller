@@ -5,8 +5,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { UNIT_OF_MEASURE_OPTIONS, UOM_LABELS, CATEGORY_OPTIONS, OWNERSHIP_TYPE_OPTIONS } from "@/modules/materials/constants";
+// OWNERSHIP_TYPE_OPTIONS kept for filter dropdown
 
-interface Supplier { id: string; name: string }
+interface Supplier { id: string; name: string; isFreeIssue: boolean; clientName: string | null }
 
 interface Item {
   id: string;
@@ -49,8 +50,6 @@ export default function ItemsPage() {
     aliases: "",
     minimumStockLevel: "",
     notes: "",
-    ownershipType: "COMPANY",
-    clientName: "",
     supplierId: "",
   });
 
@@ -76,8 +75,7 @@ export default function ItemsPage() {
   const defaultForm = {
     code: "", description: "", category: "", customCategory: "",
     unitOfMeasure: "EACH", customUnitOfMeasure: "", aliases: "",
-    minimumStockLevel: "", notes: "", ownershipType: "COMPANY",
-    clientName: "", supplierId: "",
+    minimumStockLevel: "", notes: "", supplierId: "",
   };
 
   function openCreate() {
@@ -99,8 +97,6 @@ export default function ItemsPage() {
       aliases: item.aliases.join(", "),
       minimumStockLevel: item.minimumStockLevel?.toString() || "",
       notes: item.notes || "",
-      ownershipType: item.ownershipType || "COMPANY",
-      clientName: item.clientName || "",
       supplierId: item.supplierId || "",
     });
     setShowModal(true);
@@ -118,8 +114,6 @@ export default function ItemsPage() {
       aliases: form.aliases ? form.aliases.split(",").map((a) => a.trim()).filter(Boolean) : [],
       minimumStockLevel: form.minimumStockLevel ? Number(form.minimumStockLevel) : null,
       notes: form.notes || null,
-      ownershipType: form.ownershipType,
-      clientName: form.ownershipType === "CLIENT_FREE_ISSUE" ? (form.clientName || null) : null,
       supplierId: form.supplierId || null,
     };
 
@@ -287,22 +281,23 @@ export default function ItemsPage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ownership Type</label>
-                <select value={form.ownershipType} onChange={(e) => setForm({ ...form, ownershipType: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  {OWNERSHIP_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+          {(() => {
+            const selectedSupplier = suppliers.find((s) => s.id === form.supplierId);
+            if (!selectedSupplier) return null;
+            return (
+              <div className="text-sm">
+                {selectedSupplier.isFreeIssue ? (
+                  <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                    Free Issue — {selectedSupplier.clientName}
+                  </span>
+                ) : (
+                  <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                    Company Owned
+                  </span>
+                )}
               </div>
-              {form.ownershipType === "CLIENT_FREE_ISSUE" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
-                  <input type="text" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Which client provided this item?" />
-                </div>
-              )}
-            </div>
-          </div>
+            );
+          })()}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Aliases (comma separated)</label>

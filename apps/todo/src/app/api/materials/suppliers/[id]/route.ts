@@ -63,6 +63,23 @@ export async function PUT(
   );
   if (error) return error;
 
+  // Cascade ownership changes to linked items when isFreeIssue or clientName changes
+  const freeIssueChanged = parsed.data.isFreeIssue !== undefined && parsed.data.isFreeIssue !== before.isFreeIssue;
+  const clientNameChanged = parsed.data.clientName !== undefined && parsed.data.clientName !== before.clientName;
+
+  if (freeIssueChanged || clientNameChanged) {
+    const newOwnership = supplier.isFreeIssue ? "CLIENT_FREE_ISSUE" : "COMPANY";
+    const newClientName = supplier.isFreeIssue ? (supplier.clientName || null) : null;
+
+    await prisma.item.updateMany({
+      where: { supplierId: id, isArchived: false },
+      data: {
+        ownershipType: newOwnership as never,
+        clientName: newClientName,
+      },
+    });
+  }
+
   const changes = diff(
     before as unknown as Record<string, unknown>,
     parsed.data as unknown as Record<string, unknown>,

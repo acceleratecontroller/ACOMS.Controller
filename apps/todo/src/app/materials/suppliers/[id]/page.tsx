@@ -26,6 +26,8 @@ interface Supplier {
   phone: string | null;
   email: string | null;
   notes: string | null;
+  isFreeIssue: boolean;
+  clientName: string | null;
   items: Item[];
 }
 
@@ -36,7 +38,7 @@ export default function SupplierDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [form, setForm] = useState({ name: "", contactName: "", phone: "", email: "", notes: "" });
+  const [form, setForm] = useState({ name: "", contactName: "", phone: "", email: "", notes: "", isFreeIssue: false, clientName: "" });
 
   useEffect(() => {
     fetch(`/api/materials/suppliers/${id}`)
@@ -52,6 +54,8 @@ export default function SupplierDetailPage() {
           phone: data.phone || "",
           email: data.email || "",
           notes: data.notes || "",
+          isFreeIssue: data.isFreeIssue,
+          clientName: data.clientName || "",
         });
       })
       .catch((e) => setError(e.message))
@@ -69,6 +73,8 @@ export default function SupplierDetailPage() {
         phone: form.phone || null,
         email: form.email || null,
         notes: form.notes || null,
+        isFreeIssue: form.isFreeIssue,
+        clientName: form.isFreeIssue ? (form.clientName || null) : null,
       }),
     });
     if (res.ok) {
@@ -100,6 +106,15 @@ export default function SupplierDetailPage() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <PageHeader title={supplier.name} description={[supplier.contactName, supplier.phone, supplier.email].filter(Boolean).join(" | ") || "No contact details"} />
+          <div className="mt-1">
+            {supplier.isFreeIssue ? (
+              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                Free Issue — {supplier.clientName}
+              </span>
+            ) : (
+              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Company Supplier</span>
+            )}
+          </div>
         </div>
         <button onClick={() => setShowEditModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
           Edit Supplier
@@ -172,6 +187,24 @@ export default function SupplierDetailPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div className="border-t border-gray-200 pt-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <input
+                type="checkbox"
+                checked={form.isFreeIssue}
+                onChange={(e) => setForm({ ...form, isFreeIssue: e.target.checked, clientName: e.target.checked ? form.clientName : "" })}
+                className="rounded border-gray-300"
+              />
+              Free Issue Supplier
+            </label>
+            <p className="text-xs text-gray-500 mb-2">When enabled, all items from this supplier will be marked as client free issue.</p>
+            {form.isFreeIssue && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client Name *</label>
+                <input type="text" required value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Which client provides these items?" />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
