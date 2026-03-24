@@ -3,8 +3,8 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ACOMS Controller — Task Manager",
-  description: "Shared To-Do and Recurring Tasks",
+  title: "ACOMS Controller",
+  description: "Tasks, Materials & More",
 };
 
 export default function RootLayout({
@@ -23,6 +23,20 @@ export default function RootLayout({
             </div>
             <NavLink href="/">Dashboard</NavLink>
             <NavLink href="/tasks">Task Manager</NavLink>
+            <div className="mt-3 mb-1 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Materials
+            </div>
+            <NavLink href="/materials/items">Items</NavLink>
+            <NavLink href="/materials/locations">Locations</NavLink>
+            <NavLink href="/materials/movements">Movements</NavLink>
+            <NavLink href="/materials/movements/receive">Receive</NavLink>
+            <NavLink href="/materials/movements/issue">Issue to Job</NavLink>
+            <NavLink href="/materials/movements/transfer">Transfer</NavLink>
+            <NavLink href="/materials/movements/return">Return</NavLink>
+            <NavLink href="/materials/stock">Stock Levels</NavLink>
+            <NavLink href="/materials/stocktakes">Stocktakes</NavLink>
+            <NavLink href="/materials/pick-lists">Pick Lists</NavLink>
+            <NavLink href="/materials/items/import">Import Items</NavLink>
           </nav>
 
           {/* Main content */}

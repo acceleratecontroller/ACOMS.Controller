@@ -27,3 +27,4 @@ export type ScheduleType = "FIXED" | "FLOATING";
 
 // Re-export module-specific types
 export * from "./todo";
+export * from "./materials";
