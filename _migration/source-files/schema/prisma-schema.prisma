@@ -1,0 +1,126 @@
+// ─── Standalone Prisma Schema for To-Do / Recurring Tasks Module ─────
+//
+// This schema is INDEPENDENT of ACOMS.OS. It does not reference the
+// Employee or User tables. Instead it uses generic string IDs for
+// assignees and users, which the consuming app resolves via adapters.
+//
+// To use: copy this into prisma/schema.prisma of the new repo,
+// configure the datasource, and run `npx prisma migrate dev`.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Task Enums ───────────────────────────────────────────
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  STUCK
+  AWAITING_RESPONSE
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum ScheduleType {
+  FIXED
+  FLOATING
+}
+
+// ─── Task (Quick Tasks) ──────────────────────────────────
+
+model Task {
+  id         String       @id @default(uuid())
+  title      String
+  projectId  String?
+  notes      String?
+  label      String       @default("Task")
+  dueDate    DateTime?
+  status     TaskStatus   @default(NOT_STARTED)
+  priority   TaskPriority @default(LOW)
+
+  // Generic assignee — the consuming app resolves this to its own user/employee
+  assigneeId   String
+  // Who created/archived — consuming app maps to its own User model
+  createdById  String
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  isArchived   Boolean  @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
+  // Multi-tenant: which app owns this task (e.g. "acoms", "wip")
+  appId        String   @default("default")
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([assigneeId])
+  @@index([appId])
+}
+
+// ─── Recurring Task ──────────────────────────────────────
+
+model RecurringTask {
+  id              String             @id @default(uuid())
+  title           String
+  description     String?
+  category        String             @default("Task")
+  frequencyType   RecurringFrequency @default(WEEKLY)
+  frequencyValue  Int                @default(1)
+  scheduleType    ScheduleType       @default(FLOATING)
+  lastCompleted   DateTime?
+  nextDue         DateTime?
+
+  assigneeId   String
+  createdById  String
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  isArchived   Boolean  @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
+  appId        String   @default("default")
+
+  @@index([nextDue])
+  @@index([assigneeId])
+  @@index([appId])
+}
+
+// ─── Audit Log (optional — can be omitted if the consuming app provides its own) ─
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  entityType    String
+  entityId      String
+  action        String
+  entityLabel   String
+  changes       Json?
+  performedById String
+  performedAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([performedAt])
+}
