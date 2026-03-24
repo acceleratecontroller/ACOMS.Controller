@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { OWNERSHIP_TYPE_OPTIONS, SOURCE_TYPE_OPTIONS, UOM_LABELS } from "@/modules/materials/constants";
@@ -12,13 +12,133 @@ interface ReceiveLine {
   key: string;
   itemId: string;
   quantity: string;
-  toLocationId: string;
 }
 
 function makeLine(): ReceiveLine {
-  return { key: crypto.randomUUID(), itemId: "", quantity: "", toLocationId: "" };
+  return { key: crypto.randomUUID(), itemId: "", quantity: "" };
 }
 
+// ─── Autocomplete item picker ────────────────────────────
+function ItemAutocomplete({
+  items,
+  value,
+  onChange,
+  onConfirm,
+  autoFocus,
+}: {
+  items: Item[];
+  value: string;
+  onChange: (itemId: string) => void;
+  onConfirm: () => void;
+  autoFocus?: boolean;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Sync display text when value changes externally
+  const selectedItem = items.find((i) => i.id === value);
+
+  const filtered = query.length > 0
+    ? items.filter((i) =>
+        i.code.toLowerCase().includes(query.toLowerCase()) ||
+        i.description.toLowerCase().includes(query.toLowerCase()),
+      ).slice(0, 30)
+    : items.slice(0, 30);
+
+  // Keep highlight in bounds
+  useEffect(() => {
+    setHighlightIdx(0);
+  }, [query]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (!listRef.current) return;
+    const el = listRef.current.children[highlightIdx] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [highlightIdx]);
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
+
+  function selectItem(item: Item) {
+    onChange(item.id);
+    setQuery("");
+    setOpen(false);
+    onConfirm();
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!open && e.key !== "Escape") {
+      setOpen(true);
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIdx((prev) => Math.min(prev + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIdx((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filtered.length > 0 && open) {
+        selectItem(filtered[highlightIdx]);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div className="relative">
+      <input
+        ref={inputRef}
+        type="text"
+        value={open ? query : (selectedItem ? `${selectedItem.code} — ${selectedItem.description}` : query)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+          if (value) onChange(""); // clear selection when typing
+        }}
+        onFocus={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        onBlur={() => {
+          // Delay to allow click on option
+          setTimeout(() => setOpen(false), 150);
+        }}
+        onKeyDown={handleKeyDown}
+        placeholder="Type item code..."
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+      />
+      {open && filtered.length > 0 && (
+        <div
+          ref={listRef}
+          className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        >
+          {filtered.map((item, idx) => (
+            <div
+              key={item.id}
+              onMouseDown={(e) => { e.preventDefault(); selectItem(item); }}
+              className={`px-3 py-2 text-sm cursor-pointer ${
+                idx === highlightIdx ? "bg-blue-50 text-blue-800" : "hover:bg-gray-50"
+              }`}
+            >
+              <span className="font-mono font-medium">{item.code}</span>
+              <span className="text-gray-500 ml-2">— {item.description}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main page ───────────────────────────────────────────
 export default function ReceivePage() {
   const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
@@ -36,9 +156,13 @@ export default function ReceivePage() {
     externalSource: "",
     reference: "",
     notes: "",
+    toLocationId: "",
   });
 
   const [lines, setLines] = useState<ReceiveLine[]>([makeLine()]);
+  const [focusLineKey, setFocusLineKey] = useState<string | null>(null);
+  const [focusField, setFocusField] = useState<"item" | "quantity">("item");
+  const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     fetch("/api/materials/items").then((r) => r.json()).then(setItems);
@@ -48,13 +172,34 @@ export default function ReceivePage() {
   const isFreeIssue = header.ownershipType === "CLIENT_FREE_ISSUE";
   const movementType = isFreeIssue ? "RECEIVED_FREE_ISSUE" : "RECEIVED";
 
-  function updateLine(key: string, field: keyof ReceiveLine, value: string) {
+  const updateLine = useCallback((key: string, field: keyof ReceiveLine, value: string) => {
     setLines((prev) => prev.map((l) => (l.key === key ? { ...l, [field]: value } : l)));
-  }
+  }, []);
 
   function removeLine(key: string) {
     if (lines.length <= 1) return;
     setLines((prev) => prev.filter((l) => l.key !== key));
+  }
+
+  // When item is selected in autocomplete, focus the quantity input
+  function handleItemConfirm(lineKey: string) {
+    setTimeout(() => {
+      qtyRefs.current[lineKey]?.focus();
+    }, 0);
+  }
+
+  // When Enter is pressed in quantity, add a new line and focus it
+  function handleQtyKeyDown(e: React.KeyboardEvent, lineKey: string) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const currentLine = lines.find((l) => l.key === lineKey);
+      if (!currentLine?.quantity) return; // don't add new line if qty is empty
+
+      const newLine = makeLine();
+      setLines((prev) => [...prev, newLine]);
+      setFocusLineKey(newLine.key);
+      setFocusField("item");
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -63,9 +208,15 @@ export default function ReceivePage() {
     setError(null);
     setResults(null);
 
-    const validLines = lines.filter((l) => l.itemId && l.quantity && l.toLocationId);
+    if (!header.toLocationId) {
+      setError("Please select a location to receive into.");
+      setSubmitting(false);
+      return;
+    }
+
+    const validLines = lines.filter((l) => l.itemId && l.quantity);
     if (validLines.length === 0) {
-      setError("Add at least one complete line item (item, quantity, and location).");
+      setError("Add at least one complete line item (item and quantity).");
       setSubmitting(false);
       return;
     }
@@ -83,7 +234,7 @@ export default function ReceivePage() {
           quantity: Number(line.quantity),
           movementType,
           ownershipType: header.ownershipType,
-          toLocationId: line.toLocationId,
+          toLocationId: header.toLocationId,
           sourceType: header.sourceType || null,
           sourceName: header.sourceName || null,
           clientName: header.clientName || null,
@@ -159,7 +310,14 @@ export default function ReceivePage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Receive Into Location *</label>
+                <select value={header.toLocationId} onChange={(e) => setHeader({ ...header, toLocationId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  <option value="">Select location...</option>
+                  {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reference (PO, Docket, etc.)</label>
                 <input type="text" value={header.reference} onChange={(e) => setHeader({ ...header, reference: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
@@ -175,38 +333,45 @@ export default function ReceivePage() {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900">Items to Receive</h3>
-              <button type="button" onClick={() => setLines([...lines, makeLine()])} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                + Add Line
-              </button>
+              <span className="text-xs text-gray-400">Press Enter after quantity to add a new line</span>
             </div>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-[1fr_120px_1fr_40px] gap-3 text-xs font-medium text-gray-500 px-1">
+              <div className="grid grid-cols-[1fr_120px_40px] gap-3 text-xs font-medium text-gray-500 px-1">
                 <span>Item</span>
                 <span>Quantity</span>
-                <span>To Location</span>
                 <span></span>
               </div>
-              {lines.map((line) => {
+              {lines.map((line, lineIdx) => {
                 const selectedItem = items.find((i) => i.id === line.itemId);
+                const shouldAutoFocusItem = focusLineKey === line.key && focusField === "item";
                 return (
-                  <div key={line.key} className="grid grid-cols-[1fr_120px_1fr_40px] gap-3 items-center">
-                    <select value={line.itemId} onChange={(e) => updateLine(line.key, "itemId", e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                      <option value="">Select item...</option>
-                      {items.map((i) => <option key={i.id} value={i.id}>{i.code} — {i.description}</option>)}
-                    </select>
+                  <div key={line.key} className="grid grid-cols-[1fr_120px_40px] gap-3 items-center">
+                    <ItemAutocomplete
+                      items={items}
+                      value={line.itemId}
+                      onChange={(id) => updateLine(line.key, "itemId", id)}
+                      onConfirm={() => handleItemConfirm(line.key)}
+                      autoFocus={shouldAutoFocusItem || lineIdx === 0}
+                    />
                     <div className="relative">
-                      <input type="number" min="0.01" step="any" value={line.quantity} onChange={(e) => updateLine(line.key, "quantity", e.target.value)} placeholder="Qty" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                      <input
+                        ref={(el) => { qtyRefs.current[line.key] = el; }}
+                        type="number"
+                        min="0.01"
+                        step="any"
+                        value={line.quantity}
+                        onChange={(e) => updateLine(line.key, "quantity", e.target.value)}
+                        onKeyDown={(e) => handleQtyKeyDown(e, line.key)}
+                        placeholder="Qty"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
                       {selectedItem && (
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
                           {UOM_LABELS[selectedItem.unitOfMeasure] || ""}
                         </span>
                       )}
                     </div>
-                    <select value={line.toLocationId} onChange={(e) => updateLine(line.key, "toLocationId", e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                      <option value="">Select location...</option>
-                      {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                    </select>
                     <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-lg">
                       &times;
                     </button>
@@ -215,7 +380,12 @@ export default function ReceivePage() {
               })}
             </div>
 
-            <button type="button" onClick={() => setLines([...lines, makeLine()])} className="mt-3 w-full border-2 border-dashed border-gray-300 rounded-lg py-2 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600">
+            <button type="button" onClick={() => {
+              const newLine = makeLine();
+              setLines([...lines, newLine]);
+              setFocusLineKey(newLine.key);
+              setFocusField("item");
+            }} className="mt-3 w-full border-2 border-dashed border-gray-300 rounded-lg py-2 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600">
               + Add another item
             </button>
           </div>
@@ -230,7 +400,7 @@ export default function ReceivePage() {
           <div className="flex gap-3 justify-end">
             <button type="button" onClick={() => router.back()} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
             <button type="submit" disabled={submitting} className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
-              {submitting ? "Recording..." : `Receive ${lines.filter((l) => l.itemId && l.quantity && l.toLocationId).length} Item(s)`}
+              {submitting ? "Recording..." : `Receive ${lines.filter((l) => l.itemId && l.quantity).length} Item(s)`}
             </button>
           </div>
         </form>
