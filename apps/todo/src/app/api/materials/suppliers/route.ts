@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
-import { createItemSchema } from "@/modules/materials/validation";
+import { createSupplierSchema } from "@/modules/materials/validation";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -13,33 +13,24 @@ export async function GET(request: NextRequest) {
   const archived = searchParams.get("archived") === "true";
   const search = searchParams.get("search") || undefined;
 
-  const supplierId = searchParams.get("supplierId") || undefined;
-  const category = searchParams.get("category") || undefined;
-  const ownershipType = searchParams.get("ownershipType") || undefined;
-
   const where: Record<string, unknown> = { isArchived: archived };
   if (search) {
     where.OR = [
-      { code: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-      { category: { contains: search, mode: "insensitive" } },
-      { aliases: { has: search } },
+      { name: { contains: search, mode: "insensitive" } },
+      { contactName: { contains: search, mode: "insensitive" } },
     ];
   }
-  if (supplierId) where.supplierId = supplierId;
-  if (category) where.category = category;
-  if (ownershipType) where.ownershipType = ownershipType;
 
-  const { result: items, error } = await withPrismaError("Failed to fetch items", () =>
-    prisma.item.findMany({
+  const { result: suppliers, error } = await withPrismaError("Failed to fetch suppliers", () =>
+    prisma.supplier.findMany({
       where,
-      include: { supplier: { select: { id: true, name: true } } },
-      orderBy: { code: "asc" },
+      include: { _count: { select: { items: true } } },
+      orderBy: { name: "asc" },
     }),
   );
   if (error) return error;
 
-  return NextResponse.json(items);
+  return NextResponse.json(suppliers);
 }
 
 export async function POST(request: NextRequest) {
@@ -49,7 +40,7 @@ export async function POST(request: NextRequest) {
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;
 
-  const parsed = createItemSchema.safeParse(body);
+  const parsed = createSupplierSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
@@ -57,8 +48,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { result: item, error } = await withPrismaError("Failed to create item", () =>
-    prisma.item.create({
+  const { result: supplier, error } = await withPrismaError("Failed to create supplier", () =>
+    prisma.supplier.create({
       data: {
         ...parsed.data,
         createdById: session.user.id,
@@ -68,12 +59,12 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   audit({
-    entityType: "Item",
-    entityId: item.id,
+    entityType: "Supplier",
+    entityId: supplier.id,
     action: "CREATE",
-    entityLabel: `${item.code} — ${item.description}`,
+    entityLabel: supplier.name,
     performedById: session.user.id,
   });
 
-  return NextResponse.json(item, { status: 201 });
+  return NextResponse.json(supplier, { status: 201 });
 }

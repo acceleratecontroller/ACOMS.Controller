@@ -10,11 +10,15 @@ export const createItemSchema = z.object({
   description: z.string().min(1, "Description is required"),
   category: optionalString,
   unitOfMeasure: z
-    .enum(["EACH", "METRE", "ROLL", "KILOGRAM", "LITRE", "BOX", "PACK", "LENGTH", "SET"])
+    .enum(["EACH", "METRE", "ROLL", "KILOGRAM", "LITRE", "BOX", "PACK", "LENGTH", "SET", "OTHER"])
     .default("EACH"),
+  customUnitOfMeasure: optionalString,
   aliases: z.array(z.string()).default([]),
   minimumStockLevel: z.number().min(0).optional().nullable(),
   notes: optionalString,
+  ownershipType: z.enum(["COMPANY", "CLIENT_FREE_ISSUE"]).default("COMPANY"),
+  clientName: optionalString,
+  supplierId: optionalString,
 });
 
 export const updateItemSchema = createItemSchema.partial();
@@ -108,10 +112,21 @@ export const importItemRowSchema = z.object({
   description: z.string().min(1, "Description is required"),
   category: z.string().optional(),
   unitOfMeasure: z
-    .enum(["EACH", "METRE", "ROLL", "KILOGRAM", "LITRE", "BOX", "PACK", "LENGTH", "SET"])
+    .enum(["EACH", "METRE", "ROLL", "KILOGRAM", "LITRE", "BOX", "PACK", "LENGTH", "SET", "OTHER"])
     .optional()
     .default("EACH"),
+  customUnitOfMeasure: z.string().optional(),
   aliases: z.string().optional(),
   minimumStockLevel: z.number().min(0).optional(),
   notes: z.string().optional(),
 });
+
+export const createSupplierSchema = z.object({
+  name: z.string().min(1, "Supplier name is required"),
+  contactName: optionalString,
+  phone: optionalString,
+  email: optionalString,
+  notes: optionalString,
+});
+
+export const updateSupplierSchema = createSupplierSchema.partial();

@@ -38,6 +38,7 @@ export const UNIT_OF_MEASURE_OPTIONS: SelectOption[] = [
   { value: "PACK", label: "Pack" },
   { value: "LENGTH", label: "Length" },
   { value: "SET", label: "Set" },
+  { value: "OTHER", label: "Other" },
 ];
 
 export const UOM_LABELS: Record<string, string> = {
@@ -50,7 +51,17 @@ export const UOM_LABELS: Record<string, string> = {
   PACK: "pk",
   LENGTH: "len",
   SET: "set",
+  OTHER: "other",
 };
+
+export const CATEGORY_OPTIONS: SelectOption[] = [
+  { value: "Civil", label: "Civil" },
+  { value: "Fibre Cable", label: "Fibre Cable" },
+  { value: "Copper Cable", label: "Copper Cable" },
+  { value: "Fibre Joint", label: "Fibre Joint" },
+  { value: "Copper Joint", label: "Copper Joint" },
+  { value: "Other", label: "Other" },
+];
 
 export const SOURCE_TYPE_OPTIONS: SelectOption[] = [
   { value: "SUPPLIER", label: "Supplier" },

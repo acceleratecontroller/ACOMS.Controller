@@ -147,6 +147,7 @@ enum UnitOfMeasure {
   PACK
   LENGTH
   SET
+  OTHER
 }
 
 enum SourceType {
@@ -160,17 +161,48 @@ enum StocktakeStatus {
   COMPLETED
 }
 
+// ─── Supplier ───────────────────────────────────────────
+
+model Supplier {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  contactName String?
+  phone       String?
+  email       String?
+  notes       String?
+
+  isArchived   Boolean   @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  items Item[]
+
+  @@index([isArchived])
+}
+
 // ─── Item (Master Item Register) ────────────────────────
 
 model Item {
-  id                String        @id @default(cuid())
-  code              String        @unique
-  description       String
-  category          String?
-  unitOfMeasure     UnitOfMeasure @default(EACH)
-  aliases           String[]      @default([])
-  minimumStockLevel Decimal?
-  notes             String?
+  id                  String        @id @default(cuid())
+  code                String        @unique
+  description         String
+  category            String?
+  unitOfMeasure       UnitOfMeasure @default(EACH)
+  customUnitOfMeasure String?
+  aliases             String[]      @default([])
+  minimumStockLevel   Decimal?
+  notes               String?
+
+  // Ownership — company-purchased or client free issue
+  ownershipType OwnershipType @default(COMPANY)
+  clientName    String?
+
+  // Supplier link
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
 
   isArchived   Boolean   @default(false)
   archivedAt   DateTime?
@@ -186,6 +218,8 @@ model Item {
   @@index([code])
   @@index([category])
   @@index([isArchived])
+  @@index([supplierId])
+  @@index([ownershipType])
 }
 
 // ─── Location ───────────────────────────────────────────

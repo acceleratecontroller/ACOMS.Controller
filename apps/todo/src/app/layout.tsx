@@ -27,6 +27,7 @@ export default function RootLayout({
             <SectionHeader>Setup</SectionHeader>
             <NavLink href="/materials/items">Items</NavLink>
             <NavLink href="/materials/locations">Locations</NavLink>
+            <NavLink href="/materials/suppliers">Suppliers</NavLink>
             <NavLink href="/materials/pick-lists">Pick Lists</NavLink>
             <NavLink href="/materials/items/import">Import Items</NavLink>
 

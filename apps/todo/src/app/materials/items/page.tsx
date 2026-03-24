@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { UNIT_OF_MEASURE_OPTIONS, UOM_LABELS } from "@/modules/materials/constants";
+import { UNIT_OF_MEASURE_OPTIONS, UOM_LABELS, CATEGORY_OPTIONS, OWNERSHIP_TYPE_OPTIONS } from "@/modules/materials/constants";
+
+interface Supplier { id: string; name: string }
 
 interface Item {
   id: string;
@@ -12,18 +14,27 @@ interface Item {
   description: string;
   category: string | null;
   unitOfMeasure: string;
+  customUnitOfMeasure: string | null;
   aliases: string[];
   minimumStockLevel: number | null;
   notes: string | null;
+  ownershipType: string;
+  clientName: string | null;
+  supplierId: string | null;
+  supplier: { id: string; name: string } | null;
   isArchived: boolean;
   createdAt: string;
 }
 
 export default function ItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [filterSupplier, setFilterSupplier] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterOwnership, setFilterOwnership] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Item | null>(null);
@@ -32,54 +43,84 @@ export default function ItemsPage() {
     code: "",
     description: "",
     category: "",
+    customCategory: "",
     unitOfMeasure: "EACH",
+    customUnitOfMeasure: "",
     aliases: "",
     minimumStockLevel: "",
     notes: "",
+    ownershipType: "COMPANY",
+    clientName: "",
+    supplierId: "",
   });
+
+  useEffect(() => {
+    fetch("/api/materials/suppliers").then((r) => r.json()).then(setSuppliers).catch(() => {});
+  }, []);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (showArchived) params.set("archived", "true");
     if (search) params.set("search", search);
+    if (filterSupplier) params.set("supplierId", filterSupplier);
+    if (filterCategory) params.set("category", filterCategory);
+    if (filterOwnership) params.set("ownershipType", filterOwnership);
     const res = await fetch(`/api/materials/items?${params}`);
     if (res.ok) setItems(await res.json());
     setLoading(false);
-  }, [showArchived, search]);
+  }, [showArchived, search, filterSupplier, filterCategory, filterOwnership]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
+  const defaultForm = {
+    code: "", description: "", category: "", customCategory: "",
+    unitOfMeasure: "EACH", customUnitOfMeasure: "", aliases: "",
+    minimumStockLevel: "", notes: "", ownershipType: "COMPANY",
+    clientName: "", supplierId: "",
+  };
+
   function openCreate() {
     setEditingItem(null);
-    setForm({ code: "", description: "", category: "", unitOfMeasure: "EACH", aliases: "", minimumStockLevel: "", notes: "" });
+    setForm(defaultForm);
     setShowModal(true);
   }
 
   function openEdit(item: Item) {
     setEditingItem(item);
+    const isPresetCategory = CATEGORY_OPTIONS.some((c) => c.value === item.category);
     setForm({
       code: item.code,
       description: item.description,
-      category: item.category || "",
+      category: isPresetCategory ? (item.category || "") : (item.category ? "Other" : ""),
+      customCategory: isPresetCategory ? "" : (item.category || ""),
       unitOfMeasure: item.unitOfMeasure,
+      customUnitOfMeasure: item.customUnitOfMeasure || "",
       aliases: item.aliases.join(", "),
       minimumStockLevel: item.minimumStockLevel?.toString() || "",
       notes: item.notes || "",
+      ownershipType: item.ownershipType || "COMPANY",
+      clientName: item.clientName || "",
+      supplierId: item.supplierId || "",
     });
     setShowModal(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const resolvedCategory = form.category === "Other" ? (form.customCategory || "Other") : (form.category || null);
     const payload = {
       code: form.code,
       description: form.description,
-      category: form.category || null,
+      category: resolvedCategory,
       unitOfMeasure: form.unitOfMeasure,
+      customUnitOfMeasure: form.unitOfMeasure === "OTHER" ? (form.customUnitOfMeasure || null) : null,
       aliases: form.aliases ? form.aliases.split(",").map((a) => a.trim()).filter(Boolean) : [],
       minimumStockLevel: form.minimumStockLevel ? Number(form.minimumStockLevel) : null,
       notes: form.notes || null,
+      ownershipType: form.ownershipType,
+      clientName: form.ownershipType === "CLIENT_FREE_ISSUE" ? (form.clientName || null) : null,
+      supplierId: form.supplierId || null,
     };
 
     const url = editingItem ? `/api/materials/items/${editingItem.id}` : "/api/materials/items";
@@ -104,21 +145,38 @@ export default function ItemsPage() {
     fetchItems();
   }
 
+  function getUomDisplay(item: Item) {
+    if (item.unitOfMeasure === "OTHER" && item.customUnitOfMeasure) return item.customUnitOfMeasure;
+    return UOM_LABELS[item.unitOfMeasure] || item.unitOfMeasure;
+  }
+
   return (
     <div>
       <PageHeader title="Item Register" description="Manage your master item list" />
 
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <input
           type="text"
           placeholder="Search items..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-56"
         />
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">All Categories</option>
+          {CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
+        <select value={filterSupplier} onChange={(e) => setFilterSupplier(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">All Suppliers</option>
+          {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <select value={filterOwnership} onChange={(e) => setFilterOwnership(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+          <option value="">All Ownership</option>
+          {OWNERSHIP_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
         <label className="flex items-center gap-2 text-sm text-gray-600">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
-          Show archived
+          Archived
         </label>
         <div className="flex-1" />
         <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
@@ -135,10 +193,12 @@ export default function ItemsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Code</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Category</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">UoM</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Supplier</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Min Stock</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
               </tr>
@@ -149,7 +209,17 @@ export default function ItemsPage() {
                   <td className="px-4 py-3 font-mono font-medium">{item.code}</td>
                   <td className="px-4 py-3">{item.description}</td>
                   <td className="px-4 py-3 text-gray-500">{item.category || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500">{UOM_LABELS[item.unitOfMeasure] || item.unitOfMeasure}</td>
+                  <td className="px-4 py-3 text-gray-500">{getUomDisplay(item)}</td>
+                  <td className="px-4 py-3 text-gray-500">{item.supplier?.name || "—"}</td>
+                  <td className="px-4 py-3">
+                    {item.ownershipType === "CLIENT_FREE_ISSUE" ? (
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                        Free Issue{item.clientName ? ` (${item.clientName})` : ""}
+                      </span>
+                    ) : (
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Company</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-gray-500">{item.minimumStockLevel ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => openEdit(item)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">
@@ -168,36 +238,72 @@ export default function ItemsPage() {
         </div>
       )}
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingItem ? "Edit Item" : "Add Item"}>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingItem ? "Edit Item" : "Add Item"} wide>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Code *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Item Code *</label>
               <input type="text" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
-              <select value={form.unitOfMeasure} onChange={(e) => setForm({ ...form, unitOfMeasure: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                {UNIT_OF_MEASURE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <input type="text" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-            <input type="text" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <input type="text" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, customCategory: "" })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">Select category...</option>
+                {CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+              {form.category === "Other" && (
+                <input type="text" placeholder="Enter custom category..." value={form.customCategory} onChange={(e) => setForm({ ...form, customCategory: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-2" />
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
+              <select value={form.unitOfMeasure} onChange={(e) => setForm({ ...form, unitOfMeasure: e.target.value, customUnitOfMeasure: "" })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                {UNIT_OF_MEASURE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              {form.unitOfMeasure === "OTHER" && (
+                <input type="text" placeholder="Enter custom unit..." value={form.customUnitOfMeasure} onChange={(e) => setForm({ ...form, customUnitOfMeasure: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-2" />
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+              <select value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">No supplier</option>
+                {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Stock Level</label>
               <input type="number" min="0" step="any" value={form.minimumStockLevel} onChange={(e) => setForm({ ...form, minimumStockLevel: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
+
+          <div className="border-t border-gray-200 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ownership Type</label>
+                <select value={form.ownershipType} onChange={(e) => setForm({ ...form, ownershipType: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  {OWNERSHIP_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              {form.ownershipType === "CLIENT_FREE_ISSUE" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                  <input type="text" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Which client provided this item?" />
+                </div>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Aliases (comma separated)</label>
             <input type="text" value={form.aliases} onChange={(e) => setForm({ ...form, aliases: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. Alt Name 1, Alt Name 2" />

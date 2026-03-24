@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
 
   const contentType = request.headers.get("content-type") || "";
   let csvText: string;
+  let supplierId: string | null = null;
 
   if (contentType.includes("multipart/form-data")) {
     const formData = await request.formData();
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
     csvText = await file.text();
+    supplierId = (formData.get("supplierId") as string) || null;
   } else {
     csvText = await request.text();
   }
@@ -47,9 +49,11 @@ export async function POST(request: NextRequest) {
             description: item.description,
             category: item.category,
             unitOfMeasure: item.unitOfMeasure as never,
+            customUnitOfMeasure: item.customUnitOfMeasure,
             aliases: item.aliases,
             minimumStockLevel: item.minimumStockLevel,
             notes: item.notes,
+            supplierId: supplierId,
             createdById: session.user.id,
           },
         }),

@@ -11,6 +11,7 @@ export interface ParsedItem {
   description: string;
   category?: string;
   unitOfMeasure: string;
+  customUnitOfMeasure?: string;
   aliases: string[];
   minimumStockLevel?: number;
   notes?: string;
@@ -18,7 +19,13 @@ export interface ParsedItem {
 
 /**
  * Parse CSV text into validated item rows.
- * Expects headers: code, description, category, unitOfMeasure, aliases, minimumStockLevel, notes
+ *
+ * Expected column order:
+ *   itemCode, description, category, unitOfMeasure, customUnitOfMeasure, aliases, minimumStockLevel, notes
+ *
+ * The parser matches columns by header name (case-insensitive), so order
+ * doesn't strictly matter as long as the headers are present.
+ * "itemCode" and "code" are both accepted for the item code column.
  */
 export function parseItemsCsv(csvText: string): ImportResult {
   const lines = csvText.trim().split("\n");
@@ -26,11 +33,13 @@ export function parseItemsCsv(csvText: string): ImportResult {
     return { success: 0, errors: [{ row: 0, message: "File is empty or has no data rows" }], items: [] };
   }
 
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-  const codeIdx = headers.indexOf("code");
+  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/\s+/g, ""));
+  // Support both "itemcode" and "code" as the item code column
+  const codeIdx = headers.indexOf("itemcode") >= 0 ? headers.indexOf("itemcode") : headers.indexOf("code");
   const descIdx = headers.indexOf("description");
   const catIdx = headers.indexOf("category");
   const uomIdx = headers.indexOf("unitofmeasure");
+  const customUomIdx = headers.indexOf("customunitofmeasure");
   const aliasIdx = headers.indexOf("aliases");
   const minIdx = headers.indexOf("minimumstocklevel");
   const notesIdx = headers.indexOf("notes");
@@ -38,7 +47,7 @@ export function parseItemsCsv(csvText: string): ImportResult {
   if (codeIdx === -1 || descIdx === -1) {
     return {
       success: 0,
-      errors: [{ row: 0, message: "CSV must have 'code' and 'description' columns" }],
+      errors: [{ row: 0, message: "CSV must have 'itemCode' (or 'code') and 'description' columns" }],
       items: [],
     };
   }
@@ -55,6 +64,7 @@ export function parseItemsCsv(csvText: string): ImportResult {
       description: cols[descIdx]?.trim() ?? "",
       category: catIdx >= 0 ? cols[catIdx]?.trim() || undefined : undefined,
       unitOfMeasure: uomIdx >= 0 ? cols[uomIdx]?.trim().toUpperCase() || undefined : undefined,
+      customUnitOfMeasure: customUomIdx >= 0 ? cols[customUomIdx]?.trim() || undefined : undefined,
       aliases: aliasIdx >= 0 ? cols[aliasIdx]?.trim() || undefined : undefined,
       minimumStockLevel: minIdx >= 0 && cols[minIdx]?.trim() ? Number(cols[minIdx].trim()) : undefined,
       notes: notesIdx >= 0 ? cols[notesIdx]?.trim() || undefined : undefined,
@@ -74,6 +84,7 @@ export function parseItemsCsv(csvText: string): ImportResult {
       description: parsed.data.description,
       category: parsed.data.category,
       unitOfMeasure: parsed.data.unitOfMeasure ?? "EACH",
+      customUnitOfMeasure: parsed.data.customUnitOfMeasure,
       aliases: parsed.data.aliases ? parsed.data.aliases.split("|").map((a) => a.trim()).filter(Boolean) : [],
       minimumStockLevel: parsed.data.minimumStockLevel,
       notes: parsed.data.notes,
