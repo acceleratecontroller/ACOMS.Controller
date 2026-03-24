@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { withPrismaError } from "@/lib/api-helpers";
 
-// POST /api/tasks/[id]/complete — Toggle task completion
+// POST /api/recurring-tasks/[id]/restore — Restore an archived recurring task
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -15,30 +15,26 @@ export async function POST(
   }
 
   const { id } = await params;
-  const task = await prisma.task.findUnique({ where: { id } });
 
-  if (!task) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  const newStatus = task.status === "COMPLETED" ? "NOT_STARTED" : "COMPLETED";
-
-  const { result: updated, error } = await withPrismaError("Failed to toggle task completion", () =>
-    prisma.task.update({
+  const { result: task, error } = await withPrismaError("Failed to restore recurring task", () =>
+    prisma.recurringTask.update({
       where: { id },
-      data: { status: newStatus },
+      data: {
+        isArchived: false,
+        archivedAt: null,
+        archivedById: null,
+      },
     }),
   );
   if (error) return error;
 
   audit({
-    entityType: "Task",
+    entityType: "RecurringTask",
     entityId: task.id,
-    action: "UPDATE",
+    action: "RESTORE",
     entityLabel: task.title,
     performedById: session.user.id,
-    changes: { status: { from: task.status, to: newStatus } },
   });
 
-  return NextResponse.json(updated);
+  return NextResponse.json(task);
 }

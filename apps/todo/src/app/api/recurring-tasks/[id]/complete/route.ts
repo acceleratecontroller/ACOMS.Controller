@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { calculateNextDue } from "@/modules/tasks/recurrence";
 import { auth } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { withPrismaError } from "@/lib/api-helpers";
 
-// POST /api/tasks/[id]/complete — Toggle task completion
+// POST /api/recurring-tasks/[id]/complete — Mark as completed and advance next due
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -15,29 +16,44 @@ export async function POST(
   }
 
   const { id } = await params;
-  const task = await prisma.task.findUnique({ where: { id } });
+  const task = await prisma.recurringTask.findUnique({ where: { id } });
 
   if (!task) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const newStatus = task.status === "COMPLETED" ? "NOT_STARTED" : "COMPLETED";
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
 
-  const { result: updated, error } = await withPrismaError("Failed to toggle task completion", () =>
-    prisma.task.update({
+  const nextDue = calculateNextDue(
+    task.frequencyType,
+    task.frequencyValue,
+    task.scheduleType,
+    now,
+    task.nextDue,
+  );
+
+  const { result: updated, error } = await withPrismaError("Failed to complete recurring task", () =>
+    prisma.recurringTask.update({
       where: { id },
-      data: { status: newStatus },
+      data: {
+        lastCompleted: now,
+        nextDue,
+      },
     }),
   );
   if (error) return error;
 
   audit({
-    entityType: "Task",
+    entityType: "RecurringTask",
     entityId: task.id,
     action: "UPDATE",
     entityLabel: task.title,
     performedById: session.user.id,
-    changes: { status: { from: task.status, to: newStatus } },
+    changes: {
+      lastCompleted: { from: task.lastCompleted, to: now },
+      nextDue: { from: task.nextDue, to: nextDue },
+    },
   });
 
   return NextResponse.json(updated);

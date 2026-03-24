@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createTaskSchema } from "@/modules/tasks/validation";
+import { createRecurringTaskSchema } from "@/modules/tasks/validation";
+import { calculateNextDue } from "@/modules/tasks/recurrence";
 import { auth } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { parseBody, validateAssigneeRef, withPrismaError } from "@/lib/api-helpers";
 
-// GET /api/tasks — List tasks
+// GET /api/recurring-tasks — List recurring tasks
 export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user) {
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const showArchived = request.nextUrl.searchParams.get("archived") === "true";
 
-  const tasks = await prisma.task.findMany({
+  const tasks = await prisma.recurringTask.findMany({
     where: { isArchived: showArchived },
     orderBy: { createdAt: "desc" },
   });
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(tasks);
 }
 
-// POST /api/tasks — Create a new task
+// POST /api/recurring-tasks — Create a recurring task
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
   const { data: body, error: bodyError } = await parseBody(request);
   if (bodyError) return bodyError;
 
-  const parsed = createTaskSchema.safeParse(body);
+  const parsed = createRecurringTaskSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -46,16 +47,26 @@ export async function POST(request: NextRequest) {
   const refError = await validateAssigneeRef(data.assigneeId);
   if (refError) return refError;
 
-  const { result: task, error } = await withPrismaError("Failed to create task", () =>
-    prisma.task.create({
+  const lastCompleted = data.lastCompleted ? new Date(data.lastCompleted) : null;
+  const nextDue = calculateNextDue(
+    data.frequencyType,
+    data.frequencyValue,
+    data.scheduleType,
+    lastCompleted,
+    null,
+  );
+
+  const { result: task, error } = await withPrismaError("Failed to create recurring task", () =>
+    prisma.recurringTask.create({
       data: {
         title: data.title,
-        projectId: data.projectId || null,
-        notes: data.notes || null,
-        label: data.label || "Task",
-        dueDate: data.dueDate ? new Date(data.dueDate) : null,
-        status: data.status,
-        priority: data.priority,
+        description: data.description || null,
+        category: data.category || "Task",
+        frequencyType: data.frequencyType,
+        frequencyValue: data.frequencyValue,
+        scheduleType: data.scheduleType,
+        lastCompleted,
+        nextDue,
         assigneeId: data.assigneeId,
         createdById: session.user.id,
       },
@@ -64,7 +75,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   audit({
-    entityType: "Task",
+    entityType: "RecurringTask",
     entityId: task.id,
     action: "CREATE",
     entityLabel: task.title,
