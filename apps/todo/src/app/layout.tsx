@@ -23,20 +23,29 @@ export default function RootLayout({
             </div>
             <NavLink href="/">Dashboard</NavLink>
             <NavLink href="/tasks">Task Manager</NavLink>
-            <div className="mt-3 mb-1 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Materials
-            </div>
+
+            <SectionHeader>Setup</SectionHeader>
             <NavLink href="/materials/items">Items</NavLink>
             <NavLink href="/materials/locations">Locations</NavLink>
-            <NavLink href="/materials/movements">Movements</NavLink>
-            <NavLink href="/materials/movements/receive">Receive</NavLink>
-            <NavLink href="/materials/movements/issue">Issue to Job</NavLink>
-            <NavLink href="/materials/movements/transfer">Transfer</NavLink>
-            <NavLink href="/materials/movements/return">Return</NavLink>
-            <NavLink href="/materials/stock">Stock Levels</NavLink>
-            <NavLink href="/materials/stocktakes">Stocktakes</NavLink>
             <NavLink href="/materials/pick-lists">Pick Lists</NavLink>
             <NavLink href="/materials/items/import">Import Items</NavLink>
+
+            <SectionHeader>Inbound</SectionHeader>
+            <NavLink href="/materials/movements/receive">Receive Stock</NavLink>
+
+            <SectionHeader>Outbound</SectionHeader>
+            <NavLink href="/materials/movements/issue">Issue to Job</NavLink>
+            <NavLink href="/materials/movements/return-to-supplier">Return to Supplier</NavLink>
+
+            <SectionHeader>Internal</SectionHeader>
+            <NavLink href="/materials/movements/transfer">Transfer</NavLink>
+            <NavLink href="/materials/movements/return-from-job">Return from Job</NavLink>
+
+            <SectionHeader>Tracking</SectionHeader>
+            <NavLink href="/materials/stock">Stock Levels</NavLink>
+            <NavLink href="/materials/movements">Movement History</NavLink>
+            <NavLink href="/materials/stocktakes">Stocktakes</NavLink>
+            <NavLink href="/materials/jobs">Jobs</NavLink>
           </nav>
 
           {/* Main content */}
@@ -44,6 +53,14 @@ export default function RootLayout({
         </div>
       </body>
     </html>
+  );
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-3 mb-1 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+      {children}
+    </div>
   );
 }
 
