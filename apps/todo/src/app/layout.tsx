@@ -3,7 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ACOMS Controller — To-Do",
+  title: "ACOMS Controller — Task Manager",
   description: "Shared To-Do and Recurring Tasks",
 };
 
@@ -22,8 +22,7 @@ export default function RootLayout({
               ACOMS Controller
             </div>
             <NavLink href="/">Dashboard</NavLink>
-            <NavLink href="/tasks">Tasks</NavLink>
-            <NavLink href="/categories">Categories</NavLink>
+            <NavLink href="/tasks">Task Manager</NavLink>
           </nav>
 
           {/* Main content */}

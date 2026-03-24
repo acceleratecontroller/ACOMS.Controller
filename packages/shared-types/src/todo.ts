@@ -1,31 +1,49 @@
-import type { TaskStatus, TaskPriority, RecurrenceFrequency } from "./index";
+import type { TaskStatus, TaskPriority, RecurringFrequency, ScheduleType } from "./index";
 
 // Input type for creating a new task via the API
 export interface CreateTaskInput {
   title: string;
-  description?: string;
+  projectId?: string;
+  notes?: string;
+  label?: string;
+  dueDate?: string; // ISO date string
   status?: TaskStatus;
   priority?: TaskPriority;
-  dueDate?: string; // ISO date string
-  categoryIds?: string[];
-  recurrence?: RecurrenceRuleInput;
+  assigneeId: string;
 }
 
 // Input type for updating an existing task
 export interface UpdateTaskInput {
   title?: string;
-  description?: string;
+  projectId?: string | null;
+  notes?: string | null;
+  label?: string;
+  dueDate?: string | null;
   status?: TaskStatus;
   priority?: TaskPriority;
-  dueDate?: string | null;
-  categoryIds?: string[];
+  assigneeId?: string;
 }
 
-// Input type for setting up recurrence on a task
-export interface RecurrenceRuleInput {
-  frequency: RecurrenceFrequency;
-  interval?: number; // e.g. every 2 weeks
-  daysOfWeek?: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
-  dayOfMonth?: number; // for monthly: which day (1-31)
-  endDate?: string; // ISO date string — when to stop recurring
+// Input type for creating a recurring task
+export interface CreateRecurringTaskInput {
+  title: string;
+  description?: string;
+  category?: string;
+  frequencyType?: RecurringFrequency;
+  frequencyValue?: number;
+  scheduleType?: ScheduleType;
+  lastCompleted?: string; // ISO date string
+  assigneeId: string;
+}
+
+// Input type for updating a recurring task
+export interface UpdateRecurringTaskInput {
+  title?: string;
+  description?: string | null;
+  category?: string;
+  frequencyType?: RecurringFrequency;
+  frequencyValue?: number;
+  scheduleType?: ScheduleType;
+  lastCompleted?: string | null;
+  assigneeId?: string;
 }

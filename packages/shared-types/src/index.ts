@@ -2,14 +2,28 @@
 // Shared types used across all ACOMS Controller apps
 // ============================================================
 
-// Task status — used by To-Do app and future modules
-export type TaskStatus = "todo" | "in_progress" | "done";
+// Task status — matches Prisma TaskStatus enum
+export type TaskStatus =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "STUCK"
+  | "AWAITING_RESPONSE"
+  | "COMPLETED";
 
-// Priority levels — shared concept across ACOMS
-export type TaskPriority = "low" | "medium" | "high" | "urgent";
+// Priority levels
+export type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
 // Recurrence patterns
-export type RecurrenceFrequency = "daily" | "weekly" | "monthly";
+export type RecurringFrequency =
+  | "DAILY"
+  | "WEEKLY"
+  | "FORTNIGHTLY"
+  | "MONTHLY"
+  | "QUARTERLY"
+  | "YEARLY";
+
+// Schedule types for recurring tasks
+export type ScheduleType = "FIXED" | "FLOATING";
 
 // Re-export module-specific types
 export * from "./todo";

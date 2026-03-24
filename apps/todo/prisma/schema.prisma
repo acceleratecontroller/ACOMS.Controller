@@ -7,62 +7,111 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================
-// Tasks — the core of the To-Do / Recurring Tasks app
-// ============================================================
+// ─── Task Enums ───────────────────────────────────────────
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  STUCK
+  AWAITING_RESPONSE
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum ScheduleType {
+  FIXED
+  FLOATING
+}
+
+// ─── Task (Quick Tasks) ──────────────────────────────────
+
 model Task {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  status      String    @default("todo")     // "todo" | "in_progress" | "done"
-  priority    String    @default("medium")   // "low" | "medium" | "high" | "urgent"
-  dueDate     DateTime?
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String       @id @default(uuid())
+  title      String
+  projectId  String?
+  notes      String?
+  label      String       @default("Task")
+  dueDate    DateTime?
+  status     TaskStatus   @default(NOT_STARTED)
+  priority   TaskPriority @default(LOW)
 
-  // Recurrence — links to a rule that defines the pattern
-  recurrenceRule   RecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id])
-  recurrenceRuleId String?
+  // Generic assignee — the consuming app resolves this to its own user/employee
+  assigneeId   String
+  // Who created/archived — consuming app maps to its own User model
+  createdById  String
 
-  // Self-relation: recurring tasks spawn child instances
-  parentTaskId String?
-  parentTask   Task?  @relation("RecurringInstances", fields: [parentTaskId], references: [id])
-  childTasks   Task[] @relation("RecurringInstances")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  // Categories (many-to-many)
-  categories TaskCategory[]
+  isArchived   Boolean  @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
+  // Multi-tenant: which app owns this task (e.g. "acoms", "wip")
+  appId        String   @default("default")
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([assigneeId])
+  @@index([appId])
 }
 
-// ============================================================
-// Recurrence rules — defines how often a task repeats
-// ============================================================
-model RecurrenceRule {
-  id         String    @id @default(cuid())
-  frequency  String    // "daily" | "weekly" | "monthly"
-  interval   Int       @default(1)  // every N days/weeks/months
-  daysOfWeek String?   // comma-separated: "1,3,5" for Mon/Wed/Fri
-  dayOfMonth Int?      // for monthly: which day (1-31)
-  endDate    DateTime? // when to stop creating new instances
-  tasks      Task[]
+// ─── Recurring Task ──────────────────────────────────────
+
+model RecurringTask {
+  id              String             @id @default(uuid())
+  title           String
+  description     String?
+  category        String             @default("Task")
+  frequencyType   RecurringFrequency @default(WEEKLY)
+  frequencyValue  Int                @default(1)
+  scheduleType    ScheduleType       @default(FLOATING)
+  lastCompleted   DateTime?
+  nextDue         DateTime?
+
+  assigneeId   String
+  createdById  String
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  isArchived   Boolean  @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
+  appId        String   @default("default")
+
+  @@index([nextDue])
+  @@index([assigneeId])
+  @@index([appId])
 }
 
-// ============================================================
-// Categories — for organising tasks (e.g. "Safety", "Maintenance")
-// ============================================================
-model Category {
-  id    String  @id @default(cuid())
-  name  String  @unique
-  color String? // hex colour for UI display, e.g. "#3b82f6"
-  tasks TaskCategory[]
-}
+// ─── Audit Log ───────────────────────────────────────────
 
-// Junction table for Task <-> Category (many-to-many)
-model TaskCategory {
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId     String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  categoryId String
+model AuditLog {
+  id            String   @id @default(uuid())
+  entityType    String
+  entityId      String
+  action        String
+  entityLabel   String
+  changes       Json?
+  performedById String
+  performedAt   DateTime @default(now())
 
-  @@id([taskId, categoryId])
+  @@index([entityType, entityId])
+  @@index([performedAt])
 }
