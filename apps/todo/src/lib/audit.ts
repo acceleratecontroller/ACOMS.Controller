@@ -56,6 +56,7 @@ export function diff(
 function normalise(v: unknown): string {
   if (v === null || v === undefined) return "";
   if (v instanceof Date) return v.toISOString();
+  if (Array.isArray(v)) return JSON.stringify(v);
   if (typeof v === "object" && v !== null && "toFixed" in v) return String(v);
   return String(v);
 }

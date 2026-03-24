@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { getDateBoundaries } from "@/lib/date-utils";
+import { getStockLevels } from "@/lib/stock";
 
 // GET /api/dashboard — Dashboard summary stats
 export async function GET() {
@@ -111,7 +112,32 @@ export async function GET() {
     }),
   ]);
 
+  // ─── Materials summary ───────────────────────────────────
+  const [lowStockItems, recentMovements, openStocktakes, itemCount, locationCount] = await Promise.all([
+    getStockLevels({ belowMinimumOnly: true }),
+    prisma.stockMovement.findMany({
+      include: {
+        item: { select: { code: true, description: true } },
+        fromLocation: { select: { name: true } },
+        toLocation: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.stocktake.findMany({
+      where: { status: "DRAFT" },
+      include: {
+        location: { select: { name: true } },
+        _count: { select: { lines: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.item.count({ where: { isArchived: false } }),
+    prisma.location.count({ where: { isArchived: false } }),
+  ]);
+
   return NextResponse.json({
+    // Task data
     activeTaskCount,
     overdueTaskCount,
     overdueRecurringCount,
@@ -122,5 +148,13 @@ export async function GET() {
     dueTodayRecurringCount,
     dueTodayRecurringTasks,
     upcomingTasks,
+    // Materials data
+    materials: {
+      lowStockItems,
+      recentMovements,
+      openStocktakes,
+      itemCount,
+      locationCount,
+    },
   });
 }

@@ -73,3 +73,43 @@ export interface TaskSummary {
 export interface DashboardAdapter {
   getTaskSummary(userId?: string): Promise<TaskSummary>;
 }
+
+// ═════════════════════════════════════════════════════════
+// MATERIAL TRACKER ADAPTERS
+// ═════════════════════════════════════════════════════════
+
+// ─── Client Resolution ──────────────────────────────────
+// Maps client references to display names and external IDs.
+// WIP integration will implement this by querying the WIP Client table.
+
+export interface ClientInfo {
+  id: string;
+  name: string;
+  externalId?: string;
+  externalSource?: string;
+}
+
+export interface ClientAdapter {
+  resolve(clientName: string): Promise<ClientInfo | null>;
+  search(query: string): Promise<ClientInfo[]>;
+  validate(clientName: string): Promise<boolean>;
+}
+
+// ─── Project/Job Resolution ─────────────────────────────
+// Maps project references to display names, codes, and external IDs.
+// WIP integration will implement this by querying the WIP Project table.
+
+export interface ProjectInfo {
+  id: string;
+  name: string;
+  code?: string;
+  clientName?: string;
+  externalId?: string;
+  externalSource?: string;
+}
+
+export interface ProjectAdapter {
+  resolve(projectCode: string): Promise<ProjectInfo | null>;
+  search(query: string): Promise<ProjectInfo[]>;
+  validate(projectCode: string): Promise<boolean>;
+}
