@@ -48,7 +48,7 @@ function ItemAutocomplete({
         i.code.toLowerCase().includes(query.toLowerCase()) ||
         i.description.toLowerCase().includes(query.toLowerCase()),
       ).slice(0, 30)
-    : items.slice(0, 30);
+    : [];
 
   useEffect(() => {
     setHighlightIdx(0);
