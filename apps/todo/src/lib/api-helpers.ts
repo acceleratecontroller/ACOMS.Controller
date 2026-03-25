@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/** Discriminated union for operations that may fail with an HTTP error response. */
+export type Result<T> =
+  | { result: T; error?: undefined }
+  | { result?: undefined; error: NextResponse };
+
 export async function parseBody<T = unknown>(
   request: NextRequest,
-): Promise<{ data: T; error?: never } | { data?: never; error: NextResponse }> {
+): Promise<{ data: T; error?: undefined } | { data?: undefined; error: NextResponse }> {
   try {
     const data = await request.json();
     return { data: data as T };
@@ -31,7 +36,7 @@ export async function validateAssigneeRef(
 export async function withPrismaError<T>(
   label: string,
   fn: () => Promise<T>,
-): Promise<{ result: T; error?: never } | { result?: never; error: NextResponse }> {
+): Promise<Result<T>> {
   try {
     const result = await fn();
     return { result };

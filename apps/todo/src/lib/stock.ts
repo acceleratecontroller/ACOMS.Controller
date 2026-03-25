@@ -166,6 +166,25 @@ export async function getStockAtLocation(
 }
 
 /**
+ * Get stock for ALL items at a specific location in a single query.
+ * Returns a Map of itemId → currentStock.
+ *
+ * Use this instead of calling getStockAtLocation() per item
+ * when you need stock levels for many items at one location
+ * (e.g. stocktake creation).
+ */
+export async function getStockByItemAtLocation(
+  locationId: string,
+): Promise<Map<string, number>> {
+  const levels = await getStockLevels({ locationId });
+  const map = new Map<string, number>();
+  for (const l of levels) {
+    map.set(l.itemId, l.currentStock);
+  }
+  return map;
+}
+
+/**
  * Get summary stock levels grouped by item (all locations combined).
  */
 export async function getStockSummary(): Promise<StockSummaryByItem[]> {

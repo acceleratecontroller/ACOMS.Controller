@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { updateTaskSchema } from "@/modules/tasks/validation";
-import { auth } from "@/lib/auth";
+import { requireAuth, requireAdmin } from "@/lib/auth";
 import { audit, diff } from "@/lib/audit";
 import { parseBody, validateAssigneeRef, withPrismaError } from "@/lib/api-helpers";
 
@@ -10,10 +10,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const { id } = await params;
   const task = await prisma.task.findUnique({ where: { id } });
@@ -30,10 +28,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { id } = await params;
   const { data: body, error: bodyError } = await parseBody(request);
@@ -100,10 +96,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { id } = await params;
 

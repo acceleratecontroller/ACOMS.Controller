@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { updateStocktakeLineSchema } from "@/modules/materials/validation";
 
@@ -8,8 +8,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const { result: stocktake, error } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({
@@ -35,8 +35,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { result: stocktake, error: fetchErr } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({ where: { id: params.id } }),
@@ -59,6 +59,8 @@ export async function PUT(
     return NextResponse.json({ error: "Expected array of line updates" }, { status: 400 });
   }
 
+  // Validate all lines before writing any — fail fast on bad input
+  const validatedLines: { lineId: string; countedQty: number; notes?: string | null }[] = [];
   for (const line of lines) {
     const parsed = updateStocktakeLineSchema.safeParse(line);
     if (!parsed.success) {
@@ -67,15 +69,21 @@ export async function PUT(
         { status: 400 },
       );
     }
-
-    await prisma.stocktakeLine.update({
-      where: { id: line.lineId },
-      data: {
-        countedQty: parsed.data.countedQty,
-        notes: parsed.data.notes,
-      },
-    });
+    validatedLines.push({ lineId: line.lineId, ...parsed.data });
   }
+
+  // Apply all line updates atomically
+  await prisma.$transaction(
+    validatedLines.map((vl) =>
+      prisma.stocktakeLine.update({
+        where: { id: vl.lineId },
+        data: {
+          countedQty: vl.countedQty,
+          notes: vl.notes,
+        },
+      }),
+    ),
+  );
 
   const { result: updated, error } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({

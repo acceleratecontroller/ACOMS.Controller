@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { createStocktakeSchema } from "@/modules/materials/validation";
-import { getStockAtLocation } from "@/lib/stock";
+import { getStockByItemAtLocation } from "@/lib/stock";
 
 export async function GET() {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const { result: stocktakes, error } = await withPrismaError("Failed to fetch stocktakes", () =>
     prisma.stocktake.findMany({
@@ -25,8 +25,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;
@@ -39,21 +39,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const items = await prisma.item.findMany({
-    where: { isArchived: false },
-    orderBy: { code: "asc" },
-  });
-
-  const linesData = await Promise.all(
-    items.map(async (item) => {
-      const expectedQty = await getStockAtLocation(item.id, parsed.data.locationId);
-      return {
-        itemId: item.id,
-        expectedQty,
-        countedQty: 0,
-      };
+  const [items, stockByItem] = await Promise.all([
+    prisma.item.findMany({
+      where: { isArchived: false },
+      orderBy: { code: "asc" },
     }),
-  );
+    getStockByItemAtLocation(parsed.data.locationId),
+  ]);
+
+  const linesData = items.map((item) => ({
+    itemId: item.id,
+    expectedQty: stockByItem.get(item.id) ?? 0,
+    countedQty: 0,
+  }));
 
   const { result: stocktake, error } = await withPrismaError("Failed to create stocktake", () =>
     prisma.stocktake.create({

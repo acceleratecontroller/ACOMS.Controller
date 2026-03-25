@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { updatePickListSchema } from "@/modules/materials/validation";
@@ -9,8 +10,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const { result: pickList, error } = await withPrismaError("Failed to fetch pick list", () =>
     prisma.pickList.findUniqueOrThrow({
@@ -33,8 +34,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;
@@ -47,32 +48,35 @@ export async function PUT(
     );
   }
 
-  if (parsed.data.items) {
-    await prisma.pickListItem.deleteMany({ where: { pickListId: params.id } });
-  }
-
+  // Delete old items + update pick list atomically to avoid orphaned state
   const { result: pickList, error } = await withPrismaError("Failed to update pick list", () =>
-    prisma.pickList.update({
-      where: { id: params.id },
-      data: {
-        name: parsed.data.name,
-        description: parsed.data.description,
-        ...(parsed.data.items && {
+    prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (parsed.data.items) {
+        await tx.pickListItem.deleteMany({ where: { pickListId: params.id } });
+      }
+
+      return tx.pickList.update({
+        where: { id: params.id },
+        data: {
+          name: parsed.data.name,
+          description: parsed.data.description,
+          ...(parsed.data.items && {
+            items: {
+              create: parsed.data.items.map((i) => ({
+                itemId: i.itemId,
+                defaultQty: i.defaultQty,
+              })),
+            },
+          }),
+        },
+        include: {
           items: {
-            create: parsed.data.items.map((i) => ({
-              itemId: i.itemId,
-              defaultQty: i.defaultQty,
-            })),
-          },
-        }),
-      },
-      include: {
-        items: {
-          include: {
-            item: { select: { code: true, description: true, unitOfMeasure: true } },
+            include: {
+              item: { select: { code: true, description: true, unitOfMeasure: true } },
+            },
           },
         },
-      },
+      });
     }),
   );
   if (error) return error;
@@ -92,8 +96,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { result: pickList, error } = await withPrismaError("Failed to archive pick list", () =>
     prisma.pickList.update({

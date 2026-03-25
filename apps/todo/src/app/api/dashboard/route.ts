@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { getDateBoundaries } from "@/lib/date-utils";
 import { getStockLevels } from "@/lib/stock";
 
@@ -8,10 +8,8 @@ export const dynamic = "force-dynamic";
 
 // GET /api/dashboard — Dashboard summary stats
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const { today, tomorrow } = getDateBoundaries();
 

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { withPrismaError } from "@/lib/api-helpers";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const { id } = await params;
 
@@ -42,34 +42,21 @@ export async function GET(
     receivedByItem.set(itemId, (receivedByItem.get(itemId) || 0) + Number(m.quantity));
   }
 
-  // Enrich materials with derived received qty and auto-fulfill
-  const materialsToFulfill: string[] = [];
+  // Enrich materials with derived received qty (read-only computation)
   const enrichedMaterials = job.materials.map((mat) => {
     const receivedQty = receivedByItem.get(mat.itemId) || 0;
     const requiredQty = Number(mat.requiredQty);
     const outstanding = Math.max(0, requiredQty - receivedQty);
-
-    // Auto-fulfill: if received >= required and status is not already FULFILLED
-    if (receivedQty >= requiredQty && mat.status !== "FULFILLED") {
-      materialsToFulfill.push(mat.id);
-    }
 
     return {
       ...mat,
       requiredQty,
       receivedQty,
       outstanding,
+      // Compute effective status for response (DB is updated on movement creation)
       status: (receivedQty >= requiredQty && mat.status !== "FULFILLED") ? "FULFILLED" : mat.status,
     };
   });
-
-  // Batch auto-fulfill in the background
-  if (materialsToFulfill.length > 0) {
-    prisma.jobMaterial.updateMany({
-      where: { id: { in: materialsToFulfill } },
-      data: { status: "FULFILLED" },
-    }).catch(() => {}); // fire and forget
-  }
 
   // Build item summary from movements (keyed by itemId)
   const materialItemIds = new Set(job.materials.map((m) => m.itemId));

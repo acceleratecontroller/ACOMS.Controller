@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const optionalString = z.string().optional().or(z.literal("")).or(z.null());
+import { optionalString } from "@/lib/validation-helpers";
 
 export const createTaskSchema = z.object({
   title: z.string().min(1, "Task title is required"),

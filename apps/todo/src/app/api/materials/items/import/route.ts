@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { withPrismaError } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { parseItemsCsv } from "@/modules/materials/import";
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const contentType = request.headers.get("content-type") || "";
   let csvText: string;
