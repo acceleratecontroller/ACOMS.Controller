@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
-import { createMovementSchema } from "@/modules/materials/validation";
+import {
+  createMovementSchema,
+  MOVEMENT_NEEDS_TO_LOCATION,
+  MOVEMENT_NEEDS_FROM_LOCATION,
+  MOVEMENT_NEEDS_BOTH_LOCATIONS,
+} from "@/modules/materials/validation";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -65,23 +70,19 @@ export async function POST(request: NextRequest) {
   const data = parsed.data;
 
   // Validate movement type has correct location fields
-  const needsToLocation = ["RECEIVED", "RECEIVED_FREE_ISSUE", "RETURNED_FROM_JOB", "ADJUSTED"];
-  const needsFromLocation = ["ISSUED", "RETURNED_TO_SUPPLIER"];
-  const needsBothLocations = ["TRANSFERRED"];
-
-  if (needsToLocation.includes(data.movementType) && !data.toLocationId) {
+  if (MOVEMENT_NEEDS_TO_LOCATION.includes(data.movementType) && !data.toLocationId) {
     return NextResponse.json(
       { error: "To location is required for this movement type" },
       { status: 400 },
     );
   }
-  if (needsFromLocation.includes(data.movementType) && !data.fromLocationId) {
+  if (MOVEMENT_NEEDS_FROM_LOCATION.includes(data.movementType) && !data.fromLocationId) {
     return NextResponse.json(
       { error: "From location is required for this movement type" },
       { status: 400 },
     );
   }
-  if (needsBothLocations.includes(data.movementType)) {
+  if (MOVEMENT_NEEDS_BOTH_LOCATIONS.includes(data.movementType)) {
     if (!data.fromLocationId || !data.toLocationId) {
       return NextResponse.json(
         { error: "Both from and to locations are required for transfers" },

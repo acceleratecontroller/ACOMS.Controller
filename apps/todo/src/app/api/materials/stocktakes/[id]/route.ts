@@ -59,6 +59,8 @@ export async function PUT(
     return NextResponse.json({ error: "Expected array of line updates" }, { status: 400 });
   }
 
+  // Validate all lines before writing any — fail fast on bad input
+  const validatedLines: { lineId: string; countedQty: number; notes?: string | null }[] = [];
   for (const line of lines) {
     const parsed = updateStocktakeLineSchema.safeParse(line);
     if (!parsed.success) {
@@ -67,15 +69,21 @@ export async function PUT(
         { status: 400 },
       );
     }
-
-    await prisma.stocktakeLine.update({
-      where: { id: line.lineId },
-      data: {
-        countedQty: parsed.data.countedQty,
-        notes: parsed.data.notes,
-      },
-    });
+    validatedLines.push({ lineId: line.lineId, ...parsed.data });
   }
+
+  // Apply all line updates atomically
+  await prisma.$transaction(
+    validatedLines.map((vl) =>
+      prisma.stocktakeLine.update({
+        where: { id: vl.lineId },
+        data: {
+          countedQty: vl.countedQty,
+          notes: vl.notes,
+        },
+      }),
+    ),
+  );
 
   const { result: updated, error } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({

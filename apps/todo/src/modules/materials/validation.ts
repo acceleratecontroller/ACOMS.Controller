@@ -1,7 +1,5 @@
 import { z } from "zod";
-
-const optionalString = z.string().optional().nullable();
-const positiveDecimal = z.number().positive("Quantity must be greater than zero");
+import { optionalString, positiveDecimal } from "@/lib/validation-helpers";
 
 // ─── Item Schemas ────────────────────────────────────────
 
@@ -75,6 +73,24 @@ export const createMovementSchema = z.object({
   notes: optionalString,
   attachmentPlaceholder: optionalString,
 });
+
+// ─── Movement Type Location Requirements ────────────────
+// Which location fields are required per movement type.
+
+/** Movement types that require a toLocationId (stock arriving). */
+export const MOVEMENT_NEEDS_TO_LOCATION: readonly string[] = [
+  "RECEIVED", "RECEIVED_FREE_ISSUE", "RETURNED_FROM_JOB", "ADJUSTED",
+] as const;
+
+/** Movement types that require a fromLocationId (stock leaving). */
+export const MOVEMENT_NEEDS_FROM_LOCATION: readonly string[] = [
+  "ISSUED", "RETURNED_TO_SUPPLIER",
+] as const;
+
+/** Movement types that require both fromLocationId and toLocationId. */
+export const MOVEMENT_NEEDS_BOTH_LOCATIONS: readonly string[] = [
+  "TRANSFERRED",
+] as const;
 
 // ─── Stocktake Schemas ───────────────────────────────────
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
@@ -55,30 +56,35 @@ export async function PUT(
   );
   if (fetchErr) return fetchErr;
 
-  const { result: supplier, error } = await withPrismaError("Failed to update supplier", () =>
-    prisma.supplier.update({
-      where: { id },
-      data: parsed.data,
-    }),
-  );
-  if (error) return error;
-
   // Cascade ownership changes to linked items when isFreeIssue or clientName changes
   const freeIssueChanged = parsed.data.isFreeIssue !== undefined && parsed.data.isFreeIssue !== before.isFreeIssue;
   const clientNameChanged = parsed.data.clientName !== undefined && parsed.data.clientName !== before.clientName;
+  const needsCascade = freeIssueChanged || clientNameChanged;
 
-  if (freeIssueChanged || clientNameChanged) {
-    const newOwnership = supplier.isFreeIssue ? "CLIENT_FREE_ISSUE" : "COMPANY";
-    const newClientName = supplier.isFreeIssue ? (supplier.clientName || null) : null;
+  const { result: supplier, error } = await withPrismaError("Failed to update supplier", () =>
+    prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updated = await tx.supplier.update({
+        where: { id },
+        data: parsed.data,
+      });
 
-    await prisma.item.updateMany({
-      where: { supplierId: id, isArchived: false },
-      data: {
-        ownershipType: newOwnership as never,
-        clientName: newClientName,
-      },
-    });
-  }
+      if (needsCascade) {
+        const newOwnership = updated.isFreeIssue ? "CLIENT_FREE_ISSUE" : "COMPANY";
+        const newClientName = updated.isFreeIssue ? (updated.clientName || null) : null;
+
+        await tx.item.updateMany({
+          where: { supplierId: id, isArchived: false },
+          data: {
+            ownershipType: newOwnership as never,
+            clientName: newClientName,
+          },
+        });
+      }
+
+      return updated;
+    }),
+  );
+  if (error) return error;
 
   const changes = diff(
     before as unknown as Record<string, unknown>,

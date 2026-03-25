@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { createStocktakeSchema } from "@/modules/materials/validation";
-import { getStockAtLocation } from "@/lib/stock";
+import { getStockByItemAtLocation } from "@/lib/stock";
 
 export async function GET() {
   const session = await auth();
@@ -39,21 +39,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const items = await prisma.item.findMany({
-    where: { isArchived: false },
-    orderBy: { code: "asc" },
-  });
-
-  const linesData = await Promise.all(
-    items.map(async (item) => {
-      const expectedQty = await getStockAtLocation(item.id, parsed.data.locationId);
-      return {
-        itemId: item.id,
-        expectedQty,
-        countedQty: 0,
-      };
+  const [items, stockByItem] = await Promise.all([
+    prisma.item.findMany({
+      where: { isArchived: false },
+      orderBy: { code: "asc" },
     }),
-  );
+    getStockByItemAtLocation(parsed.data.locationId),
+  ]);
+
+  const linesData = items.map((item) => ({
+    itemId: item.id,
+    expectedQty: stockByItem.get(item.id) ?? 0,
+    countedQty: 0,
+  }));
 
   const { result: stocktake, error } = await withPrismaError("Failed to create stocktake", () =>
     prisma.stocktake.create({

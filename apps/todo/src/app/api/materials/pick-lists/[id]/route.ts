@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
@@ -47,32 +48,35 @@ export async function PUT(
     );
   }
 
-  if (parsed.data.items) {
-    await prisma.pickListItem.deleteMany({ where: { pickListId: params.id } });
-  }
-
+  // Delete old items + update pick list atomically to avoid orphaned state
   const { result: pickList, error } = await withPrismaError("Failed to update pick list", () =>
-    prisma.pickList.update({
-      where: { id: params.id },
-      data: {
-        name: parsed.data.name,
-        description: parsed.data.description,
-        ...(parsed.data.items && {
+    prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (parsed.data.items) {
+        await tx.pickListItem.deleteMany({ where: { pickListId: params.id } });
+      }
+
+      return tx.pickList.update({
+        where: { id: params.id },
+        data: {
+          name: parsed.data.name,
+          description: parsed.data.description,
+          ...(parsed.data.items && {
+            items: {
+              create: parsed.data.items.map((i) => ({
+                itemId: i.itemId,
+                defaultQty: i.defaultQty,
+              })),
+            },
+          }),
+        },
+        include: {
           items: {
-            create: parsed.data.items.map((i) => ({
-              itemId: i.itemId,
-              defaultQty: i.defaultQty,
-            })),
-          },
-        }),
-      },
-      include: {
-        items: {
-          include: {
-            item: { select: { code: true, description: true, unitOfMeasure: true } },
+            include: {
+              item: { select: { code: true, description: true, unitOfMeasure: true } },
+            },
           },
         },
-      },
+      });
     }),
   );
   if (error) return error;
