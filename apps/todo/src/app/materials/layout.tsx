@@ -57,7 +57,7 @@ export default function MaterialsLayout({
   return (
     <div className="flex flex-col h-full">
       {!isLanding && (
-        <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-1 overflow-x-auto">
+        <div className="relative bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-1">
           <Link
             href="/materials"
             className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors shrink-0"
