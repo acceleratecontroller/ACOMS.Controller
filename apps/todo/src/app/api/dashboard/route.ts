@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { getDateBoundaries } from "@/lib/date-utils";
 import { getStockLevels } from "@/lib/stock";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/dashboard — Dashboard summary stats
 export async function GET() {
   const session = await auth();
