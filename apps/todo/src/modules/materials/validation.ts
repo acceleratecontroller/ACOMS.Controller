@@ -18,7 +18,7 @@ export const createItemSchema = z.object({
   notes: optionalString,
   ownershipType: z.enum(["COMPANY", "CLIENT_FREE_ISSUE"]).default("COMPANY"),
   clientName: optionalString,
-  supplierId: optionalString,
+  supplierId: z.string().min(1, "Supplier is required"),
 });
 
 export const updateItemSchema = createItemSchema.partial();

@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
     csvText = await request.text();
   }
 
+  if (!supplierId) {
+    return NextResponse.json({ error: "Supplier is required" }, { status: 400 });
+  }
+
   const result = parseItemsCsv(csvText);
 
   if (result.items.length === 0) {

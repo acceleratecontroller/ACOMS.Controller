@@ -60,7 +60,7 @@ export default function ImportItemsPage() {
           <h3 className="text-sm font-semibold text-gray-900 mb-3">How to import</h3>
           <div className="space-y-2 text-sm text-gray-600">
             <p>1. Prepare a CSV file with the columns listed below.</p>
-            <p>2. Select the supplier these items belong to (optional).</p>
+            <p>2. Select the supplier these items belong to.</p>
             <p>3. Upload the file and click Import.</p>
             <p>Items with a code that already exists will be skipped (not overwritten).</p>
           </div>
@@ -136,9 +136,9 @@ export default function ImportItemsPage() {
 
         <div className="border-t border-gray-200 pt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Supplier (optional — all imported items will be linked to this supplier)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Supplier * — all imported items will be linked to this supplier</label>
             <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm max-w-sm">
-              <option value="">No supplier</option>
+              <option value="">Select supplier...</option>
               {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             {(() => {
@@ -172,7 +172,7 @@ export default function ImportItemsPage() {
 
           <button
             onClick={handleImport}
-            disabled={!file || importing}
+            disabled={!file || !supplierId || importing}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             {importing ? "Importing..." : "Import"}
