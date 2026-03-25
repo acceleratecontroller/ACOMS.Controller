@@ -20,6 +20,116 @@ function makeLine(): ReceiveLine {
   return { key: crypto.randomUUID(), itemId: "", quantity: "" };
 }
 
+// ─── Autocomplete job picker ─────────────────────────────
+function JobAutocomplete({
+  jobs,
+  value,
+  onChange,
+}: {
+  jobs: Job[];
+  value: string;
+  onChange: (jobId: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const selectedJob = jobs.find((j) => j.id === value);
+
+  const filtered = query.length > 0
+    ? jobs.filter((j) =>
+        j.projectId.toLowerCase().includes(query.toLowerCase()) ||
+        j.name.toLowerCase().includes(query.toLowerCase()),
+      ).slice(0, 30)
+    : [];
+
+  useEffect(() => { setHighlightIdx(0); }, [query]);
+
+  useEffect(() => {
+    if (!listRef.current) return;
+    const el = listRef.current.children[highlightIdx] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [highlightIdx]);
+
+  function selectJob(job: Job) {
+    onChange(job.id);
+    setQuery("");
+    setOpen(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!open && e.key !== "Escape") setOpen(true);
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIdx((prev) => Math.min(prev + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIdx((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filtered.length > 0 && open) selectJob(filtered[highlightIdx]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    } else if (e.key === "Backspace" && !query && value) {
+      onChange("");
+    }
+  }
+
+  return (
+    <div className="relative">
+      <input
+        ref={inputRef}
+        type="text"
+        value={open ? query : (selectedJob ? `${selectedJob.projectId} — ${selectedJob.name}` : query)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+          if (value) onChange("");
+        }}
+        onFocus={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        onBlur={() => { setTimeout(() => setOpen(false), 150); }}
+        onKeyDown={handleKeyDown}
+        placeholder="Type to search jobs..."
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => { onChange(""); inputRef.current?.focus(); }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+        >
+          &times;
+        </button>
+      )}
+      {open && filtered.length > 0 && (
+        <div
+          ref={listRef}
+          className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+        >
+          {filtered.map((job, idx) => (
+            <div
+              key={job.id}
+              onMouseDown={(e) => { e.preventDefault(); selectJob(job); }}
+              className={`px-3 py-2 text-sm cursor-pointer ${
+                idx === highlightIdx ? "bg-blue-50 text-blue-800" : "hover:bg-gray-50"
+              }`}
+            >
+              <span className="font-mono font-medium">{job.projectId}</span>
+              <span className="text-gray-500 ml-2">— {job.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Autocomplete item picker ────────────────────────────
 function ItemAutocomplete({
   items,
@@ -336,10 +446,11 @@ export default function ReceivePage() {
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Job</label>
-                <select value={header.jobId} onChange={(e) => setHeader({ ...header, jobId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  <option value="">No job</option>
-                  {jobs.map((j) => <option key={j.id} value={j.id}>{j.projectId} — {j.name}</option>)}
-                </select>
+                <JobAutocomplete
+                  jobs={jobs}
+                  value={header.jobId}
+                  onChange={(id) => setHeader({ ...header, jobId: id })}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reference (PO, Docket, etc.)</label>
