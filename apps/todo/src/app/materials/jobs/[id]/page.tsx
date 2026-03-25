@@ -21,11 +21,13 @@ interface JobMaterial {
 }
 
 interface ItemSummary {
+  itemId: string;
   code: string;
   description: string;
   unitOfMeasure: string;
   received: number;
   movementCount: number;
+  alreadyInRequirements: boolean;
 }
 
 interface Movement {
@@ -148,6 +150,141 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+// ─── Inline editable number cell ─────────────────────────
+function InlineNumberCell({
+  value,
+  suffix,
+  onSave,
+  disabled,
+  className,
+}: {
+  value: number;
+  suffix?: string;
+  onSave: (val: number) => void;
+  disabled: boolean;
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setDraft(String(value)); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.select(); }, [editing]);
+
+  async function commit() {
+    const num = Number(draft);
+    if (isNaN(num) || num <= 0) { setDraft(String(value)); setEditing(false); return; }
+    if (num === value) { setEditing(false); return; }
+    setSaving(true);
+    await onSave(num);
+    setSaving(false);
+    setEditing(false);
+  }
+
+  if (disabled || !editing) {
+    return (
+      <span
+        onClick={() => { if (!disabled) setEditing(true); }}
+        className={`${className || ""} ${!disabled ? "cursor-pointer hover:bg-blue-50 hover:ring-1 hover:ring-blue-200 rounded px-1 -mx-1 transition-all" : ""}`}
+        title={!disabled ? "Click to edit" : undefined}
+      >
+        {value} {suffix}
+      </span>
+    );
+  }
+
+  return (
+    <input
+      ref={inputRef}
+      type="number"
+      min="0.01"
+      step="any"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setDraft(String(value)); setEditing(false); } }}
+      disabled={saving}
+      className="w-20 border border-blue-300 rounded px-1 py-0.5 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-400"
+    />
+  );
+}
+
+// ─── Inline editable text cell ───────────────────────────
+function InlineTextCell({
+  value,
+  onSave,
+  disabled,
+  placeholder,
+}: {
+  value: string | null;
+  onSave: (val: string | null) => void;
+  disabled: boolean;
+  placeholder?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value || "");
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setDraft(value || ""); }, [value]);
+  useEffect(() => { if (editing) inputRef.current?.select(); }, [editing]);
+
+  async function commit() {
+    const trimmed = draft.trim() || null;
+    if (trimmed === (value || null)) { setEditing(false); return; }
+    setSaving(true);
+    await onSave(trimmed);
+    setSaving(false);
+    setEditing(false);
+  }
+
+  if (disabled || !editing) {
+    return (
+      <span
+        onClick={() => { if (!disabled) setEditing(true); }}
+        className={`text-gray-500 text-xs max-w-[150px] truncate block ${!disabled ? "cursor-pointer hover:bg-blue-50 hover:ring-1 hover:ring-blue-200 rounded px-1 -mx-1 transition-all" : ""}`}
+        title={!disabled ? "Click to edit" : undefined}
+      >
+        {value || "—"}
+      </span>
+    );
+  }
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setDraft(value || ""); setEditing(false); } }}
+      disabled={saving}
+      placeholder={placeholder}
+      className="w-full border border-blue-300 rounded px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+    />
+  );
+}
+
+// ─── Lock icon SVGs ──────────────────────────────────────
+function LockIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function UnlockIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    </svg>
+  );
+}
+
 // ─── Main page ───────────────────────────────────────────
 export default function JobDetailPage() {
   const params = useParams();
@@ -156,9 +293,20 @@ export default function JobDetailPage() {
   const [allItems, setAllItems] = useState<ItemOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Add single requirement modal
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ itemId: "", requiredQty: "", notes: "" });
   const [addError, setAddError] = useState<string | null>(null);
+
+  // Bulk add modal
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkItems, setBulkItems] = useState<{ itemId: string; code: string; description: string; unitOfMeasure: string; received: number; requiredQty: string; selected: boolean }[]>([]);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkSaving, setBulkSaving] = useState(false);
+
+  // Lock/unlock
+  const [locked, setLocked] = useState(true);
 
   const fetchJob = useCallback(() => {
     fetch(`/api/materials/jobs/${id}`)
@@ -200,11 +348,11 @@ export default function JobDetailPage() {
     }
   }
 
-  async function updateMaterialStatus(materialId: string, status: string) {
+  async function updateMaterial(materialId: string, updates: Record<string, unknown>) {
     await fetch(`/api/materials/jobs/${id}/materials/${materialId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(updates),
     });
     fetchJob();
   }
@@ -212,6 +360,51 @@ export default function JobDetailPage() {
   async function deleteMaterial(materialId: string) {
     await fetch(`/api/materials/jobs/${id}/materials/${materialId}`, { method: "DELETE" });
     fetchJob();
+  }
+
+  function openBulkAdd() {
+    if (!job) return;
+    const items = job.itemSummary
+      .filter((s) => !s.alreadyInRequirements)
+      .map((s) => ({
+        itemId: s.itemId,
+        code: s.code,
+        description: s.description,
+        unitOfMeasure: s.unitOfMeasure,
+        received: s.received,
+        requiredQty: String(s.received),
+        selected: true,
+      }));
+    setBulkItems(items);
+    setBulkError(null);
+    setShowBulkModal(true);
+  }
+
+  async function handleBulkAdd() {
+    const selected = bulkItems.filter((i) => i.selected);
+    if (selected.length === 0) return;
+    setBulkSaving(true);
+    setBulkError(null);
+
+    const res = await fetch(`/api/materials/jobs/${id}/materials/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: selected.map((i) => ({
+          itemId: i.itemId,
+          requiredQty: Number(i.requiredQty),
+        })),
+      }),
+    });
+
+    setBulkSaving(false);
+    if (res.ok) {
+      setShowBulkModal(false);
+      fetchJob();
+    } else {
+      const data = await res.json();
+      setBulkError(data.error || "Failed to add requirements");
+    }
   }
 
   function formatDate(d: string) {
@@ -229,6 +422,7 @@ export default function JobDetailPage() {
   const pendingCount = job.materials.filter((m) => m.status === "PENDING").length;
   const requestedCount = job.materials.filter((m) => m.status === "REQUESTED").length;
   const fulfilledCount = job.materials.filter((m) => m.status === "FULFILLED").length;
+  const newItemsAvailable = job.itemSummary.some((s) => !s.alreadyInRequirements);
 
   return (
     <div>
@@ -266,25 +460,41 @@ export default function JobDetailPage() {
       {/* Material Requirements */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-900">
-            Material Requirements
-            {job.materials.length > 0 && (
-              <span className="font-normal text-gray-500 ml-2">
-                ({fulfilledCount} fulfilled, {requestedCount} requested, {pendingCount} pending)
-              </span>
-            )}
-          </h3>
-          <button
-            onClick={() => { setAddForm({ itemId: "", requiredQty: "", notes: "" }); setAddError(null); setShowAddModal(true); }}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700"
-          >
-            Add Requirement
-          </button>
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold text-gray-900">
+              Material Requirements
+              {job.materials.length > 0 && (
+                <span className="font-normal text-gray-500 ml-2">
+                  ({fulfilledCount} fulfilled, {requestedCount} requested, {pendingCount} pending)
+                </span>
+              )}
+            </h3>
+            <button
+              onClick={() => setLocked(!locked)}
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
+                locked
+                  ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+              }`}
+              title={locked ? "Unlock to edit requirements" : "Lock to prevent edits"}
+            >
+              {locked ? <LockIcon /> : <UnlockIcon />}
+              {locked ? "Locked" : "Editing"}
+            </button>
+          </div>
+          {!locked && (
+            <button
+              onClick={() => { setAddForm({ itemId: "", requiredQty: "", notes: "" }); setAddError(null); setShowAddModal(true); }}
+              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700"
+            >
+              Add Requirement
+            </button>
+          )}
         </div>
 
         {job.materials.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
-            <p className="text-gray-500 text-sm">No material requirements added yet. Add requirements to track what this job needs.</p>
+            <p className="text-gray-500 text-sm">No material requirements added yet. Unlock and add requirements, or use Quick Add from the received summary below.</p>
           </div>
         ) : (
           <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
@@ -309,7 +519,14 @@ export default function JobDetailPage() {
                         <span className="font-mono text-xs">{mat.item.code}</span>{" "}
                         <span className="text-gray-500">{mat.item.description}</span>
                       </td>
-                      <td className="px-4 py-3 text-right font-medium">{mat.requiredQty} {uom}</td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        <InlineNumberCell
+                          value={mat.requiredQty}
+                          suffix={uom}
+                          disabled={locked}
+                          onSave={(val) => updateMaterial(mat.id, { requiredQty: val })}
+                        />
+                      </td>
                       <td className="px-4 py-3 text-right text-green-600 font-medium">{mat.receivedQty} {uom}</td>
                       <td className="px-4 py-3 text-right">
                         {mat.outstanding > 0 ? (
@@ -319,26 +536,35 @@ export default function JobDetailPage() {
                         )}
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={mat.status} /></td>
-                      <td className="px-4 py-3 text-gray-500 text-xs max-w-[150px] truncate">{mat.notes || "—"}</td>
+                      <td className="px-4 py-3">
+                        <InlineTextCell
+                          value={mat.notes}
+                          disabled={locked}
+                          onSave={(val) => updateMaterial(mat.id, { notes: val })}
+                          placeholder="Add note..."
+                        />
+                      </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         {mat.status === "PENDING" && (
-                          <button onClick={() => updateMaterialStatus(mat.id, "REQUESTED")} className="text-blue-600 hover:text-blue-800 text-xs mr-2">
+                          <button onClick={() => updateMaterial(mat.id, { status: "REQUESTED" })} className="text-blue-600 hover:text-blue-800 text-xs mr-2">
                             Mark Requested
                           </button>
                         )}
                         {mat.status === "REQUESTED" && (
-                          <button onClick={() => updateMaterialStatus(mat.id, "PENDING")} className="text-gray-500 hover:text-gray-700 text-xs mr-2">
+                          <button onClick={() => updateMaterial(mat.id, { status: "PENDING" })} className="text-gray-500 hover:text-gray-700 text-xs mr-2">
                             Back to Pending
                           </button>
                         )}
                         {mat.status === "FULFILLED" && mat.outstanding > 0 && (
-                          <button onClick={() => updateMaterialStatus(mat.id, "REQUESTED")} className="text-orange-600 hover:text-orange-800 text-xs mr-2">
+                          <button onClick={() => updateMaterial(mat.id, { status: "REQUESTED" })} className="text-orange-600 hover:text-orange-800 text-xs mr-2">
                             Reopen
                           </button>
                         )}
-                        <button onClick={() => deleteMaterial(mat.id)} className="text-red-500 hover:text-red-700 text-xs">
-                          Remove
-                        </button>
+                        {!locked && (
+                          <button onClick={() => deleteMaterial(mat.id)} className="text-red-500 hover:text-red-700 text-xs">
+                            Remove
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -352,7 +578,17 @@ export default function JobDetailPage() {
       {/* Item breakdown from movements */}
       {job.itemSummary.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Received Materials Summary</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-900">Received Materials Summary</h3>
+            {newItemsAvailable && (
+              <button
+                onClick={openBulkAdd}
+                className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700"
+              >
+                Quick Add to Requirements
+              </button>
+            )}
+          </div>
           <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -361,15 +597,23 @@ export default function JobDetailPage() {
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-700">Qty Received</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-700">Movements</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-700">In Requirements</th>
                 </tr>
               </thead>
               <tbody>
                 {job.itemSummary.map((item) => (
-                  <tr key={item.code} className="border-b border-gray-100">
+                  <tr key={item.itemId} className="border-b border-gray-100">
                     <td className="px-4 py-3 font-mono text-xs">{item.code}</td>
                     <td className="px-4 py-3 text-gray-700">{item.description}</td>
                     <td className="px-4 py-3 text-right text-green-600 font-medium">{item.received} {UOM_LABELS[item.unitOfMeasure] || ""}</td>
                     <td className="px-4 py-3 text-right text-gray-500">{item.movementCount}</td>
+                    <td className="px-4 py-3 text-center">
+                      {item.alreadyInRequirements ? (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Added</span>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">Not added</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -420,7 +664,7 @@ export default function JobDetailPage() {
         </div>
       )}
 
-      {/* Add Requirement Modal */}
+      {/* Add Single Requirement Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Material Requirement">
         <form onSubmit={handleAddMaterial} className="space-y-4">
           <div>
@@ -459,6 +703,93 @@ export default function JobDetailPage() {
             <button type="submit" disabled={!addForm.itemId} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">Add</button>
           </div>
         </form>
+      </Modal>
+
+      {/* Bulk Add Modal */}
+      <Modal isOpen={showBulkModal} onClose={() => setShowBulkModal(false)} title="Quick Add Received Items to Requirements">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            These received items are not yet in your material requirements. Adjust quantities if needed, then add them.
+          </p>
+
+          {bulkItems.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">All received items are already in requirements.</p>
+          ) : (
+            <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700 w-8">
+                      <input
+                        type="checkbox"
+                        checked={bulkItems.every((i) => i.selected)}
+                        onChange={(e) => setBulkItems(bulkItems.map((i) => ({ ...i, selected: e.target.checked })))}
+                        className="rounded border-gray-300"
+                      />
+                    </th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">Item</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700">Received</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700">Required Qty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bulkItems.map((item, idx) => {
+                    const uom = UOM_LABELS[item.unitOfMeasure] || "";
+                    return (
+                      <tr key={item.itemId} className={`border-b border-gray-100 ${!item.selected ? "opacity-50" : ""}`}>
+                        <td className="px-3 py-2">
+                          <input
+                            type="checkbox"
+                            checked={item.selected}
+                            onChange={(e) => {
+                              const updated = [...bulkItems];
+                              updated[idx] = { ...item, selected: e.target.checked };
+                              setBulkItems(updated);
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className="font-mono text-xs">{item.code}</span>{" "}
+                          <span className="text-gray-500">{item.description}</span>
+                        </td>
+                        <td className="px-3 py-2 text-right text-green-600 font-medium">{item.received} {uom}</td>
+                        <td className="px-3 py-2 text-right">
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="any"
+                            value={item.requiredQty}
+                            onChange={(e) => {
+                              const updated = [...bulkItems];
+                              updated[idx] = { ...item, requiredQty: e.target.value };
+                              setBulkItems(updated);
+                            }}
+                            disabled={!item.selected}
+                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {bulkError && <div className="p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{bulkError}</div>}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <button type="button" onClick={() => setShowBulkModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button
+              onClick={handleBulkAdd}
+              disabled={bulkSaving || bulkItems.filter((i) => i.selected).length === 0}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+            >
+              {bulkSaving ? "Adding..." : `Add ${bulkItems.filter((i) => i.selected).length} to Requirements`}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

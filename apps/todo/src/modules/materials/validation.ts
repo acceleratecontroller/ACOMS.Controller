@@ -145,6 +145,14 @@ export const updateJobMaterialSchema = z.object({
   notes: optionalString,
 });
 
+export const bulkCreateJobMaterialSchema = z.object({
+  items: z.array(z.object({
+    itemId: z.string().min(1, "Item is required"),
+    requiredQty: z.number().positive("Required quantity must be greater than zero"),
+    notes: optionalString,
+  })).min(1, "At least one item is required"),
+});
+
 // ─── Supplier Schemas ───────────────────────────────────
 
 export const createSupplierSchema = z.object({

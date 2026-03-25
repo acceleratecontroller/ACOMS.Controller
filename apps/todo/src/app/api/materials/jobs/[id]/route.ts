@@ -71,14 +71,14 @@ export async function GET(
     }).catch(() => {}); // fire and forget
   }
 
-  // Build item summary from movements
-  const itemMap = new Map<string, { code: string; description: string; unitOfMeasure: string; received: number; movementCount: number }>();
+  // Build item summary from movements (keyed by itemId)
+  const materialItemIds = new Set(job.materials.map((m) => m.itemId));
+  const itemMap = new Map<string, { itemId: string; code: string; description: string; unitOfMeasure: string; received: number; movementCount: number; alreadyInRequirements: boolean }>();
   for (const m of job.movements) {
-    const key = m.item.code;
-    const existing = itemMap.get(key) || { code: m.item.code, description: m.item.description, unitOfMeasure: m.item.unitOfMeasure, received: 0, movementCount: 0 };
+    const existing = itemMap.get(m.itemId) || { itemId: m.itemId, code: m.item.code, description: m.item.description, unitOfMeasure: m.item.unitOfMeasure, received: 0, movementCount: 0, alreadyInRequirements: materialItemIds.has(m.itemId) };
     existing.received += Number(m.quantity);
     existing.movementCount++;
-    itemMap.set(key, existing);
+    itemMap.set(m.itemId, existing);
   }
 
   return NextResponse.json({
