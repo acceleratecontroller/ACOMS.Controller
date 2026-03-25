@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { updateJobMaterialSchema } from "@/modules/materials/validation";
 
@@ -8,8 +8,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; materialId: string }> },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { materialId } = await params;
   const { data: body, error: parseErr } = await parseBody(request);
@@ -39,8 +39,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string; materialId: string }> },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { materialId } = await params;
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { audit } from "@/lib/audit";
 import { createPickListSchema } from "@/modules/materials/validation";
@@ -29,8 +29,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;

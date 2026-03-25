@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import {
   createMovementSchema,
@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;
@@ -132,6 +132,29 @@ export async function POST(request: NextRequest) {
     }),
   );
   if (error) return error;
+
+  // Auto-fulfill: when a movement is linked to a job, check if the item's
+  // material requirement is now met and update status accordingly.
+  if (data.jobId) {
+    const jobMaterial = await prisma.jobMaterial.findUnique({
+      where: { jobId_itemId: { jobId: data.jobId, itemId: data.itemId } },
+    });
+
+    if (jobMaterial && jobMaterial.status !== "FULFILLED") {
+      const agg = await prisma.stockMovement.aggregate({
+        where: { jobId: data.jobId, itemId: data.itemId },
+        _sum: { quantity: true },
+      });
+      const totalReceived = Number(agg._sum.quantity ?? 0);
+
+      if (totalReceived >= Number(jobMaterial.requiredQty)) {
+        await prisma.jobMaterial.update({
+          where: { id: jobMaterial.id },
+          data: { status: "FULFILLED" },
+        });
+      }
+    }
+  }
 
   return NextResponse.json(movement, { status: 201 });
 }

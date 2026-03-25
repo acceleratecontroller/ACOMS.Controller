@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { auth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { audit, diff } from "@/lib/audit";
 import { updateSupplierSchema } from "@/modules/materials/validation";
@@ -36,8 +36,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { id } = await params;
   const { data: body, error: parseErr } = await parseBody(request);
@@ -108,8 +108,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { id } = await params;
 

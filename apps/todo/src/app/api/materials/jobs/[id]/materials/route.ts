@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { createJobMaterialSchema } from "@/modules/materials/validation";
 
@@ -8,8 +8,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { id } = await params;
   const { data: body, error: parseErr } = await parseBody(request);
