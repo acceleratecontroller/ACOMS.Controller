@@ -301,7 +301,7 @@ export default function JobDetailPage() {
 
   // Bulk add modal
   const [showBulkModal, setShowBulkModal] = useState(false);
-  const [bulkItems, setBulkItems] = useState<{ itemId: string; code: string; description: string; unitOfMeasure: string; received: number; requiredQty: string; selected: boolean }[]>([]);
+  const [bulkItems, setBulkItems] = useState<{ itemId: string; code: string; description: string; unitOfMeasure: string; received: number; selected: boolean }[]>([]);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkSaving, setBulkSaving] = useState(false);
 
@@ -372,7 +372,6 @@ export default function JobDetailPage() {
         description: s.description,
         unitOfMeasure: s.unitOfMeasure,
         received: s.received,
-        requiredQty: String(s.received),
         selected: true,
       }));
     setBulkItems(items);
@@ -392,7 +391,7 @@ export default function JobDetailPage() {
       body: JSON.stringify({
         items: selected.map((i) => ({
           itemId: i.itemId,
-          requiredQty: Number(i.requiredQty),
+          requiredQty: i.received,
         })),
       }),
     });
@@ -709,7 +708,7 @@ export default function JobDetailPage() {
       <Modal isOpen={showBulkModal} onClose={() => setShowBulkModal(false)} title="Quick Add Received Items to Requirements">
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            These received items are not yet in your material requirements. Adjust quantities if needed, then add them.
+            These received items are not yet in your material requirements. The received quantity will be used as the required quantity.
           </p>
 
           {bulkItems.length === 0 ? (
@@ -728,8 +727,7 @@ export default function JobDetailPage() {
                       />
                     </th>
                     <th className="text-left px-3 py-2 font-medium text-gray-700">Item</th>
-                    <th className="text-right px-3 py-2 font-medium text-gray-700">Received</th>
-                    <th className="text-right px-3 py-2 font-medium text-gray-700">Required Qty</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700">Qty Received</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -754,21 +752,6 @@ export default function JobDetailPage() {
                           <span className="text-gray-500">{item.description}</span>
                         </td>
                         <td className="px-3 py-2 text-right text-green-600 font-medium">{item.received} {uom}</td>
-                        <td className="px-3 py-2 text-right">
-                          <input
-                            type="number"
-                            min="0.01"
-                            step="any"
-                            value={item.requiredQty}
-                            onChange={(e) => {
-                              const updated = [...bulkItems];
-                              updated[idx] = { ...item, requiredQty: e.target.value };
-                              setBulkItems(updated);
-                            }}
-                            disabled={!item.selected}
-                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50"
-                          />
-                        </td>
                       </tr>
                     );
                   })}
