@@ -156,6 +156,12 @@ enum SourceType {
   INTERNAL
 }
 
+enum JobMaterialStatus {
+  PENDING
+  REQUESTED
+  FULFILLED
+}
+
 enum StocktakeStatus {
   DRAFT
   COMPLETED
@@ -218,6 +224,7 @@ model Item {
   movements      StockMovement[]
   stocktakeLines StocktakeLine[]
   pickListItems  PickListItem[]
+  jobMaterials   JobMaterial[]
 
   @@index([code])
   @@index([category])
@@ -238,7 +245,28 @@ model Job {
   createdById String
   createdAt   DateTime @default(now())
 
-  movements StockMovement[]
+  movements    StockMovement[]
+  materials    JobMaterial[]
+}
+
+// ─── Job Material Requirements ──────────────────────────
+
+model JobMaterial {
+  id          String            @id @default(cuid())
+  jobId       String
+  itemId      String
+  requiredQty Decimal
+  status      JobMaterialStatus @default(PENDING)
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  job  Job  @relation(fields: [jobId], references: [id])
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@unique([jobId, itemId])
+  @@index([jobId])
 }
 
 // ─── Location ───────────────────────────────────────────

@@ -133,6 +133,18 @@ export const createJobSchema = z.object({
   contact: z.string().min(1, "Contact is required"),
 });
 
+export const createJobMaterialSchema = z.object({
+  itemId: z.string().min(1, "Item is required"),
+  requiredQty: z.number().positive("Required quantity must be greater than zero"),
+  notes: optionalString,
+});
+
+export const updateJobMaterialSchema = z.object({
+  requiredQty: z.number().positive("Required quantity must be greater than zero").optional(),
+  status: z.enum(["PENDING", "REQUESTED", "FULFILLED"]).optional(),
+  notes: optionalString,
+});
+
 // ─── Supplier Schemas ───────────────────────────────────
 
 export const createSupplierSchema = z.object({

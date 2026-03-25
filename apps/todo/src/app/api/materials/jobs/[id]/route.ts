@@ -24,10 +24,52 @@ export async function GET(
           },
           orderBy: { createdAt: "desc" },
         },
+        materials: {
+          include: {
+            item: { select: { id: true, code: true, description: true, unitOfMeasure: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
       },
     }),
   );
   if (error) return error;
+
+  // Build received qty per item from movements
+  const receivedByItem = new Map<string, number>();
+  for (const m of job.movements) {
+    const itemId = m.itemId;
+    receivedByItem.set(itemId, (receivedByItem.get(itemId) || 0) + Number(m.quantity));
+  }
+
+  // Enrich materials with derived received qty and auto-fulfill
+  const materialsToFulfill: string[] = [];
+  const enrichedMaterials = job.materials.map((mat) => {
+    const receivedQty = receivedByItem.get(mat.itemId) || 0;
+    const requiredQty = Number(mat.requiredQty);
+    const outstanding = Math.max(0, requiredQty - receivedQty);
+
+    // Auto-fulfill: if received >= required and status is not already FULFILLED
+    if (receivedQty >= requiredQty && mat.status !== "FULFILLED") {
+      materialsToFulfill.push(mat.id);
+    }
+
+    return {
+      ...mat,
+      requiredQty,
+      receivedQty,
+      outstanding,
+      status: (receivedQty >= requiredQty && mat.status !== "FULFILLED") ? "FULFILLED" : mat.status,
+    };
+  });
+
+  // Batch auto-fulfill in the background
+  if (materialsToFulfill.length > 0) {
+    prisma.jobMaterial.updateMany({
+      where: { id: { in: materialsToFulfill } },
+      data: { status: "FULFILLED" },
+    }).catch(() => {}); // fire and forget
+  }
 
   // Build item summary from movements
   const itemMap = new Map<string, { code: string; description: string; unitOfMeasure: string; received: number; movementCount: number }>();
@@ -39,14 +81,13 @@ export async function GET(
     itemMap.set(key, existing);
   }
 
-  const itemSummary = Array.from(itemMap.values());
-
   return NextResponse.json({
     ...job,
+    materials: enrichedMaterials,
     summary: {
       totalReceived: job.movements.reduce((sum, m) => sum + Number(m.quantity), 0),
       movementCount: job.movements.length,
     },
-    itemSummary,
+    itemSummary: Array.from(itemMap.values()),
   });
 }
