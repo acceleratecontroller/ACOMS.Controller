@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 
 /**
  * GET /api/assignees — List available assignees.
@@ -11,10 +11,8 @@ import { auth } from "@/lib/auth";
  * The frontend uses this to populate owner/assignee dropdowns.
  */
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   // TODO: Replace with real assignee data from adapter
   // For standalone development, return placeholder assignees

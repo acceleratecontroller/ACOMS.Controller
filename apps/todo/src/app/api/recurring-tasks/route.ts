@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createRecurringTaskSchema } from "@/modules/tasks/validation";
 import { calculateNextDue } from "@/modules/tasks/recurrence";
-import { auth } from "@/lib/auth";
+import { requireAuth, requireAdmin } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { parseBody, validateAssigneeRef, withPrismaError } from "@/lib/api-helpers";
 
 // GET /api/recurring-tasks — List recurring tasks
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const showArchived = request.nextUrl.searchParams.get("archived") === "true";
 
@@ -25,10 +23,8 @@ export async function GET(request: NextRequest) {
 
 // POST /api/recurring-tasks — Create a recurring task
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
 
   const { data: body, error: bodyError } = await parseBody(request);
   if (bodyError) return bodyError;

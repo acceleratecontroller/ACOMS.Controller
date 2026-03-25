@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { auth, requireAdmin } from "@/lib/auth";
+import { requireAuth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import {
   createMovementSchema,
@@ -10,8 +11,8 @@ import {
 } from "@/modules/materials/validation";
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { error: authErr } = await requireAuth();
+  if (authErr) return authErr;
 
   const { searchParams } = new URL(request.url);
   const itemId = searchParams.get("itemId") || undefined;
@@ -101,60 +102,65 @@ export async function POST(request: NextRequest) {
     ? "CLIENT_FREE_ISSUE" as const
     : data.ownershipType || "COMPANY" as const;
 
+  // Create movement + auto-fulfill in a single transaction
   const { result: movement, error } = await withPrismaError("Failed to create movement", () =>
-    prisma.stockMovement.create({
-      data: {
-        itemId: data.itemId,
-        quantity: data.quantity,
-        movementType: data.movementType,
-        ownershipType,
-        fromLocationId: data.fromLocationId,
-        toLocationId: data.toLocationId,
-        clientName: data.clientName,
-        externalClientId: data.externalClientId,
-        projectName: data.projectName,
-        projectCode: data.projectCode,
-        externalProjectId: data.externalProjectId,
-        externalSource: data.externalSource,
-        sourceType: data.sourceType,
-        sourceName: data.sourceName,
-        jobId: data.jobId,
-        reference: data.reference,
-        notes: data.notes,
-        attachmentPlaceholder: data.attachmentPlaceholder,
-        createdById: session.user.id,
-      },
-      include: {
-        item: { select: { code: true, description: true } },
-        fromLocation: { select: { name: true } },
-        toLocation: { select: { name: true } },
-      },
+    prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const created = await tx.stockMovement.create({
+        data: {
+          itemId: data.itemId,
+          quantity: data.quantity,
+          movementType: data.movementType,
+          ownershipType,
+          fromLocationId: data.fromLocationId,
+          toLocationId: data.toLocationId,
+          clientName: data.clientName,
+          externalClientId: data.externalClientId,
+          projectName: data.projectName,
+          projectCode: data.projectCode,
+          externalProjectId: data.externalProjectId,
+          externalSource: data.externalSource,
+          sourceType: data.sourceType,
+          sourceName: data.sourceName,
+          jobId: data.jobId,
+          reference: data.reference,
+          notes: data.notes,
+          attachmentPlaceholder: data.attachmentPlaceholder,
+          createdById: session.user.id,
+        },
+        include: {
+          item: { select: { code: true, description: true } },
+          fromLocation: { select: { name: true } },
+          toLocation: { select: { name: true } },
+        },
+      });
+
+      // Auto-fulfill: when a movement is linked to a job, check if the item's
+      // material requirement is now met and update status accordingly.
+      if (data.jobId) {
+        const jobMaterial = await tx.jobMaterial.findUnique({
+          where: { jobId_itemId: { jobId: data.jobId, itemId: data.itemId } },
+        });
+
+        if (jobMaterial && jobMaterial.status !== "FULFILLED") {
+          const agg = await tx.stockMovement.aggregate({
+            where: { jobId: data.jobId, itemId: data.itemId },
+            _sum: { quantity: true },
+          });
+          const totalReceived = Number(agg._sum.quantity ?? 0);
+
+          if (totalReceived >= Number(jobMaterial.requiredQty)) {
+            await tx.jobMaterial.update({
+              where: { id: jobMaterial.id },
+              data: { status: "FULFILLED" },
+            });
+          }
+        }
+      }
+
+      return created;
     }),
   );
   if (error) return error;
-
-  // Auto-fulfill: when a movement is linked to a job, check if the item's
-  // material requirement is now met and update status accordingly.
-  if (data.jobId) {
-    const jobMaterial = await prisma.jobMaterial.findUnique({
-      where: { jobId_itemId: { jobId: data.jobId, itemId: data.itemId } },
-    });
-
-    if (jobMaterial && jobMaterial.status !== "FULFILLED") {
-      const agg = await prisma.stockMovement.aggregate({
-        where: { jobId: data.jobId, itemId: data.itemId },
-        _sum: { quantity: true },
-      });
-      const totalReceived = Number(agg._sum.quantity ?? 0);
-
-      if (totalReceived >= Number(jobMaterial.requiredQty)) {
-        await prisma.jobMaterial.update({
-          where: { id: jobMaterial.id },
-          data: { status: "FULFILLED" },
-        });
-      }
-    }
-  }
 
   return NextResponse.json(movement, { status: 201 });
 }
