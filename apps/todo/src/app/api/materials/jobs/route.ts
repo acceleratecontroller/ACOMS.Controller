@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { parseBody, withPrismaError } from "@/lib/api-helpers";
+import { audit } from "@/lib/audit";
+import { createJobSchema } from "@/modules/materials/validation";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -9,83 +12,59 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";
 
-  // Get all movements that have a project code (these are job-related)
-  const where: Record<string, unknown> = {
-    projectCode: { not: null },
-  };
-
+  const where: Record<string, unknown> = {};
   if (search) {
     where.OR = [
-      { projectCode: { contains: search, mode: "insensitive" } },
-      { projectName: { contains: search, mode: "insensitive" } },
-      { clientName: { contains: search, mode: "insensitive" } },
+      { projectId: { contains: search, mode: "insensitive" } },
+      { name: { contains: search, mode: "insensitive" } },
+      { client: { contains: search, mode: "insensitive" } },
     ];
-    // Remove the top-level projectCode filter since OR handles it
-    delete where.projectCode;
-    // Ensure we still only get movements with a project code
-    where.AND = [
-      { projectCode: { not: null } },
-      { OR: where.OR },
-    ];
-    delete where.OR;
   }
 
-  const movements = await prisma.stockMovement.findMany({
-    where,
-    select: {
-      projectCode: true,
-      projectName: true,
-      clientName: true,
-      movementType: true,
-      quantity: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  // Aggregate into unique jobs
-  const jobMap = new Map<string, {
-    projectCode: string;
-    projectName: string | null;
-    clientName: string | null;
-    totalIssued: number;
-    totalReturned: number;
-    movementCount: number;
-    lastActivity: Date;
-  }>();
-
-  for (const m of movements) {
-    const code = m.projectCode!;
-    const existing = jobMap.get(code);
-    const qty = Number(m.quantity);
-
-    if (existing) {
-      existing.movementCount++;
-      if (m.movementType === "ISSUED") existing.totalIssued += qty;
-      if (m.movementType === "RETURNED_FROM_JOB") existing.totalReturned += qty;
-      if (m.createdAt > existing.lastActivity) existing.lastActivity = m.createdAt;
-      // Use the most recent non-null values for name/client
-      if (m.projectName && !existing.projectName) existing.projectName = m.projectName;
-      if (m.clientName && !existing.clientName) existing.clientName = m.clientName;
-    } else {
-      jobMap.set(code, {
-        projectCode: code,
-        projectName: m.projectName,
-        clientName: m.clientName,
-        totalIssued: m.movementType === "ISSUED" ? qty : 0,
-        totalReturned: m.movementType === "RETURNED_FROM_JOB" ? qty : 0,
-        movementCount: 1,
-        lastActivity: m.createdAt,
-      });
-    }
-  }
-
-  const jobs = Array.from(jobMap.values())
-    .sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime())
-    .map((j) => ({
-      ...j,
-      netIssued: j.totalIssued - j.totalReturned,
-    }));
+  const { result: jobs, error } = await withPrismaError("Failed to fetch jobs", () =>
+    prisma.job.findMany({
+      where,
+      include: { _count: { select: { movements: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+  );
+  if (error) return error;
 
   return NextResponse.json(jobs);
+}
+
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: body, error: parseErr } = await parseBody(request);
+  if (parseErr) return parseErr;
+
+  const parsed = createJobSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+      { status: 400 },
+    );
+  }
+
+  const { result: job, error } = await withPrismaError("Failed to create job", () =>
+    prisma.job.create({
+      data: {
+        ...parsed.data,
+        createdById: session.user.id,
+      },
+    }),
+  );
+  if (error) return error;
+
+  audit({
+    entityType: "Job",
+    entityId: job.id,
+    action: "CREATE",
+    entityLabel: `${job.projectId} — ${job.name}`,
+    performedById: session.user.id,
+  });
+
+  return NextResponse.json(job, { status: 201 });
 }

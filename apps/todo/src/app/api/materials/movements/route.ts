@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
         externalSource: data.externalSource,
         sourceType: data.sourceType,
         sourceName: data.sourceName,
+        jobId: data.jobId,
         reference: data.reference,
         notes: data.notes,
         attachmentPlaceholder: data.attachmentPlaceholder,

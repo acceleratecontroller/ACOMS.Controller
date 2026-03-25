@@ -8,6 +8,7 @@ import { UOM_LABELS } from "@/modules/materials/constants";
 interface Supplier { id: string; name: string; isFreeIssue: boolean; clientName: string | null }
 interface Item { id: string; code: string; description: string; unitOfMeasure: string; supplierId: string | null }
 interface Location { id: string; name: string }
+interface Job { id: string; projectId: string; name: string }
 
 interface ReceiveLine {
   key: string;
@@ -150,6 +151,7 @@ export default function ReceivePage() {
   const [allItems, setAllItems] = useState<Item[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<{ success: number; failed: number } | null>(null);
@@ -157,6 +159,7 @@ export default function ReceivePage() {
   const [header, setHeader] = useState({
     supplierId: "",
     toLocationId: "",
+    jobId: "",
     reference: "",
     notes: "",
   });
@@ -170,6 +173,7 @@ export default function ReceivePage() {
     fetch("/api/materials/items").then((r) => r.json()).then(setAllItems);
     fetch("/api/materials/suppliers").then((r) => r.json()).then(setSuppliers);
     fetch("/api/materials/locations").then((r) => r.json()).then(setLocations);
+    fetch("/api/materials/jobs").then((r) => r.json()).then(setJobs);
   }, []);
 
   // Filter items by selected supplier
@@ -261,6 +265,7 @@ export default function ReceivePage() {
           sourceType: "SUPPLIER",
           sourceName: selectedSupplier?.name || null,
           clientName: isFreeIssue ? (selectedSupplier?.clientName || null) : null,
+          jobId: header.jobId || null,
           reference: header.reference || null,
           notes: header.notes || null,
         }),
@@ -328,7 +333,14 @@ export default function ReceivePage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Job</label>
+                <select value={header.jobId} onChange={(e) => setHeader({ ...header, jobId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  <option value="">No job</option>
+                  {jobs.map((j) => <option key={j.id} value={j.id}>{j.projectId} — {j.name}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reference (PO, Docket, etc.)</label>
                 <input type="text" value={header.reference} onChange={(e) => setHeader({ ...header, reference: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />

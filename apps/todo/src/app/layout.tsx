@@ -28,6 +28,7 @@ export default function RootLayout({
             <NavLink href="/materials/items">Items</NavLink>
             <NavLink href="/materials/locations">Locations</NavLink>
             <NavLink href="/materials/suppliers">Suppliers</NavLink>
+            <NavLink href="/materials/jobs">Jobs</NavLink>
             <NavLink href="/materials/pick-lists">Pick Lists</NavLink>
             <NavLink href="/materials/items/import">Import Items</NavLink>
 
@@ -35,18 +36,15 @@ export default function RootLayout({
             <NavLink href="/materials/movements/receive">Receive Stock</NavLink>
 
             <SectionHeader>Outbound</SectionHeader>
-            <NavLink href="/materials/movements/issue">Issue to Job</NavLink>
             <NavLink href="/materials/movements/return-to-supplier">Return to Supplier</NavLink>
 
             <SectionHeader>Internal</SectionHeader>
             <NavLink href="/materials/movements/transfer">Transfer</NavLink>
-            <NavLink href="/materials/movements/return-from-job">Return from Job</NavLink>
 
             <SectionHeader>Tracking</SectionHeader>
             <NavLink href="/materials/stock">Stock Levels</NavLink>
             <NavLink href="/materials/movements">Movement History</NavLink>
             <NavLink href="/materials/stocktakes">Stocktakes</NavLink>
-            <NavLink href="/materials/jobs">Jobs</NavLink>
           </nav>
 
           {/* Main content */}

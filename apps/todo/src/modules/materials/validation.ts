@@ -67,6 +67,9 @@ export const createMovementSchema = z.object({
   sourceType: z.enum(["SUPPLIER", "CLIENT", "INTERNAL"]).optional().nullable(),
   sourceName: optionalString,
 
+  // Job link
+  jobId: optionalString,
+
   // References
   reference: optionalString,
   notes: optionalString,
@@ -120,6 +123,17 @@ export const importItemRowSchema = z.object({
   minimumStockLevel: z.number().min(0).optional(),
   notes: z.string().optional(),
 });
+
+// ─── Job Schemas ────────────────────────────────────────
+
+export const createJobSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required"),
+  name: z.string().min(1, "Job name is required"),
+  client: z.string().min(1, "Client is required"),
+  contact: z.string().min(1, "Contact is required"),
+});
+
+// ─── Supplier Schemas ───────────────────────────────────
 
 export const createSupplierSchema = z.object({
   name: z.string().min(1, "Supplier name is required"),

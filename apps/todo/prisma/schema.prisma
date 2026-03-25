@@ -226,6 +226,21 @@ model Item {
   @@index([ownershipType])
 }
 
+// ─── Job ────────────────────────────────────────────────
+
+model Job {
+  id        String @id @default(cuid())
+  projectId String @unique
+  name      String
+  client    String
+  contact   String
+
+  createdById String
+  createdAt   DateTime @default(now())
+
+  movements StockMovement[]
+}
+
 // ─── Location ───────────────────────────────────────────
 
 model Location {
@@ -282,10 +297,14 @@ model StockMovement {
   createdById String
   createdAt   DateTime @default(now())
 
+  // Job link
+  jobId String?
+
   // Relations
   item         Item      @relation(fields: [itemId], references: [id])
   fromLocation Location? @relation("FromLocation", fields: [fromLocationId], references: [id])
   toLocation   Location? @relation("ToLocation", fields: [toLocationId], references: [id])
+  job          Job?      @relation(fields: [jobId], references: [id])
 
   stocktakeLine StocktakeLine?
 
@@ -295,6 +314,7 @@ model StockMovement {
   @@index([toLocationId])
   @@index([clientName])
   @@index([projectCode])
+  @@index([jobId])
   @@index([createdAt])
 }
 
