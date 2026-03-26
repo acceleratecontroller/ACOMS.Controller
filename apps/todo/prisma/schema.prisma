@@ -245,8 +245,14 @@ model Job {
   createdById String
   createdAt   DateTime @default(now())
 
+  isArchived   Boolean   @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
   movements    StockMovement[]
   materials    JobMaterial[]
+
+  @@index([isArchived])
 }
 
 // ─── Job Material Requirements ──────────────────────────

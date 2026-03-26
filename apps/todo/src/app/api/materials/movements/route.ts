@@ -98,6 +98,23 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Validate job exists if provided
+  if (data.jobId) {
+    const jobExists = await prisma.job.findUnique({ where: { id: data.jobId } });
+    if (!jobExists) {
+      return NextResponse.json(
+        { error: "Job not found" },
+        { status: 400 },
+      );
+    }
+    if (jobExists.isArchived) {
+      return NextResponse.json(
+        { error: "Cannot receive stock against an archived job" },
+        { status: 400 },
+      );
+    }
+  }
+
   const ownershipType = data.movementType === "RECEIVED_FREE_ISSUE"
     ? "CLIENT_FREE_ISSUE" as const
     : data.ownershipType || "COMPANY" as const;

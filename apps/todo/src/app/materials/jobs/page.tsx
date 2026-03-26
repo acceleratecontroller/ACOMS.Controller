@@ -19,18 +19,22 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ projectId: "", name: "", client: "", contact: "" });
   const [formError, setFormError] = useState<string | null>(null);
+  const [archiving, setArchiving] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    if (showArchived) params.set("archived", "true");
     const res = await fetch(`/api/materials/jobs?${params}`);
     if (res.ok) setJobs(await res.json());
     setLoading(false);
-  }, [search]);
+  }, [search, showArchived]);
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
@@ -59,6 +63,21 @@ export default function JobsPage() {
     }
   }
 
+  async function handleArchive(job: Job) {
+    if (!confirm(`Archive job "${job.projectId} — ${job.name}"?\n\nAll materials must be removed from the job first.`)) return;
+    setArchiving(job.id);
+    setArchiveError(null);
+
+    const res = await fetch(`/api/materials/jobs/${job.id}`, { method: "DELETE" });
+    if (res.ok) {
+      fetchJobs();
+    } else {
+      const data = await res.json();
+      setArchiveError(data.error || "Failed to archive job");
+    }
+    setArchiving(null);
+  }
+
   return (
     <div>
       <PageHeader title="Jobs" description="Manage jobs and track materials received against them" />
@@ -71,17 +90,34 @@ export default function JobsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-80"
         />
+        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          Show Archived
+        </label>
         <div className="flex-1" />
-        <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
-          Create Job
-        </button>
+        {!showArchived && (
+          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+            Create Job
+          </button>
+        )}
       </div>
+
+      {archiveError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{archiveError}</div>
+      )}
 
       {loading ? (
         <p className="text-gray-500 text-sm">Loading...</p>
       ) : jobs.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <p className="text-gray-500 text-sm">No jobs found. Create a job to start tracking materials against it.</p>
+          <p className="text-gray-500 text-sm">
+            {showArchived ? "No archived jobs." : "No jobs found. Create a job to start tracking materials against it."}
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
@@ -93,6 +129,7 @@ export default function JobsPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Contact</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Movements</th>
+                {!showArchived && <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -107,6 +144,17 @@ export default function JobsPage() {
                   <td className="px-4 py-3 text-gray-500">{job.client}</td>
                   <td className="px-4 py-3 text-gray-500">{job.contact}</td>
                   <td className="px-4 py-3 text-right text-gray-500">{job._count.movements}</td>
+                  {!showArchived && (
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleArchive(job)}
+                        disabled={archiving === job.id}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                      >
+                        {archiving === job.id ? "Archiving..." : "Archive"}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

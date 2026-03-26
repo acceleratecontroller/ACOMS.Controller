@@ -99,7 +99,7 @@ export default function StocktakesPage() {
                   <td className="px-4 py-3 text-gray-500">{formatDate(st.createdAt)}</td>
                   <td className="px-4 py-3 text-gray-500">{st.completedAt ? formatDate(st.completedAt) : "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
+                    <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
                       {st.status === "DRAFT" ? "Count" : "View"}
                     </Link>
                   </td>

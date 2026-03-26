@@ -11,8 +11,9 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";
+  const archived = searchParams.get("archived") === "true";
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { isArchived: archived };
   if (search) {
     where.OR = [
       { projectId: { contains: search, mode: "insensitive" } },

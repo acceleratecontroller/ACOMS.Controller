@@ -283,7 +283,7 @@ export default function ReceivePage() {
     fetch("/api/materials/items").then((r) => r.json()).then(setAllItems);
     fetch("/api/materials/suppliers").then((r) => r.json()).then(setSuppliers);
     fetch("/api/materials/locations").then((r) => r.json()).then(setLocations);
-    fetch("/api/materials/jobs").then((r) => r.json()).then(setJobs);
+    fetch("/api/materials/jobs").then((r) => r.json()).then(setJobs); // Only active (non-archived) jobs returned by default
   }, []);
 
   // Filter items by selected supplier
@@ -321,7 +321,7 @@ export default function ReceivePage() {
   }
 
   function handleQtyKeyDown(e: React.KeyboardEvent, lineKey: string) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" || e.key === "Tab") {
       e.preventDefault();
       const currentLine = lines.find((l) => l.key === lineKey);
       if (!currentLine?.quantity) return;
@@ -471,7 +471,7 @@ export default function ReceivePage() {
                 {header.supplierId && <span className="font-normal text-gray-500 ml-2">({supplierItems.length} items available)</span>}
               </h3>
               {header.supplierId && (
-                <span className="text-xs text-gray-400">Press Enter after quantity to add a new line</span>
+                <span className="text-xs text-gray-400">Press Enter or Tab after quantity to add a new line</span>
               )}
             </div>
 
