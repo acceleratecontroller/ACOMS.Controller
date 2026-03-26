@@ -498,7 +498,7 @@ export default function JobDetailPage() {
       />
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="text-xs font-medium text-gray-500 uppercase">Total Received</div>
           <div className="text-2xl font-bold text-green-600 mt-1">{job.summary.totalReceived}</div>

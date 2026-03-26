@@ -55,13 +55,13 @@ export default function StockPage() {
     <div>
       <PageHeader title="Stock Levels" description="Current stock derived from movements" />
 
-      <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
         <input
           type="text"
           placeholder="Search items..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-48"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-48"
         />
         <select
           value={locationFilter}

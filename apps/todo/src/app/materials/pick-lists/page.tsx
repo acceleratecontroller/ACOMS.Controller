@@ -166,7 +166,7 @@ export default function PickListsPage() {
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingList ? "Edit Pick List" : "New Pick List"} wide>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
               <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />

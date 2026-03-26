@@ -87,14 +87,14 @@ export default function MovementHistoryPage() {
           placeholder="Client name..."
           value={filters.clientName}
           onChange={(e) => { setFilters({ ...filters, clientName: e.target.value }); setOffset(0); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-40"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-40"
         />
         <input
           type="text"
           placeholder="Project code..."
           value={filters.projectCode}
           onChange={(e) => { setFilters({ ...filters, projectCode: e.target.value }); setOffset(0); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-40"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-40"
         />
         <span className="text-xs text-gray-400 ml-auto">{total} movements</span>
       </div>

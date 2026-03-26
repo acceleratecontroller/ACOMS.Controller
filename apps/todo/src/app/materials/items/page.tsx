@@ -154,7 +154,7 @@ export default function ItemsPage() {
           placeholder="Search items..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-56"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-56"
         />
         <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
           <option value="">All Categories</option>
@@ -234,7 +234,7 @@ export default function ItemsPage() {
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingItem ? "Edit Item" : "Add Item"} wide>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Item Code *</label>
               <input type="text" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
@@ -245,7 +245,7 @@ export default function ItemsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, customCategory: "" })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
@@ -267,7 +267,7 @@ export default function ItemsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
               <select required value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">

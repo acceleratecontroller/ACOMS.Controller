@@ -90,13 +90,13 @@ export default function JobsPage() {
     <div>
       <PageHeader title="Jobs" description="Manage jobs and track materials received against them" />
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
         <input
           type="text"
-          placeholder="Search by project ID, name, or client..."
+          placeholder="Search jobs..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-80"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-80"
         />
         <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
           <input
@@ -109,7 +109,7 @@ export default function JobsPage() {
         </label>
         <div className="flex-1" />
         {!showArchived && (
-          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full sm:w-auto">
             Create Job
           </button>
         )}
@@ -174,7 +174,7 @@ export default function JobsPage() {
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create Job">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Project ID *</label>
               <input type="text" required value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. PRJ-001" />
@@ -191,7 +191,7 @@ export default function JobsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Job Name *</label>
             <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
               <input type="text" required value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />

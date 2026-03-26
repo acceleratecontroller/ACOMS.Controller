@@ -57,12 +57,12 @@ export default function MaterialsLayout({
   return (
     <div className="flex flex-col h-full">
       {!isLanding && (
-        <div className="relative bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-1">
+        <div className="relative bg-white border-b border-gray-200 px-2 md:px-4 py-2 flex items-center gap-1 overflow-x-auto scrollbar-hide">
           <Link
             href="/materials"
-            className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors shrink-0"
+            className="px-2 md:px-3 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors shrink-0"
           >
-            &larr; Materials
+            &larr; <span className="hidden sm:inline">Materials</span>
           </Link>
           <div className="w-px h-5 bg-gray-200 mx-1 shrink-0" />
 
@@ -70,7 +70,7 @@ export default function MaterialsLayout({
             <Link
               key={item.href}
               href={item.href}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors shrink-0 ${
+              className={`px-2 md:px-3 py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors shrink-0 ${
                 isActive(item.href)
                   ? "bg-blue-50 text-blue-700"
                   : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
@@ -84,7 +84,7 @@ export default function MaterialsLayout({
           <div className="relative shrink-0" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
+              className={`px-2 md:px-3 py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center gap-1 ${
                 isOtherActive
                   ? "bg-blue-50 text-blue-700"
                   : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
@@ -103,7 +103,7 @@ export default function MaterialsLayout({
             </button>
 
             {dropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+              <div className="absolute top-full right-0 md:left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
                 {otherLinks.map((item) => (
                   <Link
                     key={item.href}

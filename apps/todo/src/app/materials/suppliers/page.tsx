@@ -114,7 +114,7 @@ export default function SuppliersPage() {
           placeholder="Search suppliers..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-64"
         />
         <label className="flex items-center gap-2 text-sm text-gray-600">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
@@ -184,7 +184,7 @@ export default function SuppliersPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name *</label>
             <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
               <input type="text" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />

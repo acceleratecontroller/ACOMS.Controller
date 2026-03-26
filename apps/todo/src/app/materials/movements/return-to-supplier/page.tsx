@@ -72,7 +72,7 @@ export default function ReturnToSupplierPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6 max-w-2xl space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Item *</label>
               <select required value={form.itemId} onChange={(e) => setForm({ ...form, itemId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
@@ -95,7 +95,7 @@ export default function ReturnToSupplierPage() {
           </div>
 
           <div className="border-t border-gray-200 pt-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
                 <input type="text" value={form.sourceName} onChange={(e) => setForm({ ...form, sourceName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />

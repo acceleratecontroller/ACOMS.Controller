@@ -420,9 +420,9 @@ export default function ReceivePage() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 max-w-4xl">
           {/* Receipt header */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 space-y-4">
             <h3 className="text-sm font-semibold text-gray-900">Receipt Details</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
                 <select value={header.supplierId} onChange={(e) => handleSupplierChange(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
@@ -451,7 +451,7 @@ export default function ReceivePage() {
                 </select>
               </div>
             </div>
-            <div className="flex items-center gap-4 mb-2">
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-2">
               <span className="text-sm font-medium text-gray-700">Receive To:</span>
               <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden">
                 <button
@@ -473,7 +473,7 @@ export default function ReceivePage() {
                 <span className="text-xs text-gray-400">Items will go into unallocated stock at the selected location</span>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {receiveMode === "job" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Job *</label>
@@ -498,8 +498,8 @@ export default function ReceivePage() {
           </div>
 
           {/* Line items */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h3 className="text-sm font-semibold text-gray-900">
                 Items to Receive
                 {header.supplierId && <span className="font-normal text-gray-500 ml-2">({supplierItems.length} items available)</span>}
@@ -516,7 +516,7 @@ export default function ReceivePage() {
             ) : (
               <>
                 <div className="space-y-3">
-                  <div className="grid grid-cols-[1fr_120px_40px] gap-3 text-xs font-medium text-gray-500 px-1">
+                  <div className="grid grid-cols-[1fr_100px_32px] md:grid-cols-[1fr_120px_40px] gap-2 md:gap-3 text-xs font-medium text-gray-500 px-1">
                     <span>Item</span>
                     <span>Quantity</span>
                     <span></span>
@@ -525,7 +525,7 @@ export default function ReceivePage() {
                     const selectedItem = supplierItems.find((i) => i.id === line.itemId);
                     const shouldAutoFocusItem = focusLineKey === line.key && focusField === "item";
                     return (
-                      <div key={line.key} className="grid grid-cols-[1fr_120px_40px] gap-3 items-center">
+                      <div key={line.key} className="grid grid-cols-[1fr_100px_32px] md:grid-cols-[1fr_120px_40px] gap-2 md:gap-3 items-center">
                         <ItemAutocomplete
                           items={supplierItems}
                           value={line.itemId}
