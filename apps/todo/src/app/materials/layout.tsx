@@ -8,6 +8,7 @@ const primaryLinks = [
   { href: "/materials/items", label: "Items" },
   { href: "/materials/jobs", label: "Jobs" },
   { href: "/materials/movements/receive", label: "Receive Stock" },
+  { href: "/materials/client-returns", label: "Returns" },
 ];
 
 const otherLinks = [

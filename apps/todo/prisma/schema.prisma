@@ -167,6 +167,11 @@ enum StocktakeStatus {
   COMPLETED
 }
 
+enum ClientReturnStatus {
+  TO_BE_RETURNED
+  RETURNED
+}
+
 // ─── Supplier ───────────────────────────────────────────
 
 model Supplier {
@@ -225,6 +230,7 @@ model Item {
   stocktakeLines StocktakeLine[]
   pickListItems  PickListItem[]
   jobMaterials   JobMaterial[]
+  clientReturns  ClientReturn[]
 
   @@index([code])
   @@index([category])
@@ -252,8 +258,9 @@ model Job {
   archivedAt   DateTime?
   archivedById String?
 
-  movements    StockMovement[]
-  materials    JobMaterial[]
+  movements     StockMovement[]
+  materials     JobMaterial[]
+  clientReturns ClientReturn[]
 
   @@index([isArchived])
   @@index([locationId])
@@ -297,6 +304,7 @@ model Location {
   movementsTo   StockMovement[] @relation("ToLocation")
   stocktakes    Stocktake[]
   jobs          Job[]
+  clientReturns ClientReturn[]
 
   @@index([isArchived])
 }
@@ -356,6 +364,31 @@ model StockMovement {
   @@index([projectCode])
   @@index([jobId])
   @@index([createdAt])
+}
+
+// ─── Client Returns ─────────────────────────────────────
+
+model ClientReturn {
+  id         String             @id @default(cuid())
+  itemId     String
+  quantity   Decimal
+  jobId      String?
+  locationId String
+  status     ClientReturnStatus @default(TO_BE_RETURNED)
+  notes      String?
+  returnedAt DateTime?
+
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  item     Item     @relation(fields: [itemId], references: [id])
+  job      Job?     @relation(fields: [jobId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+
+  @@index([status])
+  @@index([jobId])
+  @@index([locationId])
 }
 
 // ─── Stocktake ──────────────────────────────────────────
