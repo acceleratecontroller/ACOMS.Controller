@@ -48,15 +48,19 @@ export async function GET(
   const enrichedMaterials = job.materials.map((mat) => {
     const receivedQty = receivedByItem.get(mat.itemId) || 0;
     const requiredQty = Number(mat.requiredQty);
-    const outstanding = Math.max(0, requiredQty - receivedQty);
+    const fromStockQty = Number(mat.fromStockQty ?? 0);
+    // Outstanding = what we still need to source (not in stock, not yet received)
+    const outstanding = Math.max(0, requiredQty - fromStockQty - receivedQty);
+    const totalFulfilled = fromStockQty + receivedQty;
 
     return {
       ...mat,
       requiredQty,
+      fromStockQty,
       receivedQty,
       outstanding,
       // Compute effective status for response (DB is updated on movement creation)
-      status: (receivedQty >= requiredQty && mat.status !== "FULFILLED") ? "FULFILLED" : mat.status,
+      status: (totalFulfilled >= requiredQty && mat.status !== "FULFILLED") ? "FULFILLED" : mat.status,
     };
   });
 

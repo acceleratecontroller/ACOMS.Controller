@@ -24,6 +24,7 @@ interface JobMaterial {
   id: string;
   itemId: string;
   requiredQty: number;
+  fromStockQty: number;
   receivedQty: number;
   outstanding: number;
   status: string;
@@ -105,7 +106,6 @@ function RequirementItemPicker({
   }, [highlightIdx]);
 
   function selectItem(item: AvailableItem) {
-    if (item.unallocated <= 0) return; // Block selection if none available
     onChange(item.itemId);
     setQuery("");
     setOpen(false);
@@ -117,10 +117,7 @@ function RequirementItemPicker({
     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlightIdx((p) => Math.max(p - 1, 0)); }
     else if (e.key === "Enter") {
       e.preventDefault();
-      if (filtered.length > 0 && open) {
-        const item = filtered[highlightIdx];
-        if (item.unallocated > 0) selectItem(item);
-      }
+      if (filtered.length > 0 && open) selectItem(filtered[highlightIdx]);
     }
     else if (e.key === "Escape") setOpen(false);
   }
@@ -146,13 +143,11 @@ function RequirementItemPicker({
             return (
               <div
                 key={item.itemId}
-                onMouseDown={(e) => { e.preventDefault(); if (available) selectItem(item); }}
-                className={`px-3 py-2 text-sm ${
-                  !available
-                    ? "opacity-40 cursor-not-allowed bg-gray-50"
-                    : idx === highlightIdx
-                      ? "bg-blue-50 text-blue-800 cursor-pointer"
-                      : "hover:bg-gray-50 cursor-pointer"
+                onMouseDown={(e) => { e.preventDefault(); selectItem(item); }}
+                className={`px-3 py-2 text-sm cursor-pointer ${
+                  idx === highlightIdx
+                    ? "bg-blue-50 text-blue-800"
+                    : "hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -395,10 +390,6 @@ export default function JobDetailPage() {
     setAddError(null);
 
     const reqQty = Number(addForm.requiredQty);
-    if (selectedAvailableItem && reqQty > selectedAvailableItem.unallocated) {
-      setAddError(`Only ${selectedAvailableItem.unallocated} available unallocated at this location`);
-      return;
-    }
 
     const res = await fetch(`/api/materials/jobs/${id}/materials`, {
       method: "POST",
@@ -574,6 +565,7 @@ export default function JobDetailPage() {
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Item</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-700">Required</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">From Stock</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-700">Received</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-700">Outstanding</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
@@ -597,6 +589,9 @@ export default function JobDetailPage() {
                           disabled={locked}
                           onSave={(val) => updateMaterial(mat.id, { requiredQty: val })}
                         />
+                      </td>
+                      <td className="px-4 py-3 text-right text-blue-600 font-medium">
+                        {mat.fromStockQty > 0 ? `${mat.fromStockQty} ${uom}` : "—"}
                       </td>
                       <td className="px-4 py-3 text-right text-green-600 font-medium">{mat.receivedQty} {uom}</td>
                       <td className="px-4 py-3 text-right">
@@ -751,24 +746,33 @@ export default function JobDetailPage() {
               value={addForm.itemId}
               onChange={(itemId) => setAddForm({ ...addForm, itemId })}
             />
-            {selectedAvailableItem && (
+            {selectedAvailableItem && selectedAvailableItem.unallocated > 0 && (
               <p className="mt-1 text-xs text-green-600">
                 {selectedAvailableItem.unallocated} {UOM_LABELS[selectedAvailableItem.unitOfMeasure] || ""} available (unallocated) at {job.location?.name}
               </p>
+            )}
+            {selectedAvailableItem && selectedAvailableItem.unallocated <= 0 && (
+              <div className="mt-1 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                No stock available at {job.location?.name} — full quantity will be outstanding
+                {selectedAvailableItem.otherLocations.length > 0 && (
+                  <span className="block mt-0.5">
+                    Available at: {selectedAvailableItem.otherLocations.map((ol) => `${ol.locationName} (${ol.unallocated})`).join(", ")}
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Required Quantity *
-              {selectedAvailableItem && (
-                <span className="font-normal text-gray-400 ml-2">(max {selectedAvailableItem.unallocated} available)</span>
+              {selectedAvailableItem && selectedAvailableItem.unallocated > 0 && (
+                <span className="font-normal text-gray-400 ml-2">({selectedAvailableItem.unallocated} available from stock)</span>
               )}
             </label>
             <input
               type="number"
               required
               min="0.01"
-              max={selectedAvailableItem ? selectedAvailableItem.unallocated : undefined}
               step="any"
               value={addForm.requiredQty}
               onChange={(e) => setAddForm({ ...addForm, requiredQty: e.target.value })}

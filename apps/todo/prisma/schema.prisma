@@ -262,12 +262,13 @@ model Job {
 // ─── Job Material Requirements ──────────────────────────
 
 model JobMaterial {
-  id          String            @id @default(cuid())
-  jobId       String
-  itemId      String
-  requiredQty Decimal
-  status      JobMaterialStatus @default(PENDING)
-  notes       String?
+  id           String            @id @default(cuid())
+  jobId        String
+  itemId       String
+  requiredQty  Decimal
+  fromStockQty Decimal           @default(0)
+  status       JobMaterialStatus @default(PENDING)
+  notes        String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
