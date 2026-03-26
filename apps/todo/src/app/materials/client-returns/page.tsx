@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { Modal } from "@/components/Modal";
 import { CLIENT_RETURN_STATUS_LABELS, UOM_LABELS } from "@/modules/materials/constants";
 
 interface ClientReturn {
@@ -16,12 +17,15 @@ interface ClientReturn {
   location: { id: string; name: string };
 }
 
+type ConfirmAction = { id: string; action: "MARK_RETURNED" | "RETURN_TO_STOCK"; item: ClientReturn };
+
 export default function ClientReturnsPage() {
   const [returns, setReturns] = useState<ClientReturn[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("TO_BE_RETURNED");
   const [processing, setProcessing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   const fetchReturns = useCallback(async () => {
     setLoading(true);
@@ -34,10 +38,11 @@ export default function ClientReturnsPage() {
 
   useEffect(() => { fetchReturns(); }, [fetchReturns]);
 
-  async function handleAction(id: string, action: "MARK_RETURNED" | "RETURN_TO_STOCK") {
-    const label = action === "MARK_RETURNED" ? "Mark as returned to client" : "Return to stock";
-    if (!confirm(`${label}? This action cannot be undone.`)) return;
+  async function executeAction() {
+    if (!confirmAction) return;
+    const { id, action } = confirmAction;
 
+    setConfirmAction(null);
     setProcessing(id);
     setError(null);
 
@@ -51,7 +56,8 @@ export default function ClientReturnsPage() {
       fetchReturns();
     } else {
       const data = await res.json();
-      setError(data.error || `Failed to ${label.toLowerCase()}`);
+      const label = action === "MARK_RETURNED" ? "mark as returned" : "return to stock";
+      setError(data.error || `Failed to ${label}`);
     }
     setProcessing(null);
   }
@@ -154,14 +160,14 @@ export default function ClientReturnsPage() {
                       {ret.status === "TO_BE_RETURNED" && (
                         <div className="flex gap-2 justify-end">
                           <button
-                            onClick={() => handleAction(ret.id, "MARK_RETURNED")}
+                            onClick={() => setConfirmAction({ id: ret.id, action: "MARK_RETURNED", item: ret })}
                             disabled={processing === ret.id}
                             className="text-green-600 hover:text-green-800 text-xs font-medium disabled:opacity-50"
                           >
                             {processing === ret.id ? "..." : "Mark Returned"}
                           </button>
                           <button
-                            onClick={() => handleAction(ret.id, "RETURN_TO_STOCK")}
+                            onClick={() => setConfirmAction({ id: ret.id, action: "RETURN_TO_STOCK", item: ret })}
                             disabled={processing === ret.id}
                             className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:opacity-50"
                           >
@@ -177,6 +183,52 @@ export default function ClientReturnsPage() {
           </table>
         </div>
       )}
+
+      {/* Confirm Action Modal */}
+      <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={confirmAction?.action === "MARK_RETURNED" ? "Confirm Return to Client" : "Confirm Return to Stock"}>
+        {confirmAction && (
+          <div className="space-y-4">
+            <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+              <div className="text-sm">
+                <span className="font-mono text-xs text-gray-500">{confirmAction.item.item.code}</span>{" "}
+                <span className="font-medium text-gray-900">{confirmAction.item.item.description}</span>
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                {Number(confirmAction.item.quantity)} {UOM_LABELS[confirmAction.item.item.unitOfMeasure] || confirmAction.item.item.unitOfMeasure}
+                {confirmAction.item.job && <span> from job <span className="font-mono">{confirmAction.item.job.projectId}</span></span>}
+                {confirmAction.item.job?.client && <span> ({confirmAction.item.job.client})</span>}
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-600">
+              {confirmAction.action === "MARK_RETURNED"
+                ? "This will mark the material as returned to the client and remove it from stock. This cannot be undone."
+                : "This will add the material back into unallocated stock at the current location and remove it from the returns queue."}
+            </p>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmAction(null)}
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={executeAction}
+                className={`text-white px-4 py-2 rounded-lg text-sm font-medium ${
+                  confirmAction.action === "MARK_RETURNED"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {confirmAction.action === "MARK_RETURNED" ? "Mark as Returned" : "Return to Stock"}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
