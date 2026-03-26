@@ -12,19 +12,27 @@ interface Job {
   client: string;
   contact: string;
   createdAt: string;
+  location: { id: string; name: string } | null;
   _count: { movements: number };
 }
 
+interface Location { id: string; name: string }
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ projectId: "", name: "", client: "", contact: "" });
+  const [form, setForm] = useState({ projectId: "", name: "", client: "", contact: "", locationId: "" });
   const [formError, setFormError] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/materials/locations").then((r) => r.json()).then(setLocations);
+  }, []);
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
@@ -39,7 +47,7 @@ export default function JobsPage() {
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
   function openCreate() {
-    setForm({ projectId: "", name: "", client: "", contact: "" });
+    setForm({ projectId: "", name: "", client: "", contact: "", locationId: "" });
     setFormError(null);
     setShowModal(true);
   }
@@ -127,6 +135,7 @@ export default function JobsPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Project ID</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Job Name</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Contact</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Movements</th>
                 {!showArchived && <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>}
@@ -142,6 +151,7 @@ export default function JobsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-700">{job.name}</td>
                   <td className="px-4 py-3 text-gray-500">{job.client}</td>
+                  <td className="px-4 py-3 text-gray-500">{job.location?.name || "—"}</td>
                   <td className="px-4 py-3 text-gray-500">{job.contact}</td>
                   <td className="px-4 py-3 text-right text-gray-500">{job._count.movements}</td>
                   {!showArchived && (
@@ -164,9 +174,18 @@ export default function JobsPage() {
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create Job">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Project ID *</label>
-            <input type="text" required value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. PRJ-001" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Project ID *</label>
+              <input type="text" required value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. PRJ-001" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location (Depot) *</label>
+              <select required value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">Select location...</option>
+                {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Job Name *</label>

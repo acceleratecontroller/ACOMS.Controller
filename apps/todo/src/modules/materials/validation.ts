@@ -147,6 +147,7 @@ export const createJobSchema = z.object({
   name: z.string().min(1, "Job name is required"),
   client: z.string().min(1, "Client is required"),
   contact: z.string().min(1, "Contact is required"),
+  locationId: z.string().min(1, "Location is required"),
 });
 
 export const createJobMaterialSchema = z.object({

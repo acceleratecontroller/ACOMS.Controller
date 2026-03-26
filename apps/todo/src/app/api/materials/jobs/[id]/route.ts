@@ -17,6 +17,7 @@ export async function GET(
     prisma.job.findUniqueOrThrow({
       where: { id },
       include: {
+        location: { select: { id: true, name: true } },
         movements: {
           include: {
             item: { select: { code: true, description: true, unitOfMeasure: true } },

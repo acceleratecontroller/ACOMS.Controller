@@ -9,6 +9,17 @@ import { MOVEMENT_TYPE_LABELS, UOM_LABELS } from "@/modules/materials/constants"
 
 interface ItemOption { id: string; code: string; description: string; unitOfMeasure: string }
 
+interface AvailableItem {
+  itemId: string;
+  itemCode: string;
+  itemDescription: string;
+  unitOfMeasure: string;
+  unallocated: number;
+  currentStock: number;
+  allocated: number;
+  otherLocations: { locationName: string; unallocated: number }[];
+}
+
 interface JobMaterial {
   id: string;
   itemId: string;
@@ -48,6 +59,8 @@ interface JobDetail {
   name: string;
   client: string;
   contact: string;
+  locationId: string | null;
+  location: { id: string; name: string } | null;
   summary: { totalReceived: number; movementCount: number };
   materials: JobMaterial[];
   itemSummary: ItemSummary[];
@@ -56,11 +69,13 @@ interface JobDetail {
 
 // ─── Item autocomplete for adding requirements ───────────
 function RequirementItemPicker({
-  items,
+  availableItems,
+  existingMaterialItemIds,
   value,
   onChange,
 }: {
-  items: ItemOption[];
+  availableItems: AvailableItem[];
+  existingMaterialItemIds: Set<string>;
   value: string;
   onChange: (itemId: string) => void;
 }) {
@@ -70,12 +85,15 @@ function RequirementItemPicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const selectedItem = items.find((i) => i.id === value);
+  // Filter out items already in requirements
+  const pickableItems = availableItems.filter((i) => !existingMaterialItemIds.has(i.itemId));
+
+  const selectedItem = pickableItems.find((i) => i.itemId === value);
 
   const filtered = query.length > 0
-    ? items.filter((i) =>
-        i.code.toLowerCase().includes(query.toLowerCase()) ||
-        i.description.toLowerCase().includes(query.toLowerCase()),
+    ? pickableItems.filter((i) =>
+        i.itemCode.toLowerCase().includes(query.toLowerCase()) ||
+        i.itemDescription.toLowerCase().includes(query.toLowerCase()),
       ).slice(0, 30)
     : [];
 
@@ -86,8 +104,9 @@ function RequirementItemPicker({
     el?.scrollIntoView({ block: "nearest" });
   }, [highlightIdx]);
 
-  function selectItem(item: ItemOption) {
-    onChange(item.id);
+  function selectItem(item: AvailableItem) {
+    if (item.unallocated <= 0) return; // Block selection if none available
+    onChange(item.itemId);
     setQuery("");
     setOpen(false);
   }
@@ -96,7 +115,13 @@ function RequirementItemPicker({
     if (!open && e.key !== "Escape") setOpen(true);
     if (e.key === "ArrowDown") { e.preventDefault(); setHighlightIdx((p) => Math.min(p + 1, filtered.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlightIdx((p) => Math.max(p - 1, 0)); }
-    else if (e.key === "Enter") { e.preventDefault(); if (filtered.length > 0 && open) selectItem(filtered[highlightIdx]); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filtered.length > 0 && open) {
+        const item = filtered[highlightIdx];
+        if (item.unallocated > 0) selectItem(item);
+      }
+    }
     else if (e.key === "Escape") setOpen(false);
   }
 
@@ -105,7 +130,7 @@ function RequirementItemPicker({
       <input
         ref={inputRef}
         type="text"
-        value={open ? query : (selectedItem ? `${selectedItem.code} — ${selectedItem.description}` : query)}
+        value={open ? query : (selectedItem ? `${selectedItem.itemCode} — ${selectedItem.itemDescription}` : query)}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); if (value) onChange(""); }}
         onFocus={() => { setQuery(""); setOpen(true); }}
         onBlur={() => { setTimeout(() => setOpen(false), 150); }}
@@ -114,17 +139,43 @@ function RequirementItemPicker({
         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
       />
       {open && filtered.length > 0 && (
-        <div ref={listRef} className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {filtered.map((item, idx) => (
-            <div
-              key={item.id}
-              onMouseDown={(e) => { e.preventDefault(); selectItem(item); }}
-              className={`px-3 py-2 text-sm cursor-pointer ${idx === highlightIdx ? "bg-blue-50 text-blue-800" : "hover:bg-gray-50"}`}
-            >
-              <span className="font-mono font-medium">{item.code}</span>
-              <span className="text-gray-500 ml-2">— {item.description}</span>
-            </div>
-          ))}
+        <div ref={listRef} className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+          {filtered.map((item, idx) => {
+            const available = item.unallocated > 0;
+            const uom = UOM_LABELS[item.unitOfMeasure] || "";
+            return (
+              <div
+                key={item.itemId}
+                onMouseDown={(e) => { e.preventDefault(); if (available) selectItem(item); }}
+                className={`px-3 py-2 text-sm ${
+                  !available
+                    ? "opacity-40 cursor-not-allowed bg-gray-50"
+                    : idx === highlightIdx
+                      ? "bg-blue-50 text-blue-800 cursor-pointer"
+                      : "hover:bg-gray-50 cursor-pointer"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-mono font-medium">{item.itemCode}</span>
+                    <span className="text-gray-500 ml-2">— {item.itemDescription}</span>
+                  </div>
+                  <div className="text-right ml-4 whitespace-nowrap">
+                    {available ? (
+                      <span className="text-green-600 font-medium">{item.unallocated} {uom} available</span>
+                    ) : (
+                      <span className="text-red-500 font-medium">None available</span>
+                    )}
+                  </div>
+                </div>
+                {item.otherLocations.length > 0 && (
+                  <div className="mt-0.5 text-xs text-amber-600">
+                    Also at: {item.otherLocations.map((ol) => `${ol.locationName} (${ol.unallocated})`).join(", ")}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -290,7 +341,7 @@ export default function JobDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const [job, setJob] = useState<JobDetail | null>(null);
-  const [allItems, setAllItems] = useState<ItemOption[]>([]);
+  const [availableItems, setAvailableItems] = useState<AvailableItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -319,21 +370,42 @@ export default function JobDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Fetch available stock when job loads (for add requirement picker)
+  useEffect(() => {
+    if (job?.locationId) {
+      fetch(`/api/materials/stock/available?locationId=${job.locationId}`)
+        .then((r) => r.json())
+        .then(setAvailableItems)
+        .catch(() => {});
+    }
+  }, [job?.locationId]);
+
   useEffect(() => {
     fetchJob();
-    fetch("/api/materials/items").then((r) => r.json()).then(setAllItems).catch(() => {});
   }, [fetchJob]);
+
+  // Set of item IDs already in material requirements
+  const existingMaterialItemIds = new Set(job?.materials.map((m) => m.itemId) || []);
+
+  // When opening add modal, find selected item's available qty to pre-fill max
+  const selectedAvailableItem = availableItems.find((i) => i.itemId === addForm.itemId);
 
   async function handleAddMaterial(e: React.FormEvent) {
     e.preventDefault();
     setAddError(null);
+
+    const reqQty = Number(addForm.requiredQty);
+    if (selectedAvailableItem && reqQty > selectedAvailableItem.unallocated) {
+      setAddError(`Only ${selectedAvailableItem.unallocated} available unallocated at this location`);
+      return;
+    }
 
     const res = await fetch(`/api/materials/jobs/${id}/materials`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         itemId: addForm.itemId,
-        requiredQty: Number(addForm.requiredQty),
+        requiredQty: reqQty,
         notes: addForm.notes || null,
       }),
     });
@@ -431,7 +503,7 @@ export default function JobDetailPage() {
 
       <PageHeader
         title={`${job.projectId} — ${job.name}`}
-        description={`Client: ${job.client} | Contact: ${job.contact}`}
+        description={`Client: ${job.client} | Contact: ${job.contact}${job.location ? ` | Location: ${job.location.name}` : ""}`}
       />
 
       {/* Summary cards */}
@@ -666,20 +738,37 @@ export default function JobDetailPage() {
       {/* Add Single Requirement Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Material Requirement">
         <form onSubmit={handleAddMaterial} className="space-y-4">
+          {!job.locationId && (
+            <div className="p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
+              This job has no location assigned. Set a location on the job to see available stock.
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Item *</label>
             <RequirementItemPicker
-              items={allItems}
+              availableItems={availableItems}
+              existingMaterialItemIds={existingMaterialItemIds}
               value={addForm.itemId}
               onChange={(itemId) => setAddForm({ ...addForm, itemId })}
             />
+            {selectedAvailableItem && (
+              <p className="mt-1 text-xs text-green-600">
+                {selectedAvailableItem.unallocated} {UOM_LABELS[selectedAvailableItem.unitOfMeasure] || ""} available (unallocated) at {job.location?.name}
+              </p>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Required Quantity *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Required Quantity *
+              {selectedAvailableItem && (
+                <span className="font-normal text-gray-400 ml-2">(max {selectedAvailableItem.unallocated} available)</span>
+              )}
+            </label>
             <input
               type="number"
               required
               min="0.01"
+              max={selectedAvailableItem ? selectedAvailableItem.unallocated : undefined}
               step="any"
               value={addForm.requiredQty}
               onChange={(e) => setAddForm({ ...addForm, requiredQty: e.target.value })}

@@ -12,6 +12,8 @@ interface StockLevel {
   locationId: string;
   locationName: string;
   currentStock: number;
+  allocated: number;
+  unallocated: number;
   minimumStockLevel: number | null;
   isBelowMinimum: boolean;
 }
@@ -88,7 +90,9 @@ export default function StockPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Current Stock</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700">Total Stock</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700">Unallocated</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700">Allocated to Jobs</th>
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Min Level</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
               </tr>
@@ -101,6 +105,12 @@ export default function StockPage() {
                   <td className="px-4 py-3 text-gray-500">{s.locationName}</td>
                   <td className="px-4 py-3 text-right font-medium">
                     {s.currentStock} {UOM_LABELS[s.unitOfMeasure] || ""}
+                  </td>
+                  <td className="px-4 py-3 text-right text-green-600 font-medium">
+                    {s.unallocated}
+                  </td>
+                  <td className="px-4 py-3 text-right text-blue-600 font-medium">
+                    {s.allocated > 0 ? s.allocated : "—"}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-500">
                     {s.minimumStockLevel ?? "—"}

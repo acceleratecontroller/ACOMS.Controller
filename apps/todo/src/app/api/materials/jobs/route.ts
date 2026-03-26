@@ -27,7 +27,10 @@ export async function GET(request: NextRequest) {
   const { result, error } = await withPrismaError("Failed to fetch jobs", () =>
     prisma.job.findMany({
       where,
-      include: { _count: { select: { movements: true } } },
+      include: {
+        _count: { select: { movements: true } },
+        location: { select: { id: true, name: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
   );
@@ -38,7 +41,10 @@ export async function GET(request: NextRequest) {
     const { result: fallback, error: fallbackErr } = await withPrismaError("Failed to fetch jobs", () =>
       prisma.job.findMany({
         where,
-        include: { _count: { select: { movements: true } } },
+        include: {
+          _count: { select: { movements: true } },
+          location: { select: { id: true, name: true } },
+        },
         orderBy: { createdAt: "desc" },
       }),
     );

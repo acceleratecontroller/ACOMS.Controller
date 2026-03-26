@@ -242,6 +242,9 @@ model Job {
   client    String
   contact   String
 
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
   createdById String
   createdAt   DateTime @default(now())
 
@@ -253,6 +256,7 @@ model Job {
   materials    JobMaterial[]
 
   @@index([isArchived])
+  @@index([locationId])
 }
 
 // ─── Job Material Requirements ──────────────────────────
@@ -291,6 +295,7 @@ model Location {
   movementsFrom StockMovement[] @relation("FromLocation")
   movementsTo   StockMovement[] @relation("ToLocation")
   stocktakes    Stocktake[]
+  jobs          Job[]
 
   @@index([isArchived])
 }

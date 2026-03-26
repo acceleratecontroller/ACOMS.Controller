@@ -16,6 +16,8 @@ export interface StockLevel {
   locationId: string;
   locationName: string;
   currentStock: number;
+  allocated: number;
+  unallocated: number;
   minimumStockLevel: number | null;
   isBelowMinimum: boolean;
 }
@@ -33,6 +35,8 @@ export interface StockSummaryByItem {
 /**
  * Get stock levels for all items at all locations.
  * Optionally filter by locationId or itemId.
+ *
+ * Tracks allocated (linked to a job) vs unallocated stock.
  */
 export async function getStockLevels(filters?: {
   locationId?: string;
@@ -51,6 +55,7 @@ export async function getStockLevels(filters?: {
       quantity: true,
       fromLocationId: true,
       toLocationId: true,
+      jobId: true,
       item: {
         select: {
           code: true,
@@ -65,7 +70,7 @@ export async function getStockLevels(filters?: {
     },
   });
 
-  // Aggregate stock per item per location
+  // Aggregate stock per item per location — tracking total and allocated separately
   const stockMap = new Map<string, {
     itemId: string;
     itemCode: string;
@@ -74,64 +79,67 @@ export async function getStockLevels(filters?: {
     locationId: string;
     locationName: string;
     quantity: number;
+    allocated: number;
     minimumStockLevel: number | null;
   }>();
 
+  function getOrCreate(key: string, itemId: string, code: string, description: string, uom: string, locId: string, locName: string, minLevel: number | null) {
+    let entry = stockMap.get(key);
+    if (!entry) {
+      entry = {
+        itemId,
+        itemCode: code,
+        itemDescription: description,
+        unitOfMeasure: uom,
+        locationId: locId,
+        locationName: locName,
+        quantity: 0,
+        allocated: 0,
+        minimumStockLevel: minLevel,
+      };
+      stockMap.set(key, entry);
+    }
+    return entry;
+  }
+
   for (const m of movements) {
     const qty = Number(m.quantity);
+    const minLevel = m.item.minimumStockLevel ? Number(m.item.minimumStockLevel) : null;
 
     // Stock going TO a location (increase)
     if (m.toLocationId && m.toLocation) {
       const key = `${m.itemId}:${m.toLocationId}`;
-      const existing = stockMap.get(key);
-      if (existing) {
-        existing.quantity += qty;
-      } else {
-        stockMap.set(key, {
-          itemId: m.itemId,
-          itemCode: m.item.code,
-          itemDescription: m.item.description,
-          unitOfMeasure: m.item.unitOfMeasure,
-          locationId: m.toLocationId,
-          locationName: m.toLocation.name,
-          quantity: qty,
-          minimumStockLevel: m.item.minimumStockLevel ? Number(m.item.minimumStockLevel) : null,
-        });
-      }
+      const entry = getOrCreate(key, m.itemId, m.item.code, m.item.description, m.item.unitOfMeasure, m.toLocationId, m.toLocation.name, minLevel);
+      entry.quantity += qty;
+      if (m.jobId) entry.allocated += qty;
     }
 
     // Stock leaving FROM a location (decrease)
     if (m.fromLocationId && m.fromLocation) {
       const key = `${m.itemId}:${m.fromLocationId}`;
-      const existing = stockMap.get(key);
-      if (existing) {
-        existing.quantity -= qty;
-      } else {
-        stockMap.set(key, {
-          itemId: m.itemId,
-          itemCode: m.item.code,
-          itemDescription: m.item.description,
-          unitOfMeasure: m.item.unitOfMeasure,
-          locationId: m.fromLocationId,
-          locationName: m.fromLocation.name,
-          quantity: -qty,
-          minimumStockLevel: m.item.minimumStockLevel ? Number(m.item.minimumStockLevel) : null,
-        });
-      }
+      const entry = getOrCreate(key, m.itemId, m.item.code, m.item.description, m.item.unitOfMeasure, m.fromLocationId, m.fromLocation.name, minLevel);
+      entry.quantity -= qty;
+      if (m.jobId) entry.allocated -= qty;
     }
   }
 
-  let results: StockLevel[] = Array.from(stockMap.values()).map((s) => ({
-    itemId: s.itemId,
-    itemCode: s.itemCode,
-    itemDescription: s.itemDescription,
-    unitOfMeasure: s.unitOfMeasure,
-    locationId: s.locationId,
-    locationName: s.locationName,
-    currentStock: s.quantity,
-    minimumStockLevel: s.minimumStockLevel,
-    isBelowMinimum: s.minimumStockLevel !== null && s.quantity < s.minimumStockLevel,
-  }));
+  let results: StockLevel[] = Array.from(stockMap.values()).map((s) => {
+    // Clamp allocated to valid range (0 to currentStock)
+    const clampedAllocated = Math.max(0, Math.min(s.allocated, s.quantity));
+    return {
+      itemId: s.itemId,
+      itemCode: s.itemCode,
+      itemDescription: s.itemDescription,
+      unitOfMeasure: s.unitOfMeasure,
+      locationId: s.locationId,
+      locationName: s.locationName,
+      currentStock: s.quantity,
+      allocated: clampedAllocated,
+      unallocated: Math.max(0, s.quantity - clampedAllocated),
+      minimumStockLevel: s.minimumStockLevel,
+      isBelowMinimum: s.minimumStockLevel !== null && s.quantity < s.minimumStockLevel,
+    };
+  });
 
   if (locationFilter) {
     results = results.filter((r) => r.locationId === locationFilter);

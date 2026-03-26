@@ -199,7 +199,7 @@ function ItemAutocomplete({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightIdx((prev) => Math.max(prev - 1, 0));
-    } else if (e.key === "Enter") {
+    } else if (e.key === "Enter" || e.key === "Tab") {
       e.preventDefault();
       if (filtered.length > 0 && open) {
         selectItem(filtered[highlightIdx]);
@@ -265,6 +265,8 @@ export default function ReceivePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<{ success: number; failed: number } | null>(null);
+
+  const [receiveMode, setReceiveMode] = useState<"stock" | "job">("stock");
 
   const [header, setHeader] = useState({
     supplierId: "",
@@ -347,6 +349,12 @@ export default function ReceivePage() {
 
     if (!header.toLocationId) {
       setError("Please select a location to receive into.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (receiveMode === "job" && !header.jobId) {
+      setError("Please select a job to receive stock against.");
       setSubmitting(false);
       return;
     }
@@ -443,15 +451,41 @@ export default function ReceivePage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job</label>
-                <JobAutocomplete
-                  jobs={jobs}
-                  value={header.jobId}
-                  onChange={(id) => setHeader({ ...header, jobId: id })}
-                />
+            <div className="flex items-center gap-4 mb-2">
+              <span className="text-sm font-medium text-gray-700">Receive To:</span>
+              <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => { setReceiveMode("stock"); setHeader((h) => ({ ...h, jobId: "" })); }}
+                  className={`px-3 py-1.5 text-sm font-medium ${receiveMode === "stock" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                >
+                  Stock
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReceiveMode("job")}
+                  className={`px-3 py-1.5 text-sm font-medium ${receiveMode === "job" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                >
+                  Job
+                </button>
               </div>
+              {receiveMode === "stock" && (
+                <span className="text-xs text-gray-400">Items will go into unallocated stock at the selected location</span>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {receiveMode === "job" ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Job *</label>
+                  <JobAutocomplete
+                    jobs={jobs}
+                    value={header.jobId}
+                    onChange={(id) => setHeader({ ...header, jobId: id })}
+                  />
+                </div>
+              ) : (
+                <div />
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reference (PO, Docket, etc.)</label>
                 <input type="text" value={header.reference} onChange={(e) => setHeader({ ...header, reference: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
