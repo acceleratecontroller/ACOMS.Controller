@@ -22,14 +22,31 @@ export async function GET(request: NextRequest) {
     ];
   }
 
-  const { result: jobs, error } = await withPrismaError("Failed to fetch jobs", () =>
+  // Try with isArchived filter first; fall back without it if migration hasn't run yet
+  let jobs;
+  const { result, error } = await withPrismaError("Failed to fetch jobs", () =>
     prisma.job.findMany({
       where,
       include: { _count: { select: { movements: true } } },
       orderBy: { createdAt: "desc" },
     }),
   );
-  if (error) return error;
+
+  if (error) {
+    // Likely isArchived column doesn't exist yet — retry without the filter
+    delete where.isArchived;
+    const { result: fallback, error: fallbackErr } = await withPrismaError("Failed to fetch jobs", () =>
+      prisma.job.findMany({
+        where,
+        include: { _count: { select: { movements: true } } },
+        orderBy: { createdAt: "desc" },
+      }),
+    );
+    if (fallbackErr) return fallbackErr;
+    jobs = fallback;
+  } else {
+    jobs = result;
+  }
 
   return NextResponse.json(jobs);
 }

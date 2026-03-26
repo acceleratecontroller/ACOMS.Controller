@@ -107,7 +107,8 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    if (jobExists.isArchived) {
+    // Guard against archived jobs (safe access in case migration hasn't run)
+    if ("isArchived" in jobExists && jobExists.isArchived) {
       return NextResponse.json(
         { error: "Cannot receive stock against an archived job" },
         { status: 400 },
