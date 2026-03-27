@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -20,6 +20,7 @@ interface Supplier {
 }
 
 export default function SuppliersPage() {
+  const router = useRouter();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -146,11 +147,11 @@ export default function SuppliersPage() {
             </thead>
             <tbody>
               {suppliers.map((s) => (
-                <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr key={s.id} onClick={() => router.push(`/materials/suppliers/${s.id}`)} className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer">
                   <td className="px-4 py-3">
-                    <Link href={`/materials/suppliers/${s.id}`} className="text-blue-600 hover:text-blue-800 font-medium">
+                    <span className="text-blue-600 font-medium">
                       {s.name}
-                    </Link>
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{s.contactName || "—"}</td>
                   <td className="px-4 py-3 text-gray-500">{s.phone || "—"}</td>
@@ -165,7 +166,7 @@ export default function SuppliersPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-500">{s._count.items}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => openEdit(s)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">Edit</button>
                     {!s.isArchived && (
                       <button onClick={() => setArchiveTarget(s)} className="text-red-600 hover:text-red-800 text-sm">Archive</button>

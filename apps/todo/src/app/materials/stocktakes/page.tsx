@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
@@ -104,7 +103,7 @@ export default function StocktakesPage() {
           {/* Mobile card layout */}
           <div className="space-y-3 md:hidden">
             {stocktakes.map((st) => (
-              <div key={st.id} className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden">
+              <div key={st.id} onClick={() => router.push(`/materials/stocktakes/${st.id}`)} className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden cursor-pointer hover:bg-blue-50 transition-colors">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="font-medium text-gray-900">{st.location.name}</div>
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium shrink-0 ${st.status === "DRAFT" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"}`}>
@@ -125,19 +124,16 @@ export default function StocktakesPage() {
                     <div className="text-gray-700">{st.completedAt ? formatDate(st.completedAt) : "—"}</div>
                   </div>
                 </div>
-                <div className="flex gap-3 pt-3 border-t border-gray-100">
-                  <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    {st.status === "DRAFT" ? "Count" : "View"}
-                  </Link>
-                  {st.status === "DRAFT" && (
+                {st.status === "DRAFT" && (
+                  <div className="flex gap-3 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => setDeleteTarget(st)}
                       className="text-red-600 hover:text-red-800 text-sm font-medium"
                     >
                       Delete
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -157,7 +153,7 @@ export default function StocktakesPage() {
               </thead>
               <tbody>
                 {stocktakes.map((st) => (
-                  <tr key={st.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={st.id} onClick={() => router.push(`/materials/stocktakes/${st.id}`)} className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer">
                     <td className="px-4 py-3 font-medium">{st.location.name}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${st.status === "DRAFT" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"}`}>
@@ -167,20 +163,15 @@ export default function StocktakesPage() {
                     <td className="px-4 py-3 text-gray-500">{st._count.lines}</td>
                     <td className="px-4 py-3 text-gray-500">{formatDate(st.createdAt)}</td>
                     <td className="px-4 py-3 text-gray-500">{st.completedAt ? formatDate(st.completedAt) : "—"}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex gap-3 justify-end">
-                        <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
-                          {st.status === "DRAFT" ? "Count" : "View"}
-                        </Link>
-                        {st.status === "DRAFT" && (
-                          <button
-                            onClick={() => setDeleteTarget(st)}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      {st.status === "DRAFT" && (
+                        <button
+                          onClick={() => setDeleteTarget(st)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
