@@ -266,7 +266,7 @@ export default function ReceivePage() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<{ success: number; failed: number } | null>(null);
 
-  const [receiveMode, setReceiveMode] = useState<"stock" | "job">("stock");
+  const [receiveMode, setReceiveMode] = useState<"stock" | "job">("job");
 
   const [header, setHeader] = useState({
     supplierId: "",
