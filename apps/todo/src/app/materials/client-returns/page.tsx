@@ -110,11 +110,11 @@ export default function ClientReturnsPage() {
           {/* Mobile card layout */}
           <div className="space-y-3 md:hidden">
             {returns.map((ret) => (
-              <div key={ret.id} className="bg-white rounded-lg border border-gray-200 p-4">
+              <div key={ret.id} className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <div className="min-w-0">
-                    <div className="font-mono text-xs text-gray-500">{ret.item.code}</div>
-                    <div className="text-sm font-medium text-gray-900">{ret.item.description}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-xs text-gray-500 break-all">{ret.item.code}</div>
+                    <div className="text-sm font-medium text-gray-900 truncate">{ret.item.description}</div>
                   </div>
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
                     ret.status === "TO_BE_RETURNED"
@@ -127,22 +127,22 @@ export default function ClientReturnsPage() {
                 <div className="text-sm font-medium text-gray-700 mb-2">
                   {Number(ret.quantity)} {UOM_LABELS[ret.item.unitOfMeasure] || ret.item.unitOfMeasure}
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
                   {ret.job && (
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-gray-400 text-xs">Job</span>
-                      <div className="font-mono text-xs text-gray-700">{ret.job.projectId}</div>
+                      <div className="font-mono text-xs text-gray-700 truncate">{ret.job.projectId}</div>
                     </div>
                   )}
                   {ret.job?.client && (
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-gray-400 text-xs">Client</span>
-                      <div className="text-gray-700">{ret.job.client}</div>
+                      <div className="text-gray-700 truncate">{ret.job.client}</div>
                     </div>
                   )}
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-gray-400 text-xs">Location</span>
-                    <div className="text-gray-700">{ret.location.name}</div>
+                    <div className="text-gray-700 truncate">{ret.location.name}</div>
                   </div>
                   <div>
                     <span className="text-gray-400 text-xs">Date</span>

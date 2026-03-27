@@ -146,9 +146,9 @@ export default function StocktakeDetailPage() {
             const uom = UOM_LABELS[line.item.unitOfMeasure] || "";
 
             return (
-              <div key={line.id} className={`bg-white rounded-lg border p-4 ${variance !== 0 ? "border-yellow-200 bg-yellow-50" : "border-gray-200"}`}>
+              <div key={line.id} className={`bg-white rounded-lg border p-3 overflow-hidden ${variance !== 0 ? "border-yellow-200 bg-yellow-50" : "border-gray-200"}`}>
                 <div className="mb-2">
-                  <div className="font-mono text-sm font-medium text-gray-900">{line.item.code}</div>
+                  <div className="font-mono text-xs font-medium text-gray-900 break-all">{line.item.code}</div>
                   <div className="text-sm text-gray-600">{line.item.description}</div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center bg-gray-50 rounded-lg p-2 mb-2">

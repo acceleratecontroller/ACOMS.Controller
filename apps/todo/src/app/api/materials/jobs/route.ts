@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search") || "";
   const archived = searchParams.get("archived") === "true";
 
+  const hasStock = searchParams.get("hasStock");
+
   const where: Record<string, unknown> = { isArchived: archived };
   if (search) {
     where.OR = [
@@ -22,13 +24,31 @@ export async function GET(request: NextRequest) {
     ];
   }
 
+  if (hasStock === "true") {
+    // Jobs that have at least one material requirement OR at least one received movement
+    where.AND = [
+      {
+        OR: [
+          { materials: { some: {} } },
+          { movements: { some: {} } },
+        ],
+      },
+    ];
+  } else if (hasStock === "false") {
+    // Jobs that have NO material requirements AND NO received movements
+    where.AND = [
+      { materials: { none: {} } },
+      { movements: { none: {} } },
+    ];
+  }
+
   // Try with isArchived filter first; fall back without it if migration hasn't run yet
   let jobs;
   const { result, error } = await withPrismaError("Failed to fetch jobs", () =>
     prisma.job.findMany({
       where,
       include: {
-        _count: { select: { movements: true } },
+        _count: { select: { movements: true, materials: true } },
         location: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -42,7 +62,7 @@ export async function GET(request: NextRequest) {
       prisma.job.findMany({
         where,
         include: {
-          _count: { select: { movements: true } },
+          _count: { select: { movements: true, materials: true } },
           location: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: "desc" },

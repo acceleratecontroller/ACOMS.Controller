@@ -95,10 +95,10 @@ export default function StockPage() {
           {/* Mobile card layout */}
           <div className="space-y-3 md:hidden">
             {filtered.map((s, idx) => (
-              <div key={idx} className={`bg-white rounded-lg border p-4 ${s.isBelowMinimum ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
+              <div key={idx} className={`bg-white rounded-lg border p-3 overflow-hidden ${s.isBelowMinimum ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <div className="min-w-0">
-                    <div className="font-mono text-sm font-medium text-gray-900">{s.itemCode}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-xs font-medium text-gray-900 break-all">{s.itemCode}</div>
                     <div className="text-sm text-gray-600 truncate">{s.itemDescription}</div>
                   </div>
                   {s.isBelowMinimum ? (

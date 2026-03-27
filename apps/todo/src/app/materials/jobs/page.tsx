@@ -14,7 +14,7 @@ interface Job {
   contact: string;
   createdAt: string;
   location: { id: string; name: string } | null;
-  _count: { movements: number };
+  _count: { movements: number; materials: number };
 }
 
 interface Location { id: string; name: string }
@@ -57,6 +57,7 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [stockFilter, setStockFilter] = useState<"" | "true" | "false">("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ projectId: "", name: "", client: "", contact: "", locationId: "" });
   const [formError, setFormError] = useState<string | null>(null);
@@ -79,10 +80,11 @@ export default function JobsPage() {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (showArchived) params.set("archived", "true");
+    if (stockFilter) params.set("hasStock", stockFilter);
     const res = await fetch(`/api/materials/jobs?${params}`);
     if (res.ok) setJobs(await res.json());
     setLoading(false);
-  }, [search, showArchived]);
+  }, [search, showArchived, stockFilter]);
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
@@ -205,6 +207,15 @@ export default function JobsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-80"
         />
+        <select
+          value={stockFilter}
+          onChange={(e) => setStockFilter(e.target.value as "" | "true" | "false")}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+        >
+          <option value="">All jobs</option>
+          <option value="true">With stock</option>
+          <option value="false">No stock</option>
+        </select>
         <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
           <input
             type="checkbox"
@@ -239,29 +250,39 @@ export default function JobsPage() {
           {/* Mobile card layout */}
           <div className="space-y-3 md:hidden">
             {jobs.map((job) => (
-              <div key={job.id} className="bg-white rounded-lg border border-gray-200 p-4">
+              <div key={job.id} className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden">
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <Link href={`/materials/jobs/${job.id}`} className="font-mono text-blue-600 hover:text-blue-800 font-medium text-sm">
+                  <div className="min-w-0">
+                    <Link href={`/materials/jobs/${job.id}`} className="font-mono text-blue-600 hover:text-blue-800 font-medium text-sm break-all">
                       {job.projectId}
                     </Link>
-                    <div className="text-sm font-medium text-gray-900 mt-0.5">{job.name}</div>
+                    <div className="text-sm font-medium text-gray-900 mt-0.5 truncate">{job.name}</div>
                   </div>
-                  <span className="text-xs text-gray-400 whitespace-nowrap">{job._count.movements} mov.</span>
+                  <div className="text-right shrink-0">
+                    {(job._count.materials > 0 || job._count.movements > 0) ? (
+                      <span className="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                        {job._count.movements} mov.
+                      </span>
+                    ) : (
+                      <span className="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400">
+                        No stock
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mt-2">
-                  <div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm mt-2">
+                  <div className="min-w-0">
                     <span className="text-gray-400 text-xs">Client</span>
-                    <div className="text-gray-700">{job.client}</div>
+                    <div className="text-gray-700 truncate">{job.client}</div>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-gray-400 text-xs">Location</span>
-                    <div className="text-gray-700">{job.location?.name || "—"}</div>
+                    <div className="text-gray-700 truncate">{job.location?.name || "—"}</div>
                   </div>
                   {job.contact && (
-                    <div className="col-span-2">
+                    <div className="col-span-2 min-w-0">
                       <span className="text-gray-400 text-xs">Contact</span>
-                      <div className="text-gray-700">{job.contact}</div>
+                      <div className="text-gray-700 truncate">{job.contact}</div>
                     </div>
                   )}
                 </div>

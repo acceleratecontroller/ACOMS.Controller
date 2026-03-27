@@ -559,7 +559,7 @@ export default function ReceivePage() {
                           </button>
                         </div>
                         {/* Mobile: stacked layout */}
-                        <div className="sm:hidden bg-gray-50 rounded-lg p-3 space-y-2">
+                        <div className="sm:hidden bg-gray-50 rounded-lg p-3 space-y-2 overflow-hidden">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-gray-500">Item {lineIdx + 1}</span>
                             <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-lg leading-none">

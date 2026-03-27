@@ -23,7 +23,7 @@ export default function RootLayout({
       <body className="bg-gray-50 text-gray-900 min-h-screen">
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 p-4 md:p-8 pt-16 md:pt-8">{children}</main>
+          <main className="flex-1 min-w-0 p-4 md:p-8 pt-16 md:pt-8">{children}</main>
         </div>
       </body>
     </html>
