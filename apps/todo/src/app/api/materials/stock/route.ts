@@ -17,6 +17,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(stockSummary);
   }
 
-  const levels = await getStockLevels({ locationId, itemId, belowMinimumOnly });
+  const levels = await getStockLevels({ locationId, itemId, belowMinimumOnly, includeAllItems: true });
   return NextResponse.json(levels);
 }

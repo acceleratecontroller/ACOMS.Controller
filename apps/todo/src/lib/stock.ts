@@ -42,6 +42,7 @@ export async function getStockLevels(filters?: {
   locationId?: string;
   itemId?: string;
   belowMinimumOnly?: boolean;
+  includeAllItems?: boolean;
 }): Promise<StockLevel[]> {
   const where: Prisma.StockMovementWhereInput = {};
   if (filters?.itemId) where.itemId = filters.itemId;
@@ -120,6 +121,44 @@ export async function getStockLevels(filters?: {
       const entry = getOrCreate(key, m.itemId, m.item.code, m.item.description, m.item.unitOfMeasure, m.fromLocationId, m.fromLocation.name, minLevel);
       entry.quantity -= qty;
       if (m.jobId) entry.allocated -= qty;
+    }
+  }
+
+  // Include all registered (non-archived) items as zero-stock entries
+  if (filters?.includeAllItems && !filters?.itemId) {
+    const itemWhere: Prisma.ItemWhereInput = { isArchived: false };
+    if (filters?.itemId) itemWhere.id = filters.itemId;
+
+    const [allItems, allLocations] = await Promise.all([
+      prisma.item.findMany({
+        where: itemWhere,
+        select: {
+          id: true,
+          code: true,
+          description: true,
+          unitOfMeasure: true,
+          minimumStockLevel: true,
+        },
+      }),
+      locationFilter
+        ? prisma.location.findMany({
+            where: { id: locationFilter, isArchived: false },
+            select: { id: true, name: true },
+          })
+        : prisma.location.findMany({
+            where: { isArchived: false },
+            select: { id: true, name: true },
+          }),
+    ]);
+
+    for (const item of allItems) {
+      const minLevel = item.minimumStockLevel ? Number(item.minimumStockLevel) : null;
+      for (const loc of allLocations) {
+        const key = `${item.id}:${loc.id}`;
+        // getOrCreate only adds if not already present — so existing movement-derived
+        // entries are preserved, and missing ones get added as zero
+        getOrCreate(key, item.id, item.code, item.description, item.unitOfMeasure, loc.id, loc.name, minLevel);
+      }
     }
   }
 
