@@ -110,7 +110,7 @@ export default function StocktakeDetailPage() {
         description={`Status: ${stocktake.status} | Created: ${new Date(stocktake.createdAt).toLocaleDateString("en-AU")}${stocktake.completedAt ? ` | Completed: ${new Date(stocktake.completedAt).toLocaleDateString("en-AU")}` : ""}`}
       />
 
-      {isDraft && (
+      {isDraft ? (
         <div className="flex items-center gap-3 mb-4">
           <button onClick={handleSave} disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
             {saving ? "Saving..." : "Save Counts"}
@@ -121,6 +121,18 @@ export default function StocktakeDetailPage() {
           {discrepancies.length > 0 && (
             <span className="text-sm text-orange-600">{discrepancies.length} discrepancies</span>
           )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 mb-4">
+          <a
+            href={`/api/materials/stocktakes/${stocktake.id}/export`}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+            Export to Excel
+          </a>
         </div>
       )}
 
