@@ -58,7 +58,7 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const [stockFilter, setStockFilter] = useState<"" | "true" | "false">("");
+  const [stockFilter, setStockFilter] = useState<"" | "true" | "false">("true");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ projectId: "", name: "", client: "", contact: "", locationId: "" });
   const [formError, setFormError] = useState<string | null>(null);
