@@ -100,50 +100,94 @@ export default function StocktakesPage() {
       ) : stocktakes.length === 0 ? (
         <p className="text-gray-500 text-sm">No stocktakes yet.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Items</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Created</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Completed</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stocktakes.map((st) => (
-                <tr key={st.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">{st.location.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${st.status === "DRAFT" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"}`}>
-                      {st.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{st._count.lines}</td>
-                  <td className="px-4 py-3 text-gray-500">{formatDate(st.createdAt)}</td>
-                  <td className="px-4 py-3 text-gray-500">{st.completedAt ? formatDate(st.completedAt) : "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex gap-3 justify-end">
-                      <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
-                        {st.status === "DRAFT" ? "Count" : "View"}
-                      </Link>
-                      {st.status === "DRAFT" && (
-                        <button
-                          onClick={() => setDeleteTarget(st)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  </td>
+        <>
+          {/* Mobile card layout */}
+          <div className="space-y-3 md:hidden">
+            {stocktakes.map((st) => (
+              <div key={st.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="font-medium text-gray-900">{st.location.name}</div>
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium shrink-0 ${st.status === "DRAFT" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"}`}>
+                    {st.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm mb-3">
+                  <div>
+                    <span className="text-gray-400 text-xs">Items</span>
+                    <div className="text-gray-700">{st._count.lines}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">Created</span>
+                    <div className="text-gray-700">{formatDate(st.createdAt)}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">Completed</span>
+                    <div className="text-gray-700">{st.completedAt ? formatDate(st.completedAt) : "—"}</div>
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-3 border-t border-gray-100">
+                  <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    {st.status === "DRAFT" ? "Count" : "View"}
+                  </Link>
+                  {st.status === "DRAFT" && (
+                    <button
+                      onClick={() => setDeleteTarget(st)}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hidden md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Items</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Created</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Completed</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {stocktakes.map((st) => (
+                  <tr key={st.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{st.location.name}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${st.status === "DRAFT" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"}`}>
+                        {st.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{st._count.lines}</td>
+                    <td className="px-4 py-3 text-gray-500">{formatDate(st.createdAt)}</td>
+                    <td className="px-4 py-3 text-gray-500">{st.completedAt ? formatDate(st.completedAt) : "—"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex gap-3 justify-end">
+                        <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
+                          {st.status === "DRAFT" ? "Count" : "View"}
+                        </Link>
+                        {st.status === "DRAFT" && (
+                          <button
+                            onClick={() => setDeleteTarget(st)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Create Stocktake Modal */}

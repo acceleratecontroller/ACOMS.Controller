@@ -235,48 +235,95 @@ export default function JobsPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Project ID</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Job Name</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Contact</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Movements</th>
-                {!showArchived && <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id} className="border-b border-gray-100 hover:bg-blue-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/materials/jobs/${job.id}`} className="font-mono text-blue-600 hover:text-blue-800 font-medium">
+        <>
+          {/* Mobile card layout */}
+          <div className="space-y-3 md:hidden">
+            {jobs.map((job) => (
+              <div key={job.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <Link href={`/materials/jobs/${job.id}`} className="font-mono text-blue-600 hover:text-blue-800 font-medium text-sm">
                       {job.projectId}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{job.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{job.client}</td>
-                  <td className="px-4 py-3 text-gray-500">{job.location?.name || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500">{job.contact}</td>
-                  <td className="px-4 py-3 text-right text-gray-500">{job._count.movements}</td>
-                  {!showArchived && (
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => openArchiveModal(job)}
-                        disabled={archiving === job.id}
-                        className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
-                      >
-                        {archiving === job.id ? "Archiving..." : "Archive"}
-                      </button>
-                    </td>
+                    <div className="text-sm font-medium text-gray-900 mt-0.5">{job.name}</div>
+                  </div>
+                  <span className="text-xs text-gray-400 whitespace-nowrap">{job._count.movements} mov.</span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mt-2">
+                  <div>
+                    <span className="text-gray-400 text-xs">Client</span>
+                    <div className="text-gray-700">{job.client}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">Location</span>
+                    <div className="text-gray-700">{job.location?.name || "—"}</div>
+                  </div>
+                  {job.contact && (
+                    <div className="col-span-2">
+                      <span className="text-gray-400 text-xs">Contact</span>
+                      <div className="text-gray-700">{job.contact}</div>
+                    </div>
                   )}
+                </div>
+                {!showArchived && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <button
+                      onClick={() => openArchiveModal(job)}
+                      disabled={archiving === job.id}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                    >
+                      {archiving === job.id ? "Archiving..." : "Archive"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto hidden md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Project ID</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Job Name</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Contact</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Movements</th>
+                  {!showArchived && <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {jobs.map((job) => (
+                  <tr key={job.id} className="border-b border-gray-100 hover:bg-blue-50">
+                    <td className="px-4 py-3">
+                      <Link href={`/materials/jobs/${job.id}`} className="font-mono text-blue-600 hover:text-blue-800 font-medium">
+                        {job.projectId}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">{job.name}</td>
+                    <td className="px-4 py-3 text-gray-500">{job.client}</td>
+                    <td className="px-4 py-3 text-gray-500">{job.location?.name || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500">{job.contact}</td>
+                    <td className="px-4 py-3 text-right text-gray-500">{job._count.movements}</td>
+                    {!showArchived && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => openArchiveModal(job)}
+                          disabled={archiving === job.id}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                        >
+                          {archiving === job.id ? "Archiving..." : "Archive"}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Create Job Modal */}

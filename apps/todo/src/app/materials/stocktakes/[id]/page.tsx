@@ -111,15 +111,15 @@ export default function StocktakeDetailPage() {
       />
 
       {isDraft ? (
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={handleSave} disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <button onClick={handleSave} disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex-1 sm:flex-none">
             {saving ? "Saving..." : "Save Counts"}
           </button>
-          <button onClick={() => setShowComplete(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">
+          <button onClick={() => setShowComplete(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 flex-1 sm:flex-none">
             Complete Stocktake
           </button>
           {discrepancies.length > 0 && (
-            <span className="text-sm text-orange-600">{discrepancies.length} discrepancies</span>
+            <span className="text-sm text-orange-600 w-full sm:w-auto">{discrepancies.length} discrepancies</span>
           )}
         </div>
       ) : (
@@ -136,31 +136,28 @@ export default function StocktakeDetailPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-700">Expected</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-700">Counted</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-700">Variance</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-700">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stocktake.lines.map((line) => {
-              const expected = Number(line.expectedQty);
-              const counted = counts[line.id] ? Number(counts[line.id].countedQty) : Number(line.countedQty);
-              const variance = counted - expected;
-              const uom = UOM_LABELS[line.item.unitOfMeasure] || "";
+      <>
+        {/* Mobile card layout */}
+        <div className="space-y-3 md:hidden">
+          {stocktake.lines.map((line) => {
+            const expected = Number(line.expectedQty);
+            const counted = counts[line.id] ? Number(counts[line.id].countedQty) : Number(line.countedQty);
+            const variance = counted - expected;
+            const uom = UOM_LABELS[line.item.unitOfMeasure] || "";
 
-              return (
-                <tr key={line.id} className={`border-b border-gray-100 ${variance !== 0 ? "bg-yellow-50" : ""}`}>
-                  <td className="px-4 py-3 font-mono font-medium">{line.item.code}</td>
-                  <td className="px-4 py-3">{line.item.description}</td>
-                  <td className="px-4 py-3 text-right text-gray-500">{expected} {uom}</td>
-                  <td className="px-4 py-3 text-right">
+            return (
+              <div key={line.id} className={`bg-white rounded-lg border p-4 ${variance !== 0 ? "border-yellow-200 bg-yellow-50" : "border-gray-200"}`}>
+                <div className="mb-2">
+                  <div className="font-mono text-sm font-medium text-gray-900">{line.item.code}</div>
+                  <div className="text-sm text-gray-600">{line.item.description}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center bg-gray-50 rounded-lg p-2 mb-2">
+                  <div>
+                    <div className="text-xs text-gray-400">Expected</div>
+                    <div className="text-sm text-gray-600">{expected} {uom}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Counted</div>
                     {isDraft ? (
                       <input
                         type="number"
@@ -173,39 +170,112 @@ export default function StocktakeDetailPage() {
                             [line.id]: { ...counts[line.id], countedQty: e.target.value },
                           })
                         }
-                        className="w-24 border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-center mt-0.5"
                       />
                     ) : (
-                      <span className="font-medium">{counted} {uom}</span>
+                      <div className="text-sm font-medium">{counted} {uom}</div>
                     )}
-                  </td>
-                  <td className={`px-4 py-3 text-right font-medium ${variance > 0 ? "text-green-600" : variance < 0 ? "text-red-600" : "text-gray-400"}`}>
-                    {variance === 0 ? "—" : `${variance > 0 ? "+" : ""}${variance}`}
-                  </td>
-                  <td className="px-4 py-3">
-                    {isDraft ? (
-                      <input
-                        type="text"
-                        value={counts[line.id]?.notes || ""}
-                        onChange={(e) =>
-                          setCounts({
-                            ...counts,
-                            [line.id]: { ...counts[line.id], notes: e.target.value },
-                          })
-                        }
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                        placeholder="Optional note..."
-                      />
-                    ) : (
-                      <span className="text-gray-500">{line.notes || "—"}</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Variance</div>
+                    <div className={`text-sm font-medium ${variance > 0 ? "text-green-600" : variance < 0 ? "text-red-600" : "text-gray-400"}`}>
+                      {variance === 0 ? "—" : `${variance > 0 ? "+" : ""}${variance}`}
+                    </div>
+                  </div>
+                </div>
+                {isDraft ? (
+                  <input
+                    type="text"
+                    value={counts[line.id]?.notes || ""}
+                    onChange={(e) =>
+                      setCounts({
+                        ...counts,
+                        [line.id]: { ...counts[line.id], notes: e.target.value },
+                      })
+                    }
+                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                    placeholder="Notes..."
+                  />
+                ) : line.notes ? (
+                  <div className="text-sm text-gray-500">{line.notes}</div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop table layout */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto hidden md:block">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700">Expected</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700">Counted</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700">Variance</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stocktake.lines.map((line) => {
+                const expected = Number(line.expectedQty);
+                const counted = counts[line.id] ? Number(counts[line.id].countedQty) : Number(line.countedQty);
+                const variance = counted - expected;
+                const uom = UOM_LABELS[line.item.unitOfMeasure] || "";
+
+                return (
+                  <tr key={line.id} className={`border-b border-gray-100 ${variance !== 0 ? "bg-yellow-50" : ""}`}>
+                    <td className="px-4 py-3 font-mono font-medium">{line.item.code}</td>
+                    <td className="px-4 py-3">{line.item.description}</td>
+                    <td className="px-4 py-3 text-right text-gray-500">{expected} {uom}</td>
+                    <td className="px-4 py-3 text-right">
+                      {isDraft ? (
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={counts[line.id]?.countedQty || "0"}
+                          onChange={(e) =>
+                            setCounts({
+                              ...counts,
+                              [line.id]: { ...counts[line.id], countedQty: e.target.value },
+                            })
+                          }
+                          className="w-24 border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                        />
+                      ) : (
+                        <span className="font-medium">{counted} {uom}</span>
+                      )}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium ${variance > 0 ? "text-green-600" : variance < 0 ? "text-red-600" : "text-gray-400"}`}>
+                      {variance === 0 ? "—" : `${variance > 0 ? "+" : ""}${variance}`}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isDraft ? (
+                        <input
+                          type="text"
+                          value={counts[line.id]?.notes || ""}
+                          onChange={(e) =>
+                            setCounts({
+                              ...counts,
+                              [line.id]: { ...counts[line.id], notes: e.target.value },
+                            })
+                          }
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          placeholder="Optional note..."
+                        />
+                      ) : (
+                        <span className="text-gray-500">{line.notes || "—"}</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </>
 
       <ConfirmDialog
         isOpen={showComplete}

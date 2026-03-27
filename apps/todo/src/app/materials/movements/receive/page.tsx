@@ -516,7 +516,8 @@ export default function ReceivePage() {
             ) : (
               <>
                 <div className="space-y-3">
-                  <div className="grid grid-cols-[1fr_100px_32px] md:grid-cols-[1fr_120px_40px] gap-2 md:gap-3 text-xs font-medium text-gray-500 px-1">
+                  {/* Desktop: side-by-side header */}
+                  <div className="hidden sm:grid grid-cols-[1fr_120px_40px] gap-3 text-xs font-medium text-gray-500 px-1">
                     <span>Item</span>
                     <span>Quantity</span>
                     <span></span>
@@ -525,35 +526,72 @@ export default function ReceivePage() {
                     const selectedItem = supplierItems.find((i) => i.id === line.itemId);
                     const shouldAutoFocusItem = focusLineKey === line.key && focusField === "item";
                     return (
-                      <div key={line.key} className="grid grid-cols-[1fr_100px_32px] md:grid-cols-[1fr_120px_40px] gap-2 md:gap-3 items-center">
-                        <ItemAutocomplete
-                          items={supplierItems}
-                          value={line.itemId}
-                          onChange={(id) => updateLine(line.key, "itemId", id)}
-                          onConfirm={() => handleItemConfirm(line.key)}
-                          autoFocus={shouldAutoFocusItem || lineIdx === 0}
-                        />
-                        <div className="relative">
-                          <input
-                            ref={(el) => { qtyRefs.current[line.key] = el; }}
-                            type="number"
-                            min="0.01"
-                            step="any"
-                            value={line.quantity}
-                            onChange={(e) => updateLine(line.key, "quantity", e.target.value)}
-                            onKeyDown={(e) => handleQtyKeyDown(e, line.key)}
-                            placeholder="Qty"
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      <div key={line.key}>
+                        {/* Desktop: side-by-side layout */}
+                        <div className="hidden sm:grid grid-cols-[1fr_120px_40px] gap-3 items-center">
+                          <ItemAutocomplete
+                            items={supplierItems}
+                            value={line.itemId}
+                            onChange={(id) => updateLine(line.key, "itemId", id)}
+                            onConfirm={() => handleItemConfirm(line.key)}
+                            autoFocus={shouldAutoFocusItem || lineIdx === 0}
                           />
-                          {selectedItem && (
-                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                              {UOM_LABELS[selectedItem.unitOfMeasure] || ""}
-                            </span>
-                          )}
+                          <div className="relative">
+                            <input
+                              ref={(el) => { qtyRefs.current[line.key] = el; }}
+                              type="number"
+                              min="0.01"
+                              step="any"
+                              value={line.quantity}
+                              onChange={(e) => updateLine(line.key, "quantity", e.target.value)}
+                              onKeyDown={(e) => handleQtyKeyDown(e, line.key)}
+                              placeholder="Qty"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                            />
+                            {selectedItem && (
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                                {UOM_LABELS[selectedItem.unitOfMeasure] || ""}
+                              </span>
+                            )}
+                          </div>
+                          <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-lg">
+                            &times;
+                          </button>
                         </div>
-                        <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-lg">
-                          &times;
-                        </button>
+                        {/* Mobile: stacked layout */}
+                        <div className="sm:hidden bg-gray-50 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-gray-500">Item {lineIdx + 1}</span>
+                            <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-lg leading-none">
+                              &times;
+                            </button>
+                          </div>
+                          <ItemAutocomplete
+                            items={supplierItems}
+                            value={line.itemId}
+                            onChange={(id) => updateLine(line.key, "itemId", id)}
+                            onConfirm={() => handleItemConfirm(line.key)}
+                            autoFocus={shouldAutoFocusItem || lineIdx === 0}
+                          />
+                          <div className="relative">
+                            <input
+                              ref={(el) => { if (!qtyRefs.current[line.key]) qtyRefs.current[line.key] = el; }}
+                              type="number"
+                              min="0.01"
+                              step="any"
+                              value={line.quantity}
+                              onChange={(e) => updateLine(line.key, "quantity", e.target.value)}
+                              onKeyDown={(e) => handleQtyKeyDown(e, line.key)}
+                              placeholder="Quantity"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                            />
+                            {selectedItem && (
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                                {UOM_LABELS[selectedItem.unitOfMeasure] || ""}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -578,9 +616,9 @@ export default function ReceivePage() {
             </div>
           )}
 
-          <div className="flex gap-3 justify-end">
-            <button type="button" onClick={() => router.back()} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={submitting || !header.supplierId} className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+            <button type="button" onClick={() => router.back()} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 w-full sm:w-auto">Cancel</button>
+            <button type="submit" disabled={submitting || !header.supplierId} className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 w-full sm:w-auto">
               {submitting ? "Recording..." : `Receive ${lines.filter((l) => l.itemId && l.quantity).length} Item(s)`}
             </button>
           </div>

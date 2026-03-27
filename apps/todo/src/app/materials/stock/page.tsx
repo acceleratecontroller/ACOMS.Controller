@@ -91,52 +91,94 @@ export default function StockPage() {
       ) : filtered.length === 0 ? (
         <p className="text-gray-500 text-sm">No stock data found.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Total Stock</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Unallocated</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Allocated to Jobs</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Min Level</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((s, idx) => (
-                <tr key={idx} className={`border-b border-gray-100 hover:bg-gray-50 ${s.isBelowMinimum ? "bg-red-50" : ""}`}>
-                  <td className="px-4 py-3 font-mono font-medium">{s.itemCode}</td>
-                  <td className="px-4 py-3">{s.itemDescription}</td>
-                  <td className="px-4 py-3 text-gray-500">{s.locationName}</td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    {s.currentStock} {UOM_LABELS[s.unitOfMeasure] || ""}
-                  </td>
-                  <td className="px-4 py-3 text-right text-green-600 font-medium">
-                    {s.unallocated}
-                  </td>
-                  <td className="px-4 py-3 text-right text-blue-600 font-medium">
-                    {s.allocated > 0 ? s.allocated : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-500">
-                    {s.minimumStockLevel ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {s.isBelowMinimum ? (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Low</span>
-                    ) : s.currentStock <= 0 ? (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">None</span>
-                    ) : (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">OK</span>
-                    )}
-                  </td>
+        <>
+          {/* Mobile card layout */}
+          <div className="space-y-3 md:hidden">
+            {filtered.map((s, idx) => (
+              <div key={idx} className={`bg-white rounded-lg border p-4 ${s.isBelowMinimum ? "border-red-200 bg-red-50" : "border-gray-200"}`}>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="min-w-0">
+                    <div className="font-mono text-sm font-medium text-gray-900">{s.itemCode}</div>
+                    <div className="text-sm text-gray-600 truncate">{s.itemDescription}</div>
+                  </div>
+                  {s.isBelowMinimum ? (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 shrink-0">Low</span>
+                  ) : s.currentStock <= 0 ? (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 shrink-0">None</span>
+                  ) : (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 shrink-0">OK</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-400 mb-2">{s.locationName}</div>
+                <div className="grid grid-cols-3 gap-2 text-center bg-gray-50 rounded-lg p-2">
+                  <div>
+                    <div className="text-xs text-gray-400">Total</div>
+                    <div className="text-sm font-medium text-gray-900">{s.currentStock}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Free</div>
+                    <div className="text-sm font-medium text-green-600">{s.unallocated}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Allocated</div>
+                    <div className="text-sm font-medium text-blue-600">{s.allocated > 0 ? s.allocated : "—"}</div>
+                  </div>
+                </div>
+                {s.minimumStockLevel != null && (
+                  <div className="text-xs text-gray-400 mt-2">Min level: {s.minimumStockLevel} {UOM_LABELS[s.unitOfMeasure] || ""}</div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto hidden md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Total Stock</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Unallocated</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Allocated to Jobs</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Min Level</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((s, idx) => (
+                  <tr key={idx} className={`border-b border-gray-100 hover:bg-gray-50 ${s.isBelowMinimum ? "bg-red-50" : ""}`}>
+                    <td className="px-4 py-3 font-mono font-medium">{s.itemCode}</td>
+                    <td className="px-4 py-3">{s.itemDescription}</td>
+                    <td className="px-4 py-3 text-gray-500">{s.locationName}</td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {s.currentStock} {UOM_LABELS[s.unitOfMeasure] || ""}
+                    </td>
+                    <td className="px-4 py-3 text-right text-green-600 font-medium">
+                      {s.unallocated}
+                    </td>
+                    <td className="px-4 py-3 text-right text-blue-600 font-medium">
+                      {s.allocated > 0 ? s.allocated : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-500">
+                      {s.minimumStockLevel ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.isBelowMinimum ? (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Low</span>
+                      ) : s.currentStock <= 0 ? (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">None</span>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">OK</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

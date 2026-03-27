@@ -106,82 +106,153 @@ export default function ClientReturnsPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Item</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Qty</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Job</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Date</th>
-                {statusFilter !== "RETURNED" && (
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+        <>
+          {/* Mobile card layout */}
+          <div className="space-y-3 md:hidden">
+            {returns.map((ret) => (
+              <div key={ret.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="min-w-0">
+                    <div className="font-mono text-xs text-gray-500">{ret.item.code}</div>
+                    <div className="text-sm font-medium text-gray-900">{ret.item.description}</div>
+                  </div>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
+                    ret.status === "TO_BE_RETURNED"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-green-100 text-green-800"
+                  }`}>
+                    {CLIENT_RETURN_STATUS_LABELS[ret.status]}
+                  </span>
+                </div>
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  {Number(ret.quantity)} {UOM_LABELS[ret.item.unitOfMeasure] || ret.item.unitOfMeasure}
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  {ret.job && (
+                    <div>
+                      <span className="text-gray-400 text-xs">Job</span>
+                      <div className="font-mono text-xs text-gray-700">{ret.job.projectId}</div>
+                    </div>
+                  )}
+                  {ret.job?.client && (
+                    <div>
+                      <span className="text-gray-400 text-xs">Client</span>
+                      <div className="text-gray-700">{ret.job.client}</div>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-gray-400 text-xs">Location</span>
+                    <div className="text-gray-700">{ret.location.name}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs">Date</span>
+                    <div className="text-gray-700 text-xs">
+                      {ret.status === "RETURNED" && ret.returnedAt
+                        ? new Date(ret.returnedAt).toLocaleDateString()
+                        : new Date(ret.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+                {statusFilter !== "RETURNED" && ret.status === "TO_BE_RETURNED" && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex gap-3">
+                    <button
+                      onClick={() => setConfirmAction({ id: ret.id, action: "MARK_RETURNED", item: ret })}
+                      disabled={processing === ret.id}
+                      className="flex-1 bg-green-50 text-green-700 border border-green-200 rounded-lg py-2 text-sm font-medium hover:bg-green-100 disabled:opacity-50"
+                    >
+                      {processing === ret.id ? "..." : "Mark Returned"}
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction({ id: ret.id, action: "RETURN_TO_STOCK", item: ret })}
+                      disabled={processing === ret.id}
+                      className="flex-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg py-2 text-sm font-medium hover:bg-blue-100 disabled:opacity-50"
+                    >
+                      {processing === ret.id ? "..." : "Back to Stock"}
+                    </button>
+                  </div>
                 )}
-              </tr>
-            </thead>
-            <tbody>
-              {returns.map((ret) => (
-                <tr key={ret.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-xs text-gray-500">{ret.item.code}</span>{" "}
-                    <span className="text-gray-700">{ret.item.description}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">
-                    {Number(ret.quantity)} {UOM_LABELS[ret.item.unitOfMeasure] || ret.item.unitOfMeasure}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {ret.job ? (
-                      <span className="font-mono text-xs">{ret.job.projectId}</span>
-                    ) : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {ret.job?.client || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{ret.location.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                      ret.status === "TO_BE_RETURNED"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-green-100 text-green-800"
-                    }`}>
-                      {CLIENT_RETURN_STATUS_LABELS[ret.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">
-                    {ret.status === "RETURNED" && ret.returnedAt
-                      ? new Date(ret.returnedAt).toLocaleDateString()
-                      : new Date(ret.createdAt).toLocaleDateString()}
-                  </td>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto hidden md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Item</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700">Qty</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Job</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Date</th>
                   {statusFilter !== "RETURNED" && (
-                    <td className="px-4 py-3 text-right">
-                      {ret.status === "TO_BE_RETURNED" && (
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => setConfirmAction({ id: ret.id, action: "MARK_RETURNED", item: ret })}
-                            disabled={processing === ret.id}
-                            className="text-green-600 hover:text-green-800 text-xs font-medium disabled:opacity-50"
-                          >
-                            {processing === ret.id ? "..." : "Mark Returned"}
-                          </button>
-                          <button
-                            onClick={() => setConfirmAction({ id: ret.id, action: "RETURN_TO_STOCK", item: ret })}
-                            disabled={processing === ret.id}
-                            className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:opacity-50"
-                          >
-                            {processing === ret.id ? "..." : "Back to Stock"}
-                          </button>
-                        </div>
-                      )}
-                    </td>
+                    <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
                   )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {returns.map((ret) => (
+                  <tr key={ret.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-xs text-gray-500">{ret.item.code}</span>{" "}
+                      <span className="text-gray-700">{ret.item.description}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                      {Number(ret.quantity)} {UOM_LABELS[ret.item.unitOfMeasure] || ret.item.unitOfMeasure}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {ret.job ? (
+                        <span className="font-mono text-xs">{ret.job.projectId}</span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {ret.job?.client || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">{ret.location.name}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                        ret.status === "TO_BE_RETURNED"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-green-100 text-green-800"
+                      }`}>
+                        {CLIENT_RETURN_STATUS_LABELS[ret.status]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs">
+                      {ret.status === "RETURNED" && ret.returnedAt
+                        ? new Date(ret.returnedAt).toLocaleDateString()
+                        : new Date(ret.createdAt).toLocaleDateString()}
+                    </td>
+                    {statusFilter !== "RETURNED" && (
+                      <td className="px-4 py-3 text-right">
+                        {ret.status === "TO_BE_RETURNED" && (
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => setConfirmAction({ id: ret.id, action: "MARK_RETURNED", item: ret })}
+                              disabled={processing === ret.id}
+                              className="text-green-600 hover:text-green-800 text-xs font-medium disabled:opacity-50"
+                            >
+                              {processing === ret.id ? "..." : "Mark Returned"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmAction({ id: ret.id, action: "RETURN_TO_STOCK", item: ret })}
+                              disabled={processing === ret.id}
+                              className="text-blue-600 hover:text-blue-800 text-xs font-medium disabled:opacity-50"
+                            >
+                              {processing === ret.id ? "..." : "Back to Stock"}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Confirm Action Modal */}
