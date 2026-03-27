@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
 import { UOM_LABELS } from "@/modules/materials/constants";
@@ -52,6 +52,7 @@ interface JobDetailForArchive {
 }
 
 export default function JobsPage() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
@@ -250,12 +251,12 @@ export default function JobsPage() {
           {/* Mobile card layout */}
           <div className="space-y-3 md:hidden">
             {jobs.map((job) => (
-              <div key={job.id} className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden">
+              <div key={job.id} onClick={() => router.push(`/materials/jobs/${job.id}`)} className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden cursor-pointer hover:bg-blue-50 transition-colors">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="min-w-0">
-                    <Link href={`/materials/jobs/${job.id}`} className="font-mono text-blue-600 hover:text-blue-800 font-medium text-sm break-all">
+                    <span className="font-mono text-blue-600 font-medium text-sm break-all">
                       {job.projectId}
-                    </Link>
+                    </span>
                     <div className="text-sm font-medium text-gray-900 mt-0.5 truncate">{job.name}</div>
                   </div>
                   <div className="text-right shrink-0">
@@ -287,7 +288,7 @@ export default function JobsPage() {
                   )}
                 </div>
                 {!showArchived && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => openArchiveModal(job)}
                       disabled={archiving === job.id}
@@ -317,11 +318,11 @@ export default function JobsPage() {
               </thead>
               <tbody>
                 {jobs.map((job) => (
-                  <tr key={job.id} className="border-b border-gray-100 hover:bg-blue-50">
+                  <tr key={job.id} onClick={() => router.push(`/materials/jobs/${job.id}`)} className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer">
                     <td className="px-4 py-3">
-                      <Link href={`/materials/jobs/${job.id}`} className="font-mono text-blue-600 hover:text-blue-800 font-medium">
+                      <span className="font-mono text-blue-600 font-medium">
                         {job.projectId}
-                      </Link>
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-gray-700">{job.name}</td>
                     <td className="px-4 py-3 text-gray-500">{job.client}</td>
@@ -329,7 +330,7 @@ export default function JobsPage() {
                     <td className="px-4 py-3 text-gray-500">{job.contact}</td>
                     <td className="px-4 py-3 text-right text-gray-500">{job._count.movements}</td>
                     {!showArchived && (
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => openArchiveModal(job)}
                           disabled={archiving === job.id}
