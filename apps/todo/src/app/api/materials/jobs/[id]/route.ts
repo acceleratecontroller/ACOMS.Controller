@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, requireAdmin } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { withPrismaError } from "@/lib/api-helpers";
-import { audit } from "@/lib/audit";
 
 export async function GET(
   _request: NextRequest,
@@ -85,51 +84,4 @@ export async function GET(
   });
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { session, error: authErr } = await requireAdmin();
-  if (authErr) return authErr;
-
-  const { id } = await params;
-
-  // Check job exists
-  const { result: job, error: fetchErr } = await withPrismaError("Failed to fetch job", () =>
-    prisma.job.findUniqueOrThrow({
-      where: { id },
-      include: { _count: { select: { materials: true } } },
-    }),
-  );
-  if (fetchErr) return fetchErr;
-
-  // Prevent archiving if materials are still assigned
-  if (job._count.materials > 0) {
-    return NextResponse.json(
-      { error: "Remove all materials from this job before archiving" },
-      { status: 400 },
-    );
-  }
-
-  const { result: archived, error } = await withPrismaError("Failed to archive job", () =>
-    prisma.job.update({
-      where: { id },
-      data: {
-        isArchived: true,
-        archivedAt: new Date(),
-        archivedById: session.user.id,
-      },
-    }),
-  );
-  if (error) return error;
-
-  audit({
-    entityType: "Job",
-    entityId: archived.id,
-    action: "ARCHIVE",
-    entityLabel: `${archived.projectId} — ${archived.name}`,
-    performedById: session.user.id,
-  });
-
-  return NextResponse.json({ success: true });
-}
+// Archive is now handled by POST /api/materials/jobs/[id]/archive

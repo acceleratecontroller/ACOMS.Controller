@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
+import { UOM_LABELS } from "@/modules/materials/constants";
 
 interface Job {
   id: string;
@@ -18,6 +19,38 @@ interface Job {
 
 interface Location { id: string; name: string }
 
+interface JobMaterialSummary {
+  itemId: string;
+  code: string;
+  description: string;
+  unitOfMeasure: string;
+  fromStockQty: number;
+  receivedQty: number;
+  totalQty: number;
+}
+
+interface JobDetailForArchive {
+  id: string;
+  projectId: string;
+  name: string;
+  client: string;
+  location: { name: string } | null;
+  materials: {
+    itemId: string;
+    fromStockQty: number;
+    receivedQty: number;
+    item: { code: string; description: string; unitOfMeasure: string };
+  }[];
+  itemSummary: {
+    itemId: string;
+    code: string;
+    description: string;
+    unitOfMeasure: string;
+    received: number;
+    alreadyInRequirements: boolean;
+  }[];
+}
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -29,6 +62,13 @@ export default function JobsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
+
+  // Archive disposition modal state
+  const [archiveJob, setArchiveJob] = useState<Job | null>(null);
+  const [archiveDetail, setArchiveDetail] = useState<JobDetailForArchive | null>(null);
+  const [archiveMaterials, setArchiveMaterials] = useState<JobMaterialSummary[]>([]);
+  const [archiveLoading, setArchiveLoading] = useState(false);
+  const [disposition, setDisposition] = useState<"RETURN_TO_STOCK" | "RETURN_TO_CLIENT">("RETURN_TO_STOCK");
 
   useEffect(() => {
     fetch("/api/materials/locations").then((r) => r.json()).then(setLocations);
@@ -71,13 +111,80 @@ export default function JobsPage() {
     }
   }
 
-  async function handleArchive(job: Job) {
-    if (!confirm(`Archive job "${job.projectId} — ${job.name}"?\n\nAll materials must be removed from the job first.`)) return;
-    setArchiving(job.id);
+  async function openArchiveModal(job: Job) {
+    setArchiveJob(job);
+    setArchiveError(null);
+    setArchiveLoading(true);
+    setDisposition("RETURN_TO_STOCK");
+
+    // Fetch full job detail to get materials summary
+    const res = await fetch(`/api/materials/jobs/${job.id}`);
+    if (!res.ok) {
+      setArchiveError("Failed to load job details");
+      setArchiveLoading(false);
+      return;
+    }
+
+    const detail: JobDetailForArchive = await res.json();
+    setArchiveDetail(detail);
+
+    // Build combined materials list
+    const materialMap = new Map<string, JobMaterialSummary>();
+
+    // Add materials from requirements
+    for (const mat of detail.materials) {
+      const fromStockQty = mat.fromStockQty || 0;
+      const receivedQty = mat.receivedQty || 0;
+      materialMap.set(mat.itemId, {
+        itemId: mat.itemId,
+        code: mat.item.code,
+        description: mat.item.description,
+        unitOfMeasure: mat.item.unitOfMeasure,
+        fromStockQty,
+        receivedQty,
+        totalQty: fromStockQty + receivedQty,
+      });
+    }
+
+    // Add received items not in requirements
+    for (const item of detail.itemSummary) {
+      if (!item.alreadyInRequirements && item.received > 0) {
+        materialMap.set(item.itemId, {
+          itemId: item.itemId,
+          code: item.code,
+          description: item.description,
+          unitOfMeasure: item.unitOfMeasure,
+          fromStockQty: 0,
+          receivedQty: item.received,
+          totalQty: item.received,
+        });
+      }
+    }
+
+    setArchiveMaterials(Array.from(materialMap.values()).filter((m) => m.totalQty > 0));
+    setArchiveLoading(false);
+  }
+
+  function closeArchiveModal() {
+    setArchiveJob(null);
+    setArchiveDetail(null);
+    setArchiveMaterials([]);
+    setArchiveError(null);
+  }
+
+  async function handleArchive() {
+    if (!archiveJob) return;
+    setArchiving(archiveJob.id);
     setArchiveError(null);
 
-    const res = await fetch(`/api/materials/jobs/${job.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/materials/jobs/${archiveJob.id}/archive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ disposition }),
+    });
+
     if (res.ok) {
+      closeArchiveModal();
       fetchJobs();
     } else {
       const data = await res.json();
@@ -115,7 +222,7 @@ export default function JobsPage() {
         )}
       </div>
 
-      {archiveError && (
+      {archiveError && !archiveJob && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{archiveError}</div>
       )}
 
@@ -157,7 +264,7 @@ export default function JobsPage() {
                   {!showArchived && (
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => handleArchive(job)}
+                        onClick={() => openArchiveModal(job)}
                         disabled={archiving === job.id}
                         className="text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
                       >
@@ -172,6 +279,7 @@ export default function JobsPage() {
         </div>
       )}
 
+      {/* Create Job Modal */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create Job">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -207,6 +315,122 @@ export default function JobsPage() {
             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Create</button>
           </div>
         </form>
+      </Modal>
+
+      {/* Archive Disposition Modal */}
+      <Modal isOpen={!!archiveJob} onClose={closeArchiveModal} title={`Archive Job — ${archiveJob?.projectId}`} wide>
+        {archiveLoading ? (
+          <p className="text-gray-500 text-sm py-4">Loading job details...</p>
+        ) : archiveDetail && (
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              <span className="font-medium text-gray-900">{archiveDetail.name}</span>
+              {" — "}{archiveDetail.client}
+              {archiveDetail.location && <span> at <span className="font-medium">{archiveDetail.location.name}</span></span>}
+            </div>
+
+            {archiveMaterials.length > 0 ? (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">Materials on this job</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium text-gray-700">Item</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-700">From Stock</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-700">Received</th>
+                          <th className="text-right px-3 py-2 font-medium text-gray-700">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {archiveMaterials.map((mat) => (
+                          <tr key={mat.itemId} className="border-b border-gray-100">
+                            <td className="px-3 py-2">
+                              <span className="font-mono text-xs text-gray-500">{mat.code}</span>{" "}
+                              <span className="text-gray-700">{mat.description}</span>
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-500">
+                              {mat.fromStockQty > 0 ? `${mat.fromStockQty} ${UOM_LABELS[mat.unitOfMeasure] || mat.unitOfMeasure}` : "—"}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-500">
+                              {mat.receivedQty > 0 ? `${mat.receivedQty} ${UOM_LABELS[mat.unitOfMeasure] || mat.unitOfMeasure}` : "—"}
+                            </td>
+                            <td className="px-3 py-2 text-right font-medium text-gray-900">
+                              {mat.totalQty} {UOM_LABELS[mat.unitOfMeasure] || mat.unitOfMeasure}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">What should happen to these materials?</h3>
+                  <div className="space-y-2">
+                    <label
+                      className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer ${disposition === "RETURN_TO_STOCK" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="disposition"
+                        value="RETURN_TO_STOCK"
+                        checked={disposition === "RETURN_TO_STOCK"}
+                        onChange={() => setDisposition("RETURN_TO_STOCK")}
+                        className="mt-0.5"
+                      />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">Add back to stock</div>
+                        <div className="text-xs text-gray-500">Materials will be returned as unallocated stock at {archiveDetail.location?.name || "the current location"}</div>
+                      </div>
+                    </label>
+                    <label
+                      className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer ${disposition === "RETURN_TO_CLIENT" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="disposition"
+                        value="RETURN_TO_CLIENT"
+                        checked={disposition === "RETURN_TO_CLIENT"}
+                        onChange={() => setDisposition("RETURN_TO_CLIENT")}
+                        className="mt-0.5"
+                      />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">Return to client</div>
+                        <div className="text-xs text-gray-500">Materials will be tracked in the Returns queue for return to the client</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 py-2">No materials on this job. It will be archived directly.</p>
+            )}
+
+            {archiveError && (
+              <div className="p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{archiveError}</div>
+            )}
+
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                type="button"
+                onClick={closeArchiveModal}
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleArchive}
+                disabled={archiving === archiveJob?.id}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+              >
+                {archiving === archiveJob?.id ? "Archiving..." : `Archive Job${archiveMaterials.length > 0 ? ` & ${disposition === "RETURN_TO_STOCK" ? "Return to Stock" : "Queue for Client Return"}` : ""}`}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

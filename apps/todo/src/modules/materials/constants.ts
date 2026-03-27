@@ -73,3 +73,8 @@ export const STOCKTAKE_STATUS_OPTIONS: SelectOption[] = [
   { value: "DRAFT", label: "Draft" },
   { value: "COMPLETED", label: "Completed" },
 ];
+
+export const CLIENT_RETURN_STATUS_LABELS: Record<string, string> = {
+  TO_BE_RETURNED: "To Be Returned",
+  RETURNED: "Returned",
+};

@@ -170,6 +170,19 @@ export const bulkCreateJobMaterialSchema = z.object({
   })).min(1, "At least one item is required"),
 });
 
+// ─── Job Archive Disposition ────────────────────────────
+
+export const archiveJobSchema = z.object({
+  disposition: z.enum(["RETURN_TO_STOCK", "RETURN_TO_CLIENT"]),
+});
+
+// ─── Client Return Schemas ─────────────────────────────
+
+export const updateClientReturnSchema = z.object({
+  action: z.enum(["MARK_RETURNED", "RETURN_TO_STOCK"]),
+  notes: optionalString,
+});
+
 // ─── Supplier Schemas ───────────────────────────────────
 
 export const createSupplierSchema = z.object({

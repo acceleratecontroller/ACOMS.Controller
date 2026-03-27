@@ -26,6 +26,7 @@ export default function StockPage() {
   const [loading, setLoading] = useState(true);
   const [locationFilter, setLocationFilter] = useState("");
   const [belowMinOnly, setBelowMinOnly] = useState(false);
+  const [hideZero, setHideZero] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -44,12 +45,15 @@ export default function StockPage() {
 
   useEffect(() => { fetchStock(); }, [fetchStock]);
 
-  const filtered = search
-    ? stock.filter((s) =>
-        s.itemCode.toLowerCase().includes(search.toLowerCase()) ||
-        s.itemDescription.toLowerCase().includes(search.toLowerCase())
-      )
-    : stock;
+  let filtered = stock;
+  if (hideZero) filtered = filtered.filter((s) => s.currentStock > 0);
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter((s) =>
+      s.itemCode.toLowerCase().includes(q) ||
+      s.itemDescription.toLowerCase().includes(q)
+    );
+  }
 
   return (
     <div>
@@ -71,6 +75,10 @@ export default function StockPage() {
           <option value="">All locations</option>
           {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          <input type="checkbox" checked={hideZero} onChange={(e) => setHideZero(e.target.checked)} />
+          Hide zero stock
+        </label>
         <label className="flex items-center gap-2 text-sm text-gray-600">
           <input type="checkbox" checked={belowMinOnly} onChange={(e) => setBelowMinOnly(e.target.checked)} />
           Below minimum only
