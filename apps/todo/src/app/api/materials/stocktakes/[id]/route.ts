@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { updateStocktakeLineSchema } from "@/modules/materials/validation";
+import { audit } from "@/lib/audit";
 
 export async function GET(
   _request: NextRequest,
@@ -102,4 +104,45 @@ export async function PUT(
   if (error) return error;
 
   return NextResponse.json(updated);
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const { session, error: authErr } = await requireAdmin();
+  if (authErr) return authErr;
+
+  const { result: stocktake, error: fetchErr } = await withPrismaError("Failed to fetch stocktake", () =>
+    prisma.stocktake.findUniqueOrThrow({
+      where: { id: params.id },
+      include: { location: { select: { name: true } } },
+    }),
+  );
+  if (fetchErr) return fetchErr;
+
+  if (stocktake.status === "COMPLETED") {
+    return NextResponse.json(
+      { error: "Cannot delete a completed stocktake" },
+      { status: 400 },
+    );
+  }
+
+  const { error } = await withPrismaError("Failed to delete stocktake", () =>
+    prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.stocktakeLine.deleteMany({ where: { stocktakeId: params.id } });
+      await tx.stocktake.delete({ where: { id: params.id } });
+    }),
+  );
+  if (error) return error;
+
+  audit({
+    entityType: "Stocktake",
+    entityId: params.id,
+    action: "DELETE",
+    entityLabel: `Stocktake at ${stocktake.location.name}`,
+    performedById: session.user.id,
+  });
+
+  return NextResponse.json({ success: true });
 }

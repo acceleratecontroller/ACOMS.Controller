@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/PageHeader";
@@ -27,8 +27,12 @@ export default function StocktakesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ locationId: "", notes: "" });
   const [creating, setCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Stocktake | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setLoading(true);
     Promise.all([
       fetch("/api/materials/stocktakes").then((r) => r.json()),
       fetch("/api/materials/locations").then((r) => r.json()),
@@ -38,6 +42,8 @@ export default function StocktakesPage() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +60,22 @@ export default function StocktakesPage() {
     setCreating(false);
   }
 
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setError(null);
+
+    const res = await fetch(`/api/materials/stocktakes/${deleteTarget.id}`, { method: "DELETE" });
+    if (res.ok) {
+      setDeleteTarget(null);
+      fetchData();
+    } else {
+      const data = await res.json();
+      setError(data.error || "Failed to delete stocktake");
+    }
+    setDeleting(false);
+  }
+
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" });
   }
@@ -68,6 +90,10 @@ export default function StocktakesPage() {
           New Stocktake
         </button>
       </div>
+
+      {error && !deleteTarget && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+      )}
 
       {loading ? (
         <p className="text-gray-500 text-sm">Loading...</p>
@@ -99,9 +125,19 @@ export default function StocktakesPage() {
                   <td className="px-4 py-3 text-gray-500">{formatDate(st.createdAt)}</td>
                   <td className="px-4 py-3 text-gray-500">{st.completedAt ? formatDate(st.completedAt) : "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
-                      {st.status === "DRAFT" ? "Count" : "View"}
-                    </Link>
+                    <div className="flex gap-3 justify-end">
+                      <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800 text-sm">
+                        {st.status === "DRAFT" ? "Count" : "View"}
+                      </Link>
+                      {st.status === "DRAFT" && (
+                        <button
+                          onClick={() => setDeleteTarget(st)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -110,6 +146,7 @@ export default function StocktakesPage() {
         </div>
       )}
 
+      {/* Create Stocktake Modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New Stocktake">
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
@@ -130,6 +167,47 @@ export default function StocktakesPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Stocktake">
+        {deleteTarget && (
+          <div className="space-y-4">
+            <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+              <div className="text-sm">
+                <span className="font-medium text-gray-900">{deleteTarget.location.name}</span>
+                <span className="text-gray-500"> — {deleteTarget._count.lines} items</span>
+              </div>
+              <div className="text-xs text-gray-400 mt-1">Created {formatDate(deleteTarget.createdAt)}</div>
+            </div>
+
+            <p className="text-sm text-gray-600">
+              This will permanently delete this draft stocktake and all its line items. No stock adjustments will be made.
+            </p>
+
+            {error && (
+              <div className="p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{error}</div>
+            )}
+
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete Stocktake"}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

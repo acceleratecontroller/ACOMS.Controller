@@ -9,6 +9,7 @@ const primaryLinks = [
   { href: "/materials/jobs", label: "Jobs" },
   { href: "/materials/movements/receive", label: "Receive Stock" },
   { href: "/materials/client-returns", label: "Returns" },
+  { href: "/materials/stocktakes", label: "Stocktakes" },
 ];
 
 const otherLinks = [
@@ -20,7 +21,6 @@ const otherLinks = [
   { href: "/materials/movements/transfer", label: "Transfer" },
   { href: "/materials/stock", label: "Stock Levels" },
   { href: "/materials/movements", label: "Movement History" },
-  { href: "/materials/stocktakes", label: "Stocktakes" },
 ];
 
 export default function MaterialsLayout({
