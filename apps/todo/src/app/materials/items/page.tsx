@@ -39,6 +39,7 @@ export default function ItemsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Item | null>(null);
+  const [locked, setLocked] = useState(true);
 
   const [form, setForm] = useState({
     code: "",
@@ -173,9 +174,26 @@ export default function ItemsPage() {
           Archived
         </label>
         <div className="flex-1" />
-        <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
-          Add Item
+        <button
+          onClick={() => setLocked(!locked)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+            locked
+              ? "border-gray-300 text-gray-500 hover:bg-gray-50"
+              : "border-amber-300 bg-amber-50 text-amber-700"
+          }`}
+        >
+          {locked ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>
+          )}
+          {locked ? "Locked" : "Unlocked"}
         </button>
+        {!locked && (
+          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+            Add Item
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -194,7 +212,7 @@ export default function ItemsPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Supplier</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Min Stock</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+                {!locked && <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -215,16 +233,18 @@ export default function ItemsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-500">{item.minimumStockLevel ?? "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => openEdit(item)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">
-                      Edit
-                    </button>
-                    {!item.isArchived && (
-                      <button onClick={() => setArchiveTarget(item)} className="text-red-600 hover:text-red-800 text-sm">
-                        Archive
+                  {!locked && (
+                    <td className="px-4 py-3 text-right">
+                      <button onClick={() => openEdit(item)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">
+                        Edit
                       </button>
-                    )}
-                  </td>
+                      {!item.isArchived && (
+                        <button onClick={() => setArchiveTarget(item)} className="text-red-600 hover:text-red-800 text-sm">
+                          Archive
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

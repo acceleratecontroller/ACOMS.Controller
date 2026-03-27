@@ -8,6 +8,7 @@ const primaryLinks = [
   { href: "/materials/items", label: "Items" },
   { href: "/materials/jobs", label: "Jobs" },
   { href: "/materials/movements/receive", label: "Receive Stock" },
+  { href: "/materials/stock", label: "Stock Levels" },
   { href: "/materials/client-returns", label: "Returns" },
   { href: "/materials/stocktakes", label: "Stocktakes" },
 ];
@@ -19,7 +20,6 @@ const otherLinks = [
   { href: "/materials/items/import", label: "Import Items" },
   { href: "/materials/movements/return-to-supplier", label: "Return to Supplier" },
   { href: "/materials/movements/transfer", label: "Transfer" },
-  { href: "/materials/stock", label: "Stock Levels" },
   { href: "/materials/movements", label: "Movement History" },
 ];
 
