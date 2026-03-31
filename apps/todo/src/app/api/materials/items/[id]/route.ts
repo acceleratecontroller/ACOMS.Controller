@@ -7,13 +7,14 @@ import { updateItemSchema } from "@/modules/materials/validation";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { error: authErr } = await requireAuth();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: item, error } = await withPrismaError("Failed to fetch item", () =>
-    prisma.item.findUniqueOrThrow({ where: { id: params.id } }),
+    prisma.item.findUniqueOrThrow({ where: { id } }),
   );
   if (error) return error;
 
@@ -22,11 +23,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;
 
@@ -39,7 +41,7 @@ export async function PUT(
   }
 
   const { result: before, error: fetchErr } = await withPrismaError("Failed to fetch item", () =>
-    prisma.item.findUniqueOrThrow({ where: { id: params.id } }),
+    prisma.item.findUniqueOrThrow({ where: { id: id } }),
   );
   if (fetchErr) return fetchErr;
 
@@ -59,7 +61,7 @@ export async function PUT(
 
   const { result: item, error } = await withPrismaError("Failed to update item", () =>
     prisma.item.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
     }),
   );
@@ -85,14 +87,15 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: item, error } = await withPrismaError("Failed to archive item", () =>
     prisma.item.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         isArchived: true,
         archivedAt: new Date(),

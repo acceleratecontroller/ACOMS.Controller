@@ -19,14 +19,15 @@ const UOM_LABELS: Record<string, string> = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { error: authErr } = await requireAuth();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: stocktake, error } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({
-      where: { id: params.id },
+      where: { id },
       include: {
         location: { select: { name: true } },
         lines: {

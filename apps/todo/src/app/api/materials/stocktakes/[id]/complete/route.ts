@@ -7,14 +7,15 @@ import { audit } from "@/lib/audit";
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: stocktake, error: fetchErr } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({
-      where: { id: params.id },
+      where: { id },
       include: {
         location: { select: { name: true } },
         lines: {
@@ -69,7 +70,7 @@ export async function POST(
         }
 
         const completed = await tx.stocktake.update({
-          where: { id: params.id },
+          where: { id },
           data: {
             status: "COMPLETED",
             completedAt: new Date(),

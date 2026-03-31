@@ -8,14 +8,15 @@ import { audit } from "@/lib/audit";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { error: authErr } = await requireAuth();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: stocktake, error } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({
-      where: { id: params.id },
+      where: { id },
       include: {
         location: { select: { name: true } },
         lines: {
@@ -35,13 +36,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: stocktake, error: fetchErr } = await withPrismaError("Failed to fetch stocktake", () =>
-    prisma.stocktake.findUniqueOrThrow({ where: { id: params.id } }),
+    prisma.stocktake.findUniqueOrThrow({ where: { id } }),
   );
   if (fetchErr) return fetchErr;
 
@@ -89,7 +91,7 @@ export async function PUT(
 
   const { result: updated, error } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({
-      where: { id: params.id },
+      where: { id },
       include: {
         location: { select: { name: true } },
         lines: {
@@ -108,14 +110,15 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: stocktake, error: fetchErr } = await withPrismaError("Failed to fetch stocktake", () =>
     prisma.stocktake.findUniqueOrThrow({
-      where: { id: params.id },
+      where: { id },
       include: { location: { select: { name: true } } },
     }),
   );
@@ -130,15 +133,15 @@ export async function DELETE(
 
   const { error } = await withPrismaError("Failed to delete stocktake", () =>
     prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      await tx.stocktakeLine.deleteMany({ where: { stocktakeId: params.id } });
-      await tx.stocktake.delete({ where: { id: params.id } });
+      await tx.stocktakeLine.deleteMany({ where: { stocktakeId: id } });
+      await tx.stocktake.delete({ where: { id } });
     }),
   );
   if (error) return error;
 
   audit({
     entityType: "Stocktake",
-    entityId: params.id,
+    entityId: id,
     action: "DELETE",
     entityLabel: `Stocktake at ${stocktake.location.name}`,
     performedById: session.user.id,

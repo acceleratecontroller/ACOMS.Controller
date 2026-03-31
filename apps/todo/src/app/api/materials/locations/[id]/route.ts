@@ -7,13 +7,14 @@ import { updateLocationSchema } from "@/modules/materials/validation";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { error: authErr } = await requireAuth();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: location, error } = await withPrismaError("Failed to fetch location", () =>
-    prisma.location.findUniqueOrThrow({ where: { id: params.id } }),
+    prisma.location.findUniqueOrThrow({ where: { id } }),
   );
   if (error) return error;
 
@@ -22,11 +23,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;
 
@@ -39,13 +41,13 @@ export async function PUT(
   }
 
   const { result: before, error: fetchErr } = await withPrismaError("Failed to fetch location", () =>
-    prisma.location.findUniqueOrThrow({ where: { id: params.id } }),
+    prisma.location.findUniqueOrThrow({ where: { id } }),
   );
   if (fetchErr) return fetchErr;
 
   const { result: location, error } = await withPrismaError("Failed to update location", () =>
     prisma.location.update({
-      where: { id: params.id },
+      where: { id },
       data: parsed.data,
     }),
   );
@@ -71,14 +73,15 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: location, error } = await withPrismaError("Failed to archive location", () =>
     prisma.location.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         isArchived: true,
         archivedAt: new Date(),

@@ -8,14 +8,15 @@ import { updatePickListSchema } from "@/modules/materials/validation";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { error: authErr } = await requireAuth();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: pickList, error } = await withPrismaError("Failed to fetch pick list", () =>
     prisma.pickList.findUniqueOrThrow({
-      where: { id: params.id },
+      where: { id },
       include: {
         items: {
           include: {
@@ -32,11 +33,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { data: body, error: parseErr } = await parseBody(request);
   if (parseErr) return parseErr;
 
@@ -52,11 +54,11 @@ export async function PUT(
   const { result: pickList, error } = await withPrismaError("Failed to update pick list", () =>
     prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (parsed.data.items) {
-        await tx.pickListItem.deleteMany({ where: { pickListId: params.id } });
+        await tx.pickListItem.deleteMany({ where: { pickListId: id } });
       }
 
       return tx.pickList.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           name: parsed.data.name,
           description: parsed.data.description,
@@ -94,14 +96,15 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
+  const { id } = await params;
   const { result: pickList, error } = await withPrismaError("Failed to archive pick list", () =>
     prisma.pickList.update({
-      where: { id: params.id },
+      where: { id },
       data: { isArchived: true },
     }),
   );
