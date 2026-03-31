@@ -1,24 +1,23 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { getAssignableEmployees } from "@/lib/acoms-os";
 
 /**
- * GET /api/assignees — List available assignees.
- *
- * Placeholder endpoint. In standalone mode, returns a default set of
- * assignees. When ACOMS.OS integrates, this will delegate to the
- * AssigneeAdapter to query the Employee table.
- *
- * The frontend uses this to populate owner/assignee dropdowns.
+ * GET /api/assignees — List available assignees from ACOMS.OS.
  */
 export async function GET() {
   const { error: authErr } = await requireAuth();
   if (authErr) return authErr;
 
-  // TODO: Replace with real assignee data from adapter
-  // For standalone development, return placeholder assignees
-  const assignees = [
-    { id: "user-1", firstName: "Admin", lastName: "User", employeeNumber: "EMP001" },
-  ];
+  const employees = await getAssignableEmployees();
+
+  const assignees = employees.map((emp) => ({
+    id: emp.id,
+    firstName: emp.firstName,
+    lastName: emp.lastName,
+    employeeNumber: emp.employeeNumber,
+    identityId: emp.identityId,
+  }));
 
   return NextResponse.json(assignees);
 }

@@ -1,61 +1,98 @@
-/**
- * Auth placeholder — standalone task app.
- *
- * In production, replace with NextAuth, Clerk, or your preferred auth.
- * For now, returns a default admin session so the app is functional.
- *
- * ACOMS.OS integration: when ready, this will delegate to ACOMS.OS auth
- * via an adapter or shared auth package.
- */
+// src/lib/auth.ts — OIDC provider pointing to ACOMS.Auth
 
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import type { OAuthConfig } from "next-auth/providers";
+import "./auth-types";
 
-export interface SessionUser {
-  id: string;
-  role: "ADMIN" | "STAFF";
-  employeeId?: string;
+interface AcomsAuthProfile {
+  sub: string;
+  email: string;
+  name: string;
+  role: string;
 }
 
-export interface Session {
-  user: SessionUser;
-}
+const AcomsAuthProvider: OAuthConfig<AcomsAuthProfile> = {
+  id: "acoms-auth",
+  name: "ACOMS.Auth",
+  type: "oidc",
+  issuer: process.env.ACOMS_AUTH_URL,
+  wellKnown: `${process.env.ACOMS_AUTH_URL}/.well-known/openid-configuration`,
+  clientId: process.env.ACOMS_AUTH_CLIENT_ID!,
+  clientSecret: process.env.ACOMS_AUTH_CLIENT_SECRET!,
+  authorization: {
+    url: `${process.env.ACOMS_AUTH_URL}/oauth/authorize`,
+    params: { scope: "openid profile email roles" },
+  },
+  token: `${process.env.ACOMS_AUTH_URL}/api/oauth/token`,
+  userinfo: `${process.env.ACOMS_AUTH_URL}/api/oauth/userinfo`,
+  checks: ["none"],
+  profile(profile) {
+    return {
+      id: profile.sub,
+      email: profile.email,
+      name: profile.name,
+      role: profile.role,
+    };
+  },
+};
 
-/**
- * Get the current session. Returns a default admin session.
- * Replace this with real auth when integrating with ACOMS.OS.
- */
-export async function auth(): Promise<Session | null> {
-  // TODO: Replace with real auth (NextAuth, Clerk, etc.)
-  // For standalone development, return a default admin user.
-  return {
-    user: {
-      id: "system",
-      role: "ADMIN",
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers: [AcomsAuthProvider],
+  callbacks: {
+    async jwt({ token, profile }) {
+      if (profile) {
+        token.role = profile.role as string;
+        token.identityId = profile.sub as string;
+      }
+      return token;
     },
-  };
-}
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string;
+        session.user.identityId = token.identityId as string;
+      }
+      return session;
+    },
+  },
+  session: { strategy: "jwt" },
+});
 
-type AuthSuccess = { session: Session; error?: undefined };
-type AuthFailure = { session?: undefined; error: NextResponse };
+export type SessionUser = {
+  id: string;
+  role: string;
+  identityId: string;
+  email?: string;
+  name?: string;
+};
+
+export type Session = {
+  user: SessionUser;
+};
 
 /**
  * Require an authenticated session. Returns 401 if not authenticated.
  */
-export async function requireAuth(): Promise<AuthSuccess | AuthFailure> {
+export async function requireAuth() {
   const session = await auth();
-  if (!session) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  if (!session?.user) {
+    const { NextResponse } = await import("next/server");
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
   }
-  return { session };
+  return { session } as const;
 }
 
 /**
- * Require an authenticated ADMIN session. Returns 403 if not admin, 401 if not authenticated.
+ * Require an authenticated ADMIN session.
  */
-export async function requireAdmin(): Promise<AuthSuccess | AuthFailure> {
+export async function requireAdmin() {
   const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  if (!session?.user) {
+    const { NextResponse } = await import("next/server");
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
   }
-  return { session };
+  if (session.user.role !== "ADMIN") {
+    const { NextResponse } = await import("next/server");
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) } as const;
+  }
+  return { session } as const;
 }
