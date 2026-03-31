@@ -13,9 +13,9 @@ export async function GET() {
 
   const { today, tomorrow } = getDateBoundaries();
 
-  // Filter tasks to logged-in employee if available
-  const employeeId = session.user.employeeId ?? null;
-  const taskAssigneeFilter = employeeId ? { assigneeId: employeeId } : {};
+  // Filter tasks to logged-in user if available
+  const identityId = session.user.identityId ?? null;
+  const taskAssigneeFilter = identityId ? { assigneeId: identityId } : {};
 
   const [
     activeTaskCount,
