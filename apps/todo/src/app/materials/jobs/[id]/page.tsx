@@ -62,6 +62,10 @@ interface JobDetail {
   contact: string;
   locationId: string | null;
   location: { id: string; name: string } | null;
+  wipProjectId: string | null;
+  stage: string | null;
+  siteAddress: string | null;
+  depotName: string | null;
   summary: { totalReceived: number; movementCount: number };
   materials: JobMaterial[];
   itemSummary: ItemSummary[];
@@ -376,8 +380,11 @@ export default function JobDetailPage() {
   }, [job?.locationId]);
 
   useEffect(() => {
-    fetchJob();
-  }, [fetchJob]);
+    // Sync WIP data first, then fetch the job detail
+    fetch(`/api/materials/jobs/${id}/sync`, { method: "POST" })
+      .catch(() => {})
+      .finally(() => fetchJob());
+  }, [id, fetchJob]);
 
   // Set of item IDs already in material requirements
   const existingMaterialItemIds = new Set(job?.materials.map((m) => m.itemId) || []);
@@ -494,7 +501,7 @@ export default function JobDetailPage() {
 
       <PageHeader
         title={`${job.projectId} — ${job.name}`}
-        description={`Client: ${job.client} | Contact: ${job.contact}${job.location ? ` | Location: ${job.location.name}` : ""}`}
+        description={`Client: ${job.client}${job.contact ? ` | Contact: ${job.contact}` : ""}${job.depotName ? ` | Depot: ${job.depotName}` : job.location ? ` | Location: ${job.location.name}` : ""}${job.stage ? ` | Stage: ${job.stage.replace(/_/g, " ")}` : ""}`}
       />
 
       {/* Summary cards */}

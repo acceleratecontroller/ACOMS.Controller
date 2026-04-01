@@ -14,10 +14,22 @@ interface Job {
   contact: string;
   createdAt: string;
   location: { id: string; name: string } | null;
+  wipProjectId: string | null;
+  stage: string | null;
+  depotName: string | null;
   _count: { movements: number; materials: number };
 }
 
-interface Location { id: string; name: string }
+interface WipProject {
+  id: string;
+  acomsNumber: number;
+  acomsNumberFormatted: string;
+  name: string;
+  stage: string;
+  clientName: string | null;
+  depotName: string | null;
+  contactName: string | null;
+}
 
 interface JobMaterialSummary {
   itemId: string;
@@ -54,14 +66,16 @@ interface JobDetailForArchive {
 export default function JobsPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [stockFilter, setStockFilter] = useState<"" | "true" | "false">("true");
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ projectId: "", name: "", client: "", contact: "", locationId: "" });
+  const [wipSearch, setWipSearch] = useState("");
+  const [wipProjects, setWipProjects] = useState<WipProject[]>([]);
+  const [wipLoading, setWipLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
@@ -72,8 +86,18 @@ export default function JobsPage() {
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [disposition, setDisposition] = useState<"RETURN_TO_STOCK" | "RETURN_TO_CLIENT">("RETURN_TO_STOCK");
 
+  const fetchWipProjects = useCallback(async (searchTerm?: string) => {
+    setWipLoading(true);
+    const params = new URLSearchParams();
+    if (searchTerm) params.set("search", searchTerm);
+    const res = await fetch(`/api/materials/wip-jobs?${params}`);
+    if (res.ok) setWipProjects(await res.json());
+    setWipLoading(false);
+  }, []);
+
   useEffect(() => {
-    fetch("/api/materials/locations").then((r) => r.json()).then(setLocations);
+    // Sync WIP-linked jobs with latest data on page load
+    fetch("/api/materials/jobs/sync", { method: "POST" }).catch(() => {});
   }, []);
 
   const fetchJobs = useCallback(async () => {
@@ -89,20 +113,22 @@ export default function JobsPage() {
 
   useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
-  function openCreate() {
-    setForm({ projectId: "", name: "", client: "", contact: "", locationId: "" });
+  function openLinkModal() {
+    setWipSearch("");
+    setWipProjects([]);
     setFormError(null);
     setShowModal(true);
+    fetchWipProjects();
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleLinkWipJob(wipProjectId: string) {
+    setLinking(true);
     setFormError(null);
 
-    const res = await fetch("/api/materials/jobs", {
+    const res = await fetch("/api/materials/wip-jobs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ wipProjectId }),
     });
 
     if (res.ok) {
@@ -110,8 +136,9 @@ export default function JobsPage() {
       fetchJobs();
     } else {
       const data = await res.json();
-      setFormError(data.error || "Failed to create job");
+      setFormError(data.error || "Failed to link WIP job");
     }
+    setLinking(false);
   }
 
   async function openArchiveModal(job: Job) {
@@ -228,8 +255,8 @@ export default function JobsPage() {
         </label>
         <div className="flex-1" />
         {!showArchived && (
-          <button onClick={openCreate} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full sm:w-auto">
-            Create Job
+          <button onClick={openLinkModal} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full sm:w-auto">
+            Link WIP Job
           </button>
         )}
       </div>
@@ -243,7 +270,7 @@ export default function JobsPage() {
       ) : jobs.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
           <p className="text-gray-500 text-sm">
-            {showArchived ? "No archived jobs." : "No jobs found. Create a job to start tracking materials against it."}
+            {showArchived ? "No archived jobs." : "No jobs found. Link a WIP job to start tracking materials against it."}
           </p>
         </div>
       ) : (
@@ -277,11 +304,17 @@ export default function JobsPage() {
                     <div className="text-gray-700 truncate">{job.client}</div>
                   </div>
                   <div className="min-w-0">
-                    <span className="text-gray-400 text-xs">Location</span>
-                    <div className="text-gray-700 truncate">{job.location?.name || "—"}</div>
+                    <span className="text-gray-400 text-xs">Depot</span>
+                    <div className="text-gray-700 truncate">{job.depotName || job.location?.name || "—"}</div>
                   </div>
+                  {job.stage && (
+                    <div className="min-w-0">
+                      <span className="text-gray-400 text-xs">Stage</span>
+                      <div className="text-gray-700 truncate capitalize">{job.stage.replace(/_/g, " ")}</div>
+                    </div>
+                  )}
                   {job.contact && (
-                    <div className="col-span-2 min-w-0">
+                    <div className="min-w-0">
                       <span className="text-gray-400 text-xs">Contact</span>
                       <div className="text-gray-700 truncate">{job.contact}</div>
                     </div>
@@ -310,8 +343,8 @@ export default function JobsPage() {
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Project ID</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Job Name</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Contact</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Depot</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700">Stage</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-700">Movements</th>
                   {!showArchived && <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>}
                 </tr>
@@ -326,8 +359,8 @@ export default function JobsPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-700">{job.name}</td>
                     <td className="px-4 py-3 text-gray-500">{job.client}</td>
-                    <td className="px-4 py-3 text-gray-500">{job.location?.name || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500">{job.contact}</td>
+                    <td className="px-4 py-3 text-gray-500">{job.depotName || job.location?.name || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 capitalize">{job.stage ? job.stage.replace(/_/g, " ") : "—"}</td>
                     <td className="px-4 py-3 text-right text-gray-500">{job._count.movements}</td>
                     {!showArchived && (
                       <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -348,42 +381,72 @@ export default function JobsPage() {
         </>
       )}
 
-      {/* Create Job Modal */}
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create Job">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Project ID *</label>
-              <input type="text" required value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. PRJ-001" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location (Depot) *</label>
-              <select required value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">Select location...</option>
-                {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </select>
-            </div>
-          </div>
+      {/* Link WIP Job Modal */}
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Link WIP Job" wide>
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Job Name *</label>
-            <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <input
+              type="text"
+              placeholder="Search WIP jobs by name, client, or ACOMS number..."
+              value={wipSearch}
+              onChange={(e) => {
+                setWipSearch(e.target.value);
+                fetchWipProjects(e.target.value);
+              }}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              autoFocus
+            />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
-              <input type="text" required value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact *</label>
-              <input type="text" required value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-            </div>
-          </div>
+
           {formError && <div className="p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{formError}</div>}
-          <div className="flex gap-3 justify-end pt-2">
+
+          {wipLoading ? (
+            <p className="text-gray-500 text-sm py-4">Loading WIP jobs...</p>
+          ) : wipProjects.length === 0 ? (
+            <p className="text-gray-500 text-sm py-4">
+              {wipSearch ? "No matching WIP jobs found." : "No available WIP jobs to link."}
+            </p>
+          ) : (
+            <div className="border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">ACOMS #</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">Job Name</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">Client</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">Depot</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700">Stage</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wipProjects.map((wp) => (
+                    <tr key={wp.id} className="border-b border-gray-100 hover:bg-blue-50">
+                      <td className="px-3 py-2 font-mono text-blue-600 font-medium">{wp.acomsNumberFormatted}</td>
+                      <td className="px-3 py-2 text-gray-700">{wp.name}</td>
+                      <td className="px-3 py-2 text-gray-500">{wp.clientName || "—"}</td>
+                      <td className="px-3 py-2 text-gray-500">{wp.depotName || "—"}</td>
+                      <td className="px-3 py-2 text-gray-500 capitalize">{wp.stage.replace(/_/g, " ")}</td>
+                      <td className="px-3 py-2 text-right">
+                        <button
+                          onClick={() => handleLinkWipJob(wp.id)}
+                          disabled={linking}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {linking ? "Linking..." : "Link"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
             <button type="button" onClick={() => setShowModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Create</button>
           </div>
-        </form>
+        </div>
       </Modal>
 
       {/* Archive Disposition Modal */}

@@ -243,10 +243,17 @@ model Item {
 
 model Job {
   id        String @id @default(cuid())
-  projectId String @unique
+  projectId String @unique                // WIP acomsNumber formatted (e.g. "A0023")
   name      String
   client    String
   contact   String
+
+  // ── WIP integration ──
+  wipProjectId String? @unique            // UUID from ACOMS.WIP projects table
+  stage        String?                    // Current WIP stage (synced on load)
+  siteAddress  String?                    // From WIP
+  depotName    String?                    // WIP depot name (display only)
+  wipSyncedAt  DateTime?                  // Last time data was refreshed from WIP
 
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id])
@@ -264,6 +271,7 @@ model Job {
 
   @@index([isArchived])
   @@index([locationId])
+  @@index([wipProjectId])
 }
 
 // ─── Job Material Requirements ──────────────────────────
