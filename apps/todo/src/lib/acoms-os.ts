@@ -37,15 +37,30 @@ export async function getEmployeeByIdentityId(identityId: string): Promise<Emplo
  * Fetch list of active employees for assignee dropdowns.
  */
 export async function getAssignableEmployees(): Promise<Employee[]> {
+  const baseUrl = getBaseUrl();
+  const token = getToken();
+  console.log("[acoms-os] getAssignableEmployees called");
+  console.log("[acoms-os] baseUrl:", baseUrl ? `${baseUrl.slice(0, 20)}...` : "EMPTY");
+  console.log("[acoms-os] token present:", token.length > 0, "length:", token.length);
+
   try {
-    const res = await fetch(`${getBaseUrl()}/api/employees/assignees`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+    const url = `${baseUrl}/api/employees/assignees`;
+    console.log("[acoms-os] fetching:", url);
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
       next: { revalidate: 60 },
     });
-    if (!res.ok) return [];
+    console.log("[acoms-os] response status:", res.status);
+    if (!res.ok) {
+      const text = await res.text();
+      console.log("[acoms-os] error response:", text);
+      return [];
+    }
     const data = await res.json();
+    console.log("[acoms-os] employees returned:", data.employees?.length ?? 0);
     return data.employees || [];
-  } catch {
+  } catch (err) {
+    console.error("[acoms-os] fetch error:", err);
     return [];
   }
 }
