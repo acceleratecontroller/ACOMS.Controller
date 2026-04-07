@@ -1,19 +1,64 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/Modal";
+import { DashboardWidget } from "@/components/DashboardWidget";
+import {
+  PRIORITY_OPTIONS,
+  FREQUENCY_OPTIONS,
+  SCHEDULE_OPTIONS,
+  RECURRING_CATEGORY_OPTIONS,
+} from "@/modules/tasks/constants";
+import { Assignee, assigneeName, tomorrowISO } from "./tasks/types";
+
+interface DashboardTask {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  priority: string;
+  status: string;
+  assigneeId: string;
+}
+
+interface DashboardRecurring {
+  id: string;
+  title: string;
+  nextDue: string | null;
+  frequencyType: string;
+  frequencyValue: number;
+  assigneeId: string;
+  lastCompleted: string | null;
+  description: string | null;
+  category: string;
+  scheduleType: string;
+}
+
+interface DashboardNote {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface DashboardData {
   activeTaskCount: number;
+  pendingTaskCount: number;
   overdueTaskCount: number;
   overdueRecurringCount: number;
   dueTodayTaskCount: number;
   dueTodayRecurringCount: number;
-  overdueTasks: { id: string; title: string; dueDate: string }[];
-  overdueRecurringTasks: { id: string; title: string; nextDue: string }[];
-  dueTodayTasks: { id: string; title: string }[];
-  upcomingTasks: { id: string; title: string; dueDate: string }[];
+  completedRecentCount: number;
+  overdueTasks: DashboardTask[];
+  overdueRecurringTasks: DashboardRecurring[];
+  dueTodayTasks: DashboardTask[];
+  dueTodayRecurringTasks: DashboardRecurring[];
+  dueSoonTasks: DashboardTask[];
+  highPriorityTasks: DashboardTask[];
+  upcomingRecurring: DashboardRecurring[];
+  recentNotes: DashboardNote[];
+  totalNoteCount: number;
+  assigneeMap: Record<string, string>;
   materials: {
     lowStockItems: {
       itemCode: string;
@@ -53,27 +98,154 @@ const MOVEMENT_TYPE_LABELS: Record<string, string> = {
   ADJUSTED: "Adjustment",
 };
 
+const PRIORITY_BADGE: Record<string, string> = {
+  LOW: "bg-green-100 text-green-700",
+  MEDIUM: "bg-yellow-100 text-yellow-700",
+  HIGH: "bg-red-100 text-red-700",
+};
+
+function formatShortDate(dateStr: string | null): string {
+  if (!dateStr) return "No date";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit" });
+}
+
+function formatNoteDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-AU", {
+    day: "2-digit", month: "2-digit", year: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: true,
+  });
+}
+
+function frequencyLabel(type: string, value: number): string {
+  const opt = FREQUENCY_OPTIONS.find((o) => o.value === type);
+  const label = opt?.label ?? type;
+  if (value === 1) return label;
+  return `Every ${value} ${label.toLowerCase()}`;
+}
+
+// PLACEHOLDER: handlers and render will be added below
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [assignees, setAssignees] = useState<Assignee[]>([]);
 
-  // Quick Note from dashboard
+  // Modal state
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [showAddRecurring, setShowAddRecurring] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  // Note modal state
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
   const [noteSaveStatus, setNoteSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Edit note modal (for clicking existing notes)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteContent, setEditingNoteContent] = useState("");
+
+  const loadDashboard = useCallback(async () => {
+    const res = await fetch("/api/dashboard");
+    if (res.ok) setData(await res.json());
+  }, []);
+
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then((r) => r.json())
-      .then(setData)
-      .catch(() => {});
+    loadDashboard();
     fetch("/api/auth/session")
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((sess) => { if (sess?.user?.role === "ADMIN") setIsAdmin(true); })
       .catch(() => {});
-  }, []);
+    fetch("/api/assignees")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setAssignees)
+      .catch(() => {});
+  }, [loadDashboard]);
+
+  // --- ACTION HANDLERS ---
+
+  async function handleCompleteTask(id: string) {
+    await fetch(`/api/tasks/${id}/complete`, { method: "POST" });
+    loadDashboard();
+  }
+
+  async function handleCompleteRecurring(id: string) {
+    await fetch(`/api/recurring-tasks/${id}/complete`, { method: "POST" });
+    loadDashboard();
+  }
+
+  async function handleCreateTask(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const fd = new FormData(e.currentTarget);
+      const body = {
+        title: fd.get("title"),
+        projectId: fd.get("projectId") || null,
+        notes: fd.get("notes") || null,
+        label: fd.get("label") || "Task",
+        dueDate: fd.get("dueDate") || null,
+        status: "NOT_STARTED",
+        priority: fd.get("priority") || "LOW",
+        assigneeId: fd.get("assigneeId"),
+      };
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setShowAddTask(false);
+        loadDashboard();
+      } else {
+        const err = await res.json().catch(() => null);
+        setError(err?.error || `Failed to create task (${res.status})`);
+      }
+    } catch (ex) {
+      setError(ex instanceof Error ? ex.message : "Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCreateRecurring(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const fd = new FormData(e.currentTarget);
+      const body = {
+        title: fd.get("title"),
+        description: fd.get("description") || null,
+        category: fd.get("category") || "Task",
+        frequencyType: fd.get("frequencyType") || "WEEKLY",
+        frequencyValue: parseInt(String(fd.get("frequencyValue") || "1"), 10),
+        scheduleType: fd.get("scheduleType") || "FLOATING",
+        lastCompleted: fd.get("lastCompleted") || null,
+        assigneeId: fd.get("assigneeId"),
+      };
+      const res = await fetch("/api/recurring-tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setShowAddRecurring(false);
+        loadDashboard();
+      } else {
+        const err = await res.json().catch(() => null);
+        setError(err?.error || `Failed to create recurring task (${res.status})`);
+      }
+    } catch (ex) {
+      setError(ex instanceof Error ? ex.message : "Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleNewNote() {
     const res = await fetch("/api/notes", { method: "POST" });
@@ -111,7 +283,6 @@ export default function DashboardPage() {
       clearTimeout(autoSaveTimerRef.current);
       autoSaveTimerRef.current = null;
     }
-    // Flush save
     if (noteId && noteContent) {
       fetch(`/api/notes/${noteId}`, {
         method: "PUT",
@@ -123,51 +294,343 @@ export default function DashboardPage() {
     setNoteId(null);
     setNoteContent("");
     setNoteSaveStatus("idle");
+    loadDashboard();
+  }
+
+  function handleEditNote(note: DashboardNote) {
+    setEditingNoteId(note.id);
+    setEditingNoteContent(note.content);
+    setNoteSaveStatus("idle");
+  }
+
+  function handleEditNoteChange(content: string) {
+    setEditingNoteContent(content);
+    if (!editingNoteId) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    setNoteSaveStatus("saving");
+    const id = editingNoteId;
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await fetch(`/api/notes/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        setNoteSaveStatus("saved");
+      } catch {
+        setNoteSaveStatus("idle");
+      }
+    }, 1000);
+  }
+
+  function handleCloseEditNote() {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    if (editingNoteId && editingNoteContent) {
+      fetch(`/api/notes/${editingNoteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editingNoteContent }),
+      });
+    }
+    setEditingNoteId(null);
+    setEditingNoteContent("");
+    setNoteSaveStatus("idle");
+    loadDashboard();
   }
 
   const totalOverdue = (data?.overdueTaskCount ?? 0) + (data?.overdueRecurringCount ?? 0);
   const totalDueToday = (data?.dueTodayTaskCount ?? 0) + (data?.dueTodayRecurringCount ?? 0);
 
+  // Combine needs-attention items
+  const needsAttentionItems: { id: string; title: string; type: "task" | "recurring"; urgency: "overdue" | "due-today" | "due-soon" | "high-priority"; date: string | null; priority?: string; assigneeId: string }[] = [];
+  if (data) {
+    for (const t of data.overdueTasks) needsAttentionItems.push({ id: t.id, title: t.title, type: "task", urgency: "overdue", date: t.dueDate, priority: t.priority, assigneeId: t.assigneeId });
+    for (const t of data.overdueRecurringTasks) needsAttentionItems.push({ id: t.id, title: t.title, type: "recurring", urgency: "overdue", date: t.nextDue, assigneeId: t.assigneeId });
+    for (const t of data.dueTodayTasks) needsAttentionItems.push({ id: t.id, title: t.title, type: "task", urgency: "due-today", date: t.dueDate, priority: t.priority, assigneeId: t.assigneeId });
+    for (const t of data.dueTodayRecurringTasks) needsAttentionItems.push({ id: t.id, title: t.title, type: "recurring", urgency: "due-today", date: t.nextDue, assigneeId: t.assigneeId });
+    for (const t of data.dueSoonTasks) needsAttentionItems.push({ id: t.id, title: t.title, type: "task", urgency: "due-soon", date: t.dueDate, priority: t.priority, assigneeId: t.assigneeId });
+    for (const t of data.highPriorityTasks) {
+      if (!needsAttentionItems.find((i) => i.id === t.id)) {
+        needsAttentionItems.push({ id: t.id, title: t.title, type: "task", urgency: "high-priority", date: t.dueDate, priority: t.priority, assigneeId: t.assigneeId });
+      }
+    }
+  }
+
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-      {/* ─── Task Summary ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <StatCard label="Active Tasks" value={data ? data.activeTaskCount : null} />
-        <StatCard label="Due Today" value={data ? totalDueToday : null} color="blue" />
-        <StatCard label="Overdue" value={data ? totalOverdue : null} color="red" />
-      </div>
-
-      {data && totalOverdue > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <h3 className="text-sm font-semibold text-red-800 mb-2">Overdue Items</h3>
-          <ul className="text-sm text-red-700 space-y-1">
-            {data.overdueTasks.map((t) => (
-              <li key={t.id}>{t.title}</li>
-            ))}
-            {data.overdueRecurringTasks.map((t) => (
-              <li key={t.id}>{t.title} (recurring)</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* ─── Quick Note from Dashboard ────────────────────── */}
+      {/* ─── Quick Actions Bar ─────────────────────────────── */}
       {isAdmin && (
-        <div className="mb-8">
+        <div className="flex flex-wrap gap-2 mb-6">
+          <button
+            onClick={() => { setShowAddTask(true); setError(""); }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            Quick Task
+          </button>
+          <button
+            onClick={() => { setShowAddRecurring(true); setError(""); }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            Recurring Task
+          </button>
           <button
             onClick={handleNewNote}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors shadow-sm"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New Quick Note
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            Quick Note
           </button>
         </div>
       )}
 
+      {/* ─── Summary Stats ─────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="text-xs text-gray-500">Active Tasks</div>
+          {data ? <div className="text-2xl font-bold text-gray-900">{data.activeTaskCount}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="text-xs text-gray-500">Due Today</div>
+          {data ? <div className={`text-2xl font-bold ${totalDueToday > 0 ? "text-blue-600" : "text-gray-900"}`}>{totalDueToday}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="text-xs text-gray-500">Overdue</div>
+          {data ? <div className={`text-2xl font-bold ${totalOverdue > 0 ? "text-red-600" : "text-gray-900"}`}>{totalOverdue}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="text-xs text-gray-500">Completed (7d)</div>
+          {data ? <div className="text-2xl font-bold text-green-600">{data.completedRecentCount}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        </div>
+      </div>
+
+      {/* ─── Main Grid: Left + Right columns ───────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        {/* ─── LEFT: Needs Attention ───────────────────────── */}
+        <DashboardWidget
+          title="Needs Attention"
+          badge={needsAttentionItems.length}
+          badgeColor={totalOverdue > 0 ? "bg-red-500" : "bg-blue-500"}
+          viewAllHref="/tasks"
+          viewAllLabel="Open Task Manager"
+        >
+          {needsAttentionItems.length === 0 ? (
+            <div className="text-sm text-gray-400 py-6 text-center">All clear — nothing needs attention right now.</div>
+          ) : (
+            <div className="space-y-1 max-h-[400px] overflow-y-auto">
+              {needsAttentionItems.map((item) => {
+                const urgencyColors: Record<string, string> = {
+                  overdue: "bg-red-100 text-red-700",
+                  "due-today": "bg-orange-100 text-orange-700",
+                  "due-soon": "bg-yellow-100 text-yellow-700",
+                  "high-priority": "bg-red-100 text-red-700",
+                };
+                const urgencyLabels: Record<string, string> = {
+                  overdue: "Overdue",
+                  "due-today": "Due Today",
+                  "due-soon": "Due Soon",
+                  "high-priority": "High Priority",
+                };
+                return (
+                  <div key={`${item.type}-${item.id}`} className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm ${item.urgency === "overdue" ? "bg-red-50 border-red-200" : item.urgency === "due-today" ? "bg-orange-50 border-orange-200" : "bg-white border-gray-200"}`}>
+                    {isAdmin && (
+                      <button
+                        onClick={() => item.type === "task" ? handleCompleteTask(item.id) : handleCompleteRecurring(item.id)}
+                        className="p-1 rounded hover:bg-green-100 text-green-600 transition-colors shrink-0"
+                        title={item.type === "task" ? "Complete" : "Mark done"}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-gray-900 truncate block">{item.title}</span>
+                      <span className="text-xs text-gray-500">
+                        {data?.assigneeMap[item.assigneeId] || "Unassigned"}
+                        {item.date ? ` · ${formatShortDate(item.date)}` : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${urgencyColors[item.urgency]}`}>
+                        {urgencyLabels[item.urgency]}
+                      </span>
+                      {item.type === "recurring" && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">Recurring</span>
+                      )}
+                      {item.priority && (
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${PRIORITY_BADGE[item.priority] || ""}`}>{item.priority}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DashboardWidget>
+
+        {/* ─── RIGHT: Upcoming Recurring ───────────────────── */}
+        <DashboardWidget
+          title="Upcoming Recurring Tasks"
+          viewAllHref="/tasks"
+          viewAllLabel="Open Task Manager"
+        >
+          {!data || data.upcomingRecurring.length === 0 ? (
+            <div className="text-sm text-gray-400 py-6 text-center">No upcoming recurring tasks.</div>
+          ) : (
+            <div className="space-y-1 max-h-[400px] overflow-y-auto">
+              {data.upcomingRecurring.map((task) => (
+                <div key={task.id} className="flex items-center gap-2 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleCompleteRecurring(task.id)}
+                      className="p-1 rounded hover:bg-green-100 text-green-600 transition-colors shrink-0"
+                      title="Mark done"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                    </button>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-gray-900 truncate block">{task.title}</span>
+                    <span className="text-xs text-gray-500">
+                      {data.assigneeMap[task.assigneeId] || "Unassigned"} · {frequencyLabel(task.frequencyType, task.frequencyValue)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 shrink-0">
+                    {formatShortDate(task.nextDue)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DashboardWidget>
+      </div>
+
+      {/* ─── Second Row: Notes + Materials ─────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        {/* ─── Recent Quick Notes ──────────────────────────── */}
+        <DashboardWidget
+          title="Recent Quick Notes"
+          badge={data && data.totalNoteCount > 4 ? data.totalNoteCount - 4 : undefined}
+          badgeColor="bg-amber-500"
+          action={isAdmin ? { label: "+ New Note", onClick: handleNewNote } : undefined}
+          viewAllHref="/tasks"
+          viewAllLabel={data && data.totalNoteCount > 4 ? `View all ${data.totalNoteCount} notes` : "View all notes"}
+        >
+          {!data || data.recentNotes.length === 0 ? (
+            <div className="text-sm text-gray-400 py-6 text-center">No notes yet.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {data.recentNotes.map((note) => (
+                <div
+                  key={note.id}
+                  onClick={() => handleEditNote(note)}
+                  className="bg-amber-50 border border-amber-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:bg-amber-100/70 transition-all"
+                >
+                  <div className="text-xs text-gray-800 whitespace-pre-wrap line-clamp-3 mb-2 min-h-[2.5rem]">
+                    {note.content || <span className="text-gray-400 italic">Empty note</span>}
+                  </div>
+                  <div className="text-[10px] text-gray-400">{formatNoteDate(note.updatedAt)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DashboardWidget>
+
+        {/* ─── Materials Snapshot ──────────────────────────── */}
+        <DashboardWidget
+          title="Materials"
+          viewAllHref="/materials/items"
+          viewAllLabel="Open Materials"
+        >
+          {!data?.materials ? (
+            <div className="text-sm text-gray-400 py-6 text-center">Loading materials...</div>
+          ) : (
+            <div className="space-y-3">
+              {/* Summary stats */}
+              <div className="flex gap-4 text-xs">
+                <div><span className="text-gray-500">Items:</span> <span className="font-medium">{data.materials.itemCount}</span></div>
+                <div><span className="text-gray-500">Locations:</span> <span className="font-medium">{data.materials.locationCount}</span></div>
+                {data.materials.lowStockItems.length > 0 && (
+                  <div><span className="text-red-600 font-medium">{data.materials.lowStockItems.length} low stock</span></div>
+                )}
+                {data.materials.openStocktakes.length > 0 && (
+                  <div><span className="text-blue-600 font-medium">{data.materials.openStocktakes.length} open stocktake{data.materials.openStocktakes.length !== 1 ? "s" : ""}</span></div>
+                )}
+              </div>
+
+              {/* Low stock alerts */}
+              {data.materials.lowStockItems.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-red-700 mb-1">Low Stock</div>
+                  <div className="space-y-1">
+                    {data.materials.lowStockItems.slice(0, 4).map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1">
+                        <div>
+                          <span className="font-mono font-medium">{item.itemCode}</span>{" "}
+                          <span className="text-gray-500">{item.itemDescription}</span>
+                          <span className="text-gray-400 ml-1">@ {item.locationName}</span>
+                        </div>
+                        <div className="text-red-600 font-medium">{item.currentStock} / {item.minimumStockLevel}</div>
+                      </div>
+                    ))}
+                    {data.materials.lowStockItems.length > 4 && (
+                      <Link href="/materials/stock" className="text-xs text-blue-600 hover:text-blue-800">
+                        +{data.materials.lowStockItems.length - 4} more
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent movements */}
+              {data.materials.recentMovements.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-gray-700 mb-1">Recent Movements</div>
+                  <div className="space-y-1">
+                    {data.materials.recentMovements.slice(0, 3).map((m) => (
+                      <div key={m.id} className="text-xs flex items-center justify-between border-b border-gray-100 pb-1">
+                        <span>
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium mr-1">
+                            {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
+                          </span>
+                          <span className="font-mono">{m.item.code}</span>
+                          <span className="text-gray-400 ml-1">x{Number(m.quantity)}</span>
+                        </span>
+                        <span className="text-gray-400">{new Date(m.createdAt).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit" })}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Open stocktakes */}
+              {data.materials.openStocktakes.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-gray-700 mb-1">Open Stocktakes</div>
+                  {data.materials.openStocktakes.map((st) => (
+                    <div key={st.id} className="flex items-center justify-between text-xs pb-1">
+                      <div>
+                        <span className="font-medium">{st.location.name}</span>
+                        <span className="text-gray-400 ml-2">{st._count.lines} items</span>
+                      </div>
+                      <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800">Continue</Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </DashboardWidget>
+      </div>
+
+      {/* ─── New Note Modal ──────────────────────────────── */}
       {noteModalOpen && (
         <Modal isOpen onClose={handleCloseNote} wide>
           <div className="flex items-center justify-between mb-3">
@@ -185,151 +648,152 @@ export default function DashboardPage() {
             placeholder="Type your note here..."
             autoFocus
           />
-          <p className="text-xs text-gray-400 mt-2">Your note is auto-saved. Close this modal when done. View all notes in Task Manager &rarr; Quick Notes.</p>
+          <p className="text-xs text-gray-400 mt-2">Your note is auto-saved. Close this modal when done.</p>
         </Modal>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-2">Task Manager</h2>
-          <p className="text-gray-600 mb-4">
-            Manage quick tasks and recurring schedules for your team.
-          </p>
-          <Link
-            href="/tasks"
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            Open Task Manager
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold mb-2">Material Tracker</h2>
-          <p className="text-gray-600 mb-4">
-            {data?.materials ? (
-              <>
-                {data.materials.itemCount} items across {data.materials.locationCount} locations.
-                {data.materials.lowStockItems.length > 0 && (
-                  <span className="text-red-600 font-medium ml-1">
-                    {data.materials.lowStockItems.length} low stock alerts.
-                  </span>
-                )}
-              </>
-            ) : (
-              "Track stock, movements, and materials."
-            )}
-          </p>
-          <Link
-            href="/materials/items"
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            Open Materials
-          </Link>
-        </div>
-      </div>
-
-      {/* ─── Materials Widgets ────────────────────────────── */}
-      {data?.materials && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Low Stock Alerts */}
-          {data.materials.lowStockItems.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Low Stock Alerts</h3>
-              <div className="space-y-2">
-                {data.materials.lowStockItems.slice(0, 8).map((item, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1">
-                    <div>
-                      <span className="font-mono font-medium">{item.itemCode}</span>{" "}
-                      <span className="text-gray-500">{item.itemDescription}</span>
-                      <span className="text-gray-400 ml-1">@ {item.locationName}</span>
-                    </div>
-                    <div className="text-red-600 font-medium">
-                      {item.currentStock} / {item.minimumStockLevel}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link href="/materials/stock" className="text-xs text-blue-600 hover:text-blue-800 mt-2 inline-block">
-                View stock levels
-              </Link>
-            </div>
-          )}
-
-          {/* Recent Movements */}
-          {data.materials.recentMovements.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Recent Movements</h3>
-              <div className="space-y-2">
-                {data.materials.recentMovements.map((m) => (
-                  <div key={m.id} className="text-xs border-b border-gray-100 pb-1">
-                    <div className="flex items-center justify-between">
-                      <span>
-                        <span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium mr-1">
-                          {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
-                        </span>
-                        <span className="font-mono">{m.item.code}</span>
-                        <span className="text-gray-400 ml-1">x{Number(m.quantity)}</span>
-                      </span>
-                      <span className="text-gray-400">
-                        {new Date(m.createdAt).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit" })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link href="/materials/movements" className="text-xs text-blue-600 hover:text-blue-800 mt-2 inline-block">
-                View all movements
-              </Link>
-            </div>
-          )}
-
-          {/* Open Stocktakes */}
-          {data.materials.openStocktakes.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Open Stocktakes</h3>
-              <div className="space-y-2">
-                {data.materials.openStocktakes.map((st) => (
-                  <div key={st.id} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1">
-                    <div>
-                      <span className="font-medium">{st.location.name}</span>
-                      <span className="text-gray-400 ml-2">{st._count.lines} items</span>
-                    </div>
-                    <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800">
-                      Continue
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+      {/* ─── Edit Note Modal ─────────────────────────────── */}
+      {editingNoteId && (
+        <Modal isOpen onClose={handleCloseEditNote} wide>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900">Edit Note</h2>
+            <span className="text-xs text-gray-400">
+              {noteSaveStatus === "saving" && "Saving..."}
+              {noteSaveStatus === "saved" && "Saved"}
+            </span>
+          </div>
+          <textarea
+            value={editingNoteContent}
+            onChange={(e) => handleEditNoteChange(e.target.value)}
+            rows={12}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            placeholder="Type your note here..."
+            autoFocus
+          />
+          <p className="text-xs text-gray-400 mt-2">Your note is auto-saved. Close this modal when done.</p>
+        </Modal>
       )}
-    </div>
-  );
-}
 
-function StatCard({
-  label,
-  value,
-  color = "gray",
-}: {
-  label: string;
-  value: number | null;
-  color?: string;
-}) {
-  const colorMap: Record<string, string> = {
-    gray: "text-gray-900",
-    blue: "text-blue-600",
-    red: "text-red-600",
-  };
+      {/* ─── Add Task Modal ──────────────────────────────── */}
+      {showAddTask && (
+        <Modal isOpen onClose={() => setShowAddTask(false)}>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Add Quick Task</h2>
+          <form onSubmit={handleCreateTask} className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
+              <input name="title" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What needs to be done?" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
+                <select name="assigneeId" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select assignee...</option>
+                  {assignees.map((e) => (
+                    <option key={e.id} value={e.id}>{assigneeName(e)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
+                <input name="projectId" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., NBN-001" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                <input name="dueDate" type="date" defaultValue={tomorrowISO()} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <select name="priority" defaultValue="LOW" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  {PRIORITY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
+                <input name="label" defaultValue="Task" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task, Meeting, Report" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+              <textarea name="notes" rows={2} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
+            </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className="flex gap-3 pt-2">
+              <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : "Add Task"}</button>
+              <button type="button" onClick={() => setShowAddTask(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <div className="text-sm text-gray-500">{label}</div>
-      {value === null ? (
-        <div className="h-9 w-12 bg-gray-200 rounded animate-pulse mt-1" />
-      ) : (
-        <div className={`text-3xl font-bold ${colorMap[color]}`}>{value}</div>
+      {/* ─── Add Recurring Task Modal ────────────────────── */}
+      {showAddRecurring && (
+        <Modal isOpen onClose={() => setShowAddRecurring(false)}>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Add Recurring Task</h2>
+          <form onSubmit={handleCreateRecurring} className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
+              <input name="title" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What recurring task needs tracking?" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
+                <select name="assigneeId" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select assignee...</option>
+                  {assignees.map((e) => (
+                    <option key={e.id} value={e.id}>{assigneeName(e)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select name="category" defaultValue="Task" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  {RECURRING_CATEGORY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                <select name="frequencyType" defaultValue="WEEKLY" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  {FREQUENCY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
+                <input name="frequencyValue" type="number" min={1} defaultValue={1} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Schedule Type</label>
+                <select name="scheduleType" defaultValue="FLOATING" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  {SCHEDULE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Completed</label>
+              <input name="lastCompleted" type="date" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea name="description" rows={2} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
+            </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className="flex gap-3 pt-2">
+              <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : "Add Recurring Task"}</button>
+              <button type="button" onClick={() => setShowAddRecurring(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );
