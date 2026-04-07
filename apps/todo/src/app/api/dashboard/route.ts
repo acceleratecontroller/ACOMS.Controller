@@ -14,13 +14,33 @@ export async function GET() {
 
   const { today, tomorrow } = getDateBoundaries();
 
-  // Resolve the logged-in user's ACOMS.OS employee ID from their identity ID
+  // Resolve employee ID in parallel with material queries (which don't need it)
   const identityId = session.user.identityId ?? null;
-  let employeeId: string | null = null;
-  if (identityId) {
-    const employee = await getEmployeeByIdentityId(identityId);
-    employeeId = employee?.id ?? null;
-  }
+  const [employeeResult, lowStockItems, recentMovements, openStocktakes, itemCount, locationCount] = await Promise.all([
+    identityId ? getEmployeeByIdentityId(identityId) : Promise.resolve(null),
+    getStockLevels({ belowMinimumOnly: true }),
+    prisma.stockMovement.findMany({
+      include: {
+        item: { select: { code: true, description: true } },
+        fromLocation: { select: { name: true } },
+        toLocation: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.stocktake.findMany({
+      where: { status: "DRAFT" },
+      include: {
+        location: { select: { name: true } },
+        _count: { select: { lines: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.item.count({ where: { isArchived: false } }),
+    prisma.location.count({ where: { isArchived: false } }),
+  ]);
+
+  const employeeId = employeeResult?.id ?? null;
   const taskAssigneeFilter = employeeId ? { assigneeId: employeeId } : {};
 
   const [
@@ -116,30 +136,6 @@ export async function GET() {
       orderBy: { dueDate: "asc" },
       take: 5,
     }),
-  ]);
-
-  // ─── Materials summary ───────────────────────────────────
-  const [lowStockItems, recentMovements, openStocktakes, itemCount, locationCount] = await Promise.all([
-    getStockLevels({ belowMinimumOnly: true }),
-    prisma.stockMovement.findMany({
-      include: {
-        item: { select: { code: true, description: true } },
-        fromLocation: { select: { name: true } },
-        toLocation: { select: { name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.stocktake.findMany({
-      where: { status: "DRAFT" },
-      include: {
-        location: { select: { name: true } },
-        _count: { select: { lines: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.item.count({ where: { isArchived: false } }),
-    prisma.location.count({ where: { isArchived: false } }),
   ]);
 
   return NextResponse.json({

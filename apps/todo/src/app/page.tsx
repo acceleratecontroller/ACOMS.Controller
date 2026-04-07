@@ -71,9 +71,9 @@ export default function DashboardPage() {
 
       {/* ─── Task Summary ─────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <StatCard label="Active Tasks" value={data?.activeTaskCount ?? 0} />
-        <StatCard label="Due Today" value={totalDueToday} color="blue" />
-        <StatCard label="Overdue" value={totalOverdue} color="red" />
+        <StatCard label="Active Tasks" value={data ? data.activeTaskCount : null} />
+        <StatCard label="Due Today" value={data ? totalDueToday : null} color="blue" />
+        <StatCard label="Overdue" value={data ? totalOverdue : null} color="red" />
       </div>
 
       {data && totalOverdue > 0 && (
@@ -215,7 +215,7 @@ function StatCard({
   color = "gray",
 }: {
   label: string;
-  value: number;
+  value: number | null;
   color?: string;
 }) {
   const colorMap: Record<string, string> = {
@@ -227,7 +227,11 @@ function StatCard({
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <div className="text-sm text-gray-500">{label}</div>
-      <div className={`text-3xl font-bold ${colorMap[color]}`}>{value}</div>
+      {value === null ? (
+        <div className="h-9 w-12 bg-gray-200 rounded animate-pulse mt-1" />
+      ) : (
+        <div className={`text-3xl font-bold ${colorMap[color]}`}>{value}</div>
+      )}
     </div>
   );
 }
