@@ -16,6 +16,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Embed routes authenticate via token (query param or header), not cookies.
+  // Token validation happens in the embed layout/API handlers themselves.
+  if (pathname.startsWith("/embed")) {
+    return NextResponse.next();
+  }
+
   // Check for NextAuth session cookie
   const hasSession =
     request.cookies.has("authjs.session-token") ||

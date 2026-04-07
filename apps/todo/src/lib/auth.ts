@@ -71,10 +71,32 @@ export type Session = {
 };
 
 /**
+ * Try embed token auth first (via headers()), then fall back to session cookie.
+ * Uses Next.js headers() so no API route changes are needed.
+ */
+async function resolveSession(): Promise<Session | null> {
+  const { headers } = await import("next/headers");
+  const headerStore = await headers();
+  const authHeader = headerStore.get("authorization");
+
+  if (authHeader?.startsWith("Bearer embed:")) {
+    const { validateEmbedToken } = await import("./embed-token");
+    const user = validateEmbedToken(authHeader.slice("Bearer embed:".length));
+    if (user) return { user };
+  }
+
+  // Fall back to NextAuth session cookie
+  const session = await auth();
+  if (!session?.user) return null;
+  return session as Session;
+}
+
+/**
  * Require an authenticated session. Returns 401 if not authenticated.
+ * Automatically checks embed tokens via request headers — no changes needed in API routes.
  */
 export async function requireAuth() {
-  const session = await auth();
+  const session = await resolveSession();
   if (!session?.user) {
     const { NextResponse } = await import("next/server");
     return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
@@ -84,9 +106,10 @@ export async function requireAuth() {
 
 /**
  * Require an authenticated ADMIN session.
+ * Automatically checks embed tokens via request headers.
  */
 export async function requireAdmin() {
-  const session = await auth();
+  const session = await resolveSession();
   if (!session?.user) {
     const { NextResponse } = await import("next/server");
     return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
