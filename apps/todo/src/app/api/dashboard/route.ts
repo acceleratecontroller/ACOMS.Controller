@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { getDateBoundaries } from "@/lib/date-utils";
 import { getStockLevels } from "@/lib/stock";
+import { getEmployeeByIdentityId } from "@/lib/acoms-os";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,14 @@ export async function GET() {
 
   const { today, tomorrow } = getDateBoundaries();
 
-  // Filter tasks to logged-in user if available
+  // Resolve the logged-in user's ACOMS.OS employee ID from their identity ID
   const identityId = session.user.identityId ?? null;
-  const taskAssigneeFilter = identityId ? { assigneeId: identityId } : {};
+  let employeeId: string | null = null;
+  if (identityId) {
+    const employee = await getEmployeeByIdentityId(identityId);
+    employeeId = employee?.id ?? null;
+  }
+  const taskAssigneeFilter = employeeId ? { assigneeId: employeeId } : {};
 
   const [
     activeTaskCount,
