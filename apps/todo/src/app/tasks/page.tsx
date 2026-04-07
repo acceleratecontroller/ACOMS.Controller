@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Modal } from "@/components/Modal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -26,10 +26,11 @@ import {
 import { TaskRow } from "./TaskRow";
 import { RecurringTaskRow } from "./RecurringTaskRow";
 import { RecurringCalendar } from "./RecurringCalendar";
+import { NoteCard, QuickNote } from "./NoteCard";
 
 export default function TaskManagerPage() {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<"quick" | "recurring">("quick");
+  const [activeTab, setActiveTab] = useState<"quick" | "recurring" | "notes">("quick");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [assignees, setAssignees] = useState<Assignee[]>([]);
@@ -49,10 +50,20 @@ export default function TaskManagerPage() {
   const [showAddRecurring, setShowAddRecurring] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<RecurringTask | null>(null);
 
+  // Quick Notes state
+  const [notes, setNotes] = useState<QuickNote[]>([]);
+  const [showArchivedNotes, setShowArchivedNotes] = useState(false);
+  const [editingNote, setEditingNote] = useState<QuickNote | null>(null);
+  const [noteContent, setNoteContent] = useState("");
+  const [noteSaveStatus, setNoteSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // When converting a note to a task, pre-fill the add-task modal
+  const [noteForTask, setNoteForTask] = useState<QuickNote | null>(null);
+
   const [confirmAction, setConfirmAction] = useState<{
     type: "archive" | "restore" | "complete";
     id: string;
-    entity: "task" | "recurring";
+    entity: "task" | "recurring" | "note";
     title: string;
   } | null>(null);
 
@@ -84,6 +95,15 @@ export default function TaskManagerPage() {
     [],
   );
 
+  const loadNotes = useCallback(
+    async (archived = false) => {
+      const url = archived ? "/api/notes?archived=true" : "/api/notes";
+      const res = await fetch(url);
+      if (res.ok) setNotes(await res.json());
+    },
+    [],
+  );
+
   useEffect(() => {
     async function init() {
       const [sessionRes] = await Promise.all([
@@ -91,6 +111,7 @@ export default function TaskManagerPage() {
         loadAssignees(),
         loadTasks(showArchived),
         loadRecurringTasks(showArchived),
+        loadNotes(showArchivedNotes),
       ]);
       if (sessionRes?.ok) {
         const sess = await sessionRes.json();
@@ -99,7 +120,12 @@ export default function TaskManagerPage() {
       setLoading(false);
     }
     init();
-  }, [loadAssignees, loadTasks, loadRecurringTasks, showArchived]);
+  }, [loadAssignees, loadTasks, loadRecurringTasks, loadNotes, showArchived, showArchivedNotes]);
+
+  // Reload notes when archived toggle changes
+  useEffect(() => {
+    if (!loading) loadNotes(showArchivedNotes);
+  }, [showArchivedNotes, loadNotes, loading]);
 
   // ─── Filtering ─────────────────────────────────────────
 
@@ -218,6 +244,17 @@ export default function TaskManagerPage() {
       });
 
       if (res.ok) {
+        const task = await res.json();
+        // If we were converting a note, mark it as converted
+        if (noteForTask) {
+          await fetch(`/api/notes/${noteForTask.id}/convert`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ taskId: task.id }),
+          });
+          setNoteForTask(null);
+          await loadNotes(showArchivedNotes);
+        }
         setShowAddTask(false);
         await loadTasks(showArchived);
       } else {
@@ -374,12 +411,88 @@ export default function TaskManagerPage() {
     if (res.ok) await loadRecurringTasks(showArchived);
   }
 
+  // ─── Quick Notes CRUD ───────────────────────────────────
+
+  async function handleCreateNote() {
+    const res = await fetch("/api/notes", { method: "POST" });
+    if (res.ok) {
+      const note: QuickNote = await res.json();
+      setEditingNote(note);
+      setNoteContent(note.content);
+      setNoteSaveStatus("idle");
+      await loadNotes(showArchivedNotes);
+    }
+  }
+
+  function handleAutoSaveNote(id: string, content: string) {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    setNoteSaveStatus("saving");
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await fetch(`/api/notes/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        setNoteSaveStatus("saved");
+        // Refresh notes list in background
+        loadNotes(showArchivedNotes);
+      } catch {
+        setNoteSaveStatus("idle");
+      }
+    }, 1000);
+  }
+
+  function handleNoteContentChange(content: string) {
+    setNoteContent(content);
+    if (editingNote) {
+      handleAutoSaveNote(editingNote.id, content);
+    }
+  }
+
+  function handleCloseNoteEditor() {
+    // Flush any pending auto-save immediately
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    if (editingNote && noteContent !== editingNote.content) {
+      fetch(`/api/notes/${editingNote.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: noteContent }),
+      }).then(() => loadNotes(showArchivedNotes));
+    }
+    setEditingNote(null);
+    setNoteContent("");
+    setNoteSaveStatus("idle");
+  }
+
+  async function handleArchiveNote(id: string) {
+    const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    if (res.ok) await loadNotes(showArchivedNotes);
+  }
+
+  async function handleRestoreNote(id: string) {
+    const res = await fetch(`/api/notes/${id}/restore`, { method: "POST" });
+    if (res.ok) await loadNotes(showArchivedNotes);
+  }
+
+  function handleConvertNoteToTask(note: QuickNote) {
+    setNoteForTask(note);
+    setShowAddTask(true);
+    setError("");
+  }
+
   function handleConfirm() {
     if (!confirmAction) return;
     const { type, id, entity } = confirmAction;
     if (entity === "task") {
       if (type === "archive") handleArchiveTask(id);
       else if (type === "restore") handleRestoreTask(id);
+    } else if (entity === "note") {
+      if (type === "archive") handleArchiveNote(id);
+      else if (type === "restore") handleRestoreNote(id);
     } else {
       if (type === "archive") handleArchiveRecurring(id);
       else if (type === "restore") handleRestoreRecurring(id);
@@ -433,6 +546,17 @@ export default function TaskManagerPage() {
               {recurringTaskBadges.dueToday > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.dueToday}</span>}
               {recurringTaskBadges.dueSoon > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.dueSoon}</span>}
             </>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("notes")}
+          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+            activeTab === "notes" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-700"
+          }`}
+        >
+          Quick Notes
+          {activeTab !== "notes" && notes.length > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">{notes.length}</span>
           )}
         </button>
       </div>
@@ -601,10 +725,75 @@ export default function TaskManagerPage() {
         </div>
       )}
 
+      {/* ─── Quick Notes Tab ────────────────────────────────── */}
+      {activeTab === "notes" && (
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {isAdmin && (
+              <button onClick={handleCreateNote} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                + Add Quick Note
+              </button>
+            )}
+            <button
+              onClick={() => setShowArchivedNotes(!showArchivedNotes)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${showArchivedNotes ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+            >
+              {showArchivedNotes ? "Showing Archived" : "Active"}
+            </button>
+          </div>
+
+          {notes.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <p className="font-medium">{showArchivedNotes ? "No archived notes" : "No quick notes yet"}</p>
+              <p className="text-sm mt-1">{showArchivedNotes ? "Archived and converted notes will appear here." : "Jot down a quick note to get started."}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {notes.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  isAdmin={isAdmin}
+                  onEdit={() => {
+                    setEditingNote(note);
+                    setNoteContent(note.content);
+                    setNoteSaveStatus("idle");
+                  }}
+                  onArchive={() => setConfirmAction({ type: "archive", id: note.id, entity: "note", title: "this note" })}
+                  onRestore={() => handleRestoreNote(note.id)}
+                  onConvertToTask={() => handleConvertNoteToTask(note)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Note Editor Modal ────────────────────────────────── */}
+      {editingNote && (
+        <Modal isOpen onClose={handleCloseNoteEditor} wide>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900">Quick Note</h2>
+            <span className="text-xs text-gray-400">
+              {noteSaveStatus === "saving" && "Saving..."}
+              {noteSaveStatus === "saved" && "Saved"}
+            </span>
+          </div>
+          <textarea
+            value={noteContent}
+            onChange={(e) => handleNoteContentChange(e.target.value)}
+            rows={12}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            placeholder="Type your note here..."
+            autoFocus
+          />
+        </Modal>
+      )}
+
       {/* ─── Add Task Modal ────────────────────────────────── */}
       {showAddTask && (
-        <Modal isOpen onClose={() => setShowAddTask(false)}>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Add Quick Task</h2>
+        <Modal isOpen onClose={() => { setShowAddTask(false); setNoteForTask(null); }}>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{noteForTask ? "Create Task from Note" : "Add Quick Task"}</h2>
           <form onSubmit={handleCreateTask} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
@@ -645,12 +834,12 @@ export default function TaskManagerPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea name="notes" rows={2} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
+              <textarea name="notes" rows={2} defaultValue={noteForTask?.content || ""} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex gap-3 pt-2">
-              <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : "Add Task"}</button>
-              <button type="button" onClick={() => setShowAddTask(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+              <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : noteForTask ? "Create Task" : "Add Task"}</button>
+              <button type="button" onClick={() => { setShowAddTask(false); setNoteForTask(null); }} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
             </div>
           </form>
         </Modal>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { Modal } from "@/components/Modal";
 
 interface DashboardData {
   activeTaskCount: number;
@@ -54,13 +55,75 @@ const MOVEMENT_TYPE_LABELS: Record<string, string> = {
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Quick Note from dashboard
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [noteId, setNoteId] = useState<string | null>(null);
+  const [noteContent, setNoteContent] = useState("");
+  const [noteSaveStatus, setNoteSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch("/api/dashboard")
       .then((r) => r.json())
       .then(setData)
       .catch(() => {});
+    fetch("/api/auth/session")
+      .then((r) => r.ok ? r.json() : null)
+      .then((sess) => { if (sess?.user?.role === "ADMIN") setIsAdmin(true); })
+      .catch(() => {});
   }, []);
+
+  async function handleNewNote() {
+    const res = await fetch("/api/notes", { method: "POST" });
+    if (res.ok) {
+      const note = await res.json();
+      setNoteId(note.id);
+      setNoteContent("");
+      setNoteSaveStatus("idle");
+      setNoteModalOpen(true);
+    }
+  }
+
+  function handleNoteChange(content: string) {
+    setNoteContent(content);
+    if (!noteId) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    setNoteSaveStatus("saving");
+    const id = noteId;
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await fetch(`/api/notes/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        setNoteSaveStatus("saved");
+      } catch {
+        setNoteSaveStatus("idle");
+      }
+    }, 1000);
+  }
+
+  function handleCloseNote() {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    // Flush save
+    if (noteId && noteContent) {
+      fetch(`/api/notes/${noteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: noteContent }),
+      });
+    }
+    setNoteModalOpen(false);
+    setNoteId(null);
+    setNoteContent("");
+    setNoteSaveStatus("idle");
+  }
 
   const totalOverdue = (data?.overdueTaskCount ?? 0) + (data?.overdueRecurringCount ?? 0);
   const totalDueToday = (data?.dueTodayTaskCount ?? 0) + (data?.dueTodayRecurringCount ?? 0);
@@ -88,6 +151,42 @@ export default function DashboardPage() {
             ))}
           </ul>
         </div>
+      )}
+
+      {/* ─── Quick Note from Dashboard ────────────────────── */}
+      {isAdmin && (
+        <div className="mb-8">
+          <button
+            onClick={handleNewNote}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            New Quick Note
+          </button>
+        </div>
+      )}
+
+      {noteModalOpen && (
+        <Modal isOpen onClose={handleCloseNote} wide>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900">Quick Note</h2>
+            <span className="text-xs text-gray-400">
+              {noteSaveStatus === "saving" && "Saving..."}
+              {noteSaveStatus === "saved" && "Saved"}
+            </span>
+          </div>
+          <textarea
+            value={noteContent}
+            onChange={(e) => handleNoteChange(e.target.value)}
+            rows={12}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            placeholder="Type your note here..."
+            autoFocus
+          />
+          <p className="text-xs text-gray-400 mt-2">Your note is auto-saved. Close this modal when done. View all notes in Task Manager &rarr; Quick Notes.</p>
+        </Modal>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

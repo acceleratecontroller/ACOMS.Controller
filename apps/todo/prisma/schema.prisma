@@ -100,6 +100,32 @@ model RecurringTask {
   @@index([appId])
 }
 
+// ─── Quick Note ─────────────────────────────────────────
+
+model QuickNote {
+  id      String @id @default(uuid())
+  content String @default("")
+
+  // Owner — each user only sees their own notes
+  createdById String
+
+  // When converted to a task, stores the task ID (also acts as "converted" flag)
+  convertedToTaskId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isArchived   Boolean   @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
+  appId String @default("default")
+
+  @@index([createdById])
+  @@index([isArchived])
+  @@index([appId])
+}
+
 // ─── Audit Log ───────────────────────────────────────────
 
 model AuditLog {
