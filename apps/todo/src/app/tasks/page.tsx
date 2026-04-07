@@ -172,6 +172,26 @@ export default function TaskManagerPage() {
     return assignees.filter((e) => ids.includes(e.id));
   }, [recurringTasks, assignees]);
 
+  // ─── Tab Badge Counts ─────────────────────────────────
+
+  const quickTaskBadges = useMemo(() => {
+    const active = tasks.filter((t) => !t.isArchived && t.status !== "COMPLETED");
+    return {
+      overdue: active.filter((t) => isOverdue(t.dueDate)).length,
+      dueToday: active.filter((t) => isDueToday(t.dueDate)).length,
+      dueSoon: active.filter((t) => isDueSoon(t.dueDate) && !isDueToday(t.dueDate)).length,
+    };
+  }, [tasks]);
+
+  const recurringTaskBadges = useMemo(() => {
+    const active = recurringTasks.filter((t) => !t.isArchived);
+    return {
+      overdue: active.filter((t) => isOverdue(t.nextDue)).length,
+      dueToday: active.filter((t) => isDueToday(t.nextDue)).length,
+      dueSoon: active.filter((t) => isDueSoon(t.nextDue) && !isDueToday(t.nextDue)).length,
+    };
+  }, [recurringTasks]);
+
   // ─── CRUD Actions ──────────────────────────────────────
 
   async function handleCreateTask(e: React.FormEvent<HTMLFormElement>) {
@@ -387,19 +407,33 @@ export default function TaskManagerPage() {
       <div className="flex border-b mb-4">
         <button
           onClick={() => setActiveTab("quick")}
-          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
+          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
             activeTab === "quick" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-700"
           }`}
         >
           Quick Tasks
+          {activeTab !== "quick" && (
+            <>
+              {quickTaskBadges.overdue > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">{quickTaskBadges.overdue}</span>}
+              {quickTaskBadges.dueToday > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none">{quickTaskBadges.dueToday}</span>}
+              {quickTaskBadges.dueSoon > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-500 text-white text-[10px] font-bold leading-none">{quickTaskBadges.dueSoon}</span>}
+            </>
+          )}
         </button>
         <button
           onClick={() => setActiveTab("recurring")}
-          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
+          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
             activeTab === "recurring" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-700"
           }`}
         >
           Recurring Tasks
+          {activeTab !== "recurring" && (
+            <>
+              {recurringTaskBadges.overdue > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.overdue}</span>}
+              {recurringTaskBadges.dueToday > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.dueToday}</span>}
+              {recurringTaskBadges.dueSoon > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.dueSoon}</span>}
+            </>
+          )}
         </button>
       </div>
 
