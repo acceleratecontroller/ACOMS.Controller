@@ -533,9 +533,9 @@ export default function TaskManagerPage() {
               {isAdmin && (
                 <span
                   onClick={(e) => { e.stopPropagation(); setShowAddTask(true); setError(""); }}
-                  className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gray-200 text-gray-600 hover:bg-blue-500 hover:text-white text-[12px] font-bold leading-none cursor-pointer transition-colors"
+                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer transition-colors"
                   title="Add quick task"
-                >+</span>
+                ><svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></span>
               )}
             </>
           )}
@@ -555,9 +555,9 @@ export default function TaskManagerPage() {
               {isAdmin && (
                 <span
                   onClick={(e) => { e.stopPropagation(); setShowAddRecurring(true); setError(""); }}
-                  className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gray-200 text-gray-600 hover:bg-blue-500 hover:text-white text-[12px] font-bold leading-none cursor-pointer transition-colors"
+                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer transition-colors"
                   title="Add recurring task"
-                >+</span>
+                ><svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></span>
               )}
             </>
           )}
@@ -577,9 +577,9 @@ export default function TaskManagerPage() {
               {isAdmin && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleCreateNote(); }}
-                  className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gray-200 text-gray-600 hover:bg-amber-500 hover:text-white text-[12px] font-bold leading-none cursor-pointer transition-colors"
+                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer transition-colors"
                   title="Add quick note"
-                >+</span>
+                ><svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></span>
               )}
             </>
           )}
