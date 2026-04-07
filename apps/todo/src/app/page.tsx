@@ -68,7 +68,17 @@ interface DashboardData {
       currentStock: number;
       minimumStockLevel: number | null;
     }[];
-    recentMovements: {
+    recentJobActivity: {
+      jobId: string;
+      projectId: string;
+      jobName: string;
+      client: string;
+      movementCount: number;
+      movementTypes: string[];
+      lastActivity: string;
+      totalIssued: number;
+    }[];
+    recentGeneralMovements: {
       id: string;
       quantity: string;
       movementType: string;
@@ -83,8 +93,19 @@ interface DashboardData {
       location: { name: string };
       _count: { lines: number };
     }[];
-    itemCount: number;
-    locationCount: number;
+    pendingJobMaterials: {
+      id: string;
+      projectId: string;
+      name: string;
+      client: string;
+      _count: { materials: number };
+    }[];
+    pendingClientReturns: {
+      id: string;
+      quantity: string;
+      item: { code: string; description: string };
+      job: { projectId: string; name: string; client: string } | null;
+    }[];
   };
 }
 
@@ -546,55 +567,47 @@ export default function DashboardPage() {
         {/* ─── Materials Snapshot ──────────────────────────── */}
         <DashboardWidget
           title="Materials"
-          viewAllHref="/materials/items"
+          viewAllHref="/materials"
           viewAllLabel="Open Materials"
         >
           {!data?.materials ? (
             <div className="text-sm text-gray-400 py-6 text-center">Loading materials...</div>
           ) : (
             <div className="space-y-3">
-              {/* Summary stats */}
-              <div className="flex gap-4 text-xs">
-                <div><span className="text-gray-500">Items:</span> <span className="font-medium">{data.materials.itemCount}</span></div>
-                <div><span className="text-gray-500">Locations:</span> <span className="font-medium">{data.materials.locationCount}</span></div>
-                {data.materials.lowStockItems.length > 0 && (
-                  <div><span className="text-red-600 font-medium">{data.materials.lowStockItems.length} low stock</span></div>
-                )}
-                {data.materials.openStocktakes.length > 0 && (
-                  <div><span className="text-blue-600 font-medium">{data.materials.openStocktakes.length} open stocktake{data.materials.openStocktakes.length !== 1 ? "s" : ""}</span></div>
-                )}
-              </div>
-
-              {/* Low stock alerts */}
-              {data.materials.lowStockItems.length > 0 && (
+              {/* Recent job activity */}
+              {data.materials.recentJobActivity.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-red-700 mb-1">Low Stock</div>
+                  <div className="text-xs font-semibold text-gray-700 mb-1">Recent Job Activity</div>
                   <div className="space-y-1">
-                    {data.materials.lowStockItems.slice(0, 4).map((item, i) => (
-                      <div key={i} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1">
-                        <div>
-                          <span className="font-mono font-medium">{item.itemCode}</span>{" "}
-                          <span className="text-gray-500">{item.itemDescription}</span>
-                          <span className="text-gray-400 ml-1">@ {item.locationName}</span>
+                    {data.materials.recentJobActivity.map((j) => (
+                      <Link key={j.jobId} href={`/materials/jobs/${j.jobId}`} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1 hover:bg-gray-50 -mx-1 px-1 rounded">
+                        <div className="min-w-0">
+                          <span className="font-mono font-medium">{j.projectId}</span>{" "}
+                          <span className="text-gray-600 truncate">{j.jobName}</span>
+                          <span className="text-gray-400 ml-1">({j.client})</span>
                         </div>
-                        <div className="text-red-600 font-medium">{item.currentStock} / {item.minimumStockLevel}</div>
-                      </div>
-                    ))}
-                    {data.materials.lowStockItems.length > 4 && (
-                      <Link href="/materials/stock" className="text-xs text-blue-600 hover:text-blue-800">
-                        +{data.materials.lowStockItems.length - 4} more
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <div className="flex gap-0.5">
+                            {j.movementTypes.slice(0, 2).map((t) => (
+                              <span key={t} className="inline-block px-1 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">
+                                {MOVEMENT_TYPE_LABELS[t] || t}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-gray-400">{j.movementCount} mov</span>
+                        </div>
                       </Link>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}
 
-              {/* Recent movements */}
-              {data.materials.recentMovements.length > 0 && (
+              {/* General stock movements (non-job) */}
+              {data.materials.recentGeneralMovements.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-gray-700 mb-1">Recent Movements</div>
+                  <div className="text-xs font-semibold text-gray-700 mb-1">Stock Movements</div>
                   <div className="space-y-1">
-                    {data.materials.recentMovements.slice(0, 3).map((m) => (
+                    {data.materials.recentGeneralMovements.slice(0, 5).map((m) => (
                       <div key={m.id} className="text-xs flex items-center justify-between border-b border-gray-100 pb-1">
                         <span>
                           <span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium mr-1">
@@ -606,6 +619,68 @@ export default function DashboardPage() {
                         <span className="text-gray-400">{new Date(m.createdAt).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit" })}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Jobs awaiting materials */}
+              {data.materials.pendingJobMaterials.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-amber-700 mb-1">Awaiting Materials</div>
+                  <div className="space-y-1">
+                    {data.materials.pendingJobMaterials.map((j) => (
+                      <Link key={j.id} href={`/materials/jobs/${j.id}`} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1 hover:bg-gray-50 -mx-1 px-1 rounded">
+                        <div>
+                          <span className="font-mono font-medium">{j.projectId}</span>{" "}
+                          <span className="text-gray-600">{j.name}</span>
+                          <span className="text-gray-400 ml-1">({j.client})</span>
+                        </div>
+                        <span className="text-amber-600 font-medium">{j._count.materials} item{j._count.materials !== 1 ? "s" : ""}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Client returns due */}
+              {data.materials.pendingClientReturns.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-orange-700 mb-1">Client Returns Due</div>
+                  <div className="space-y-1">
+                    {data.materials.pendingClientReturns.map((r) => (
+                      <div key={r.id} className="text-xs flex items-center justify-between border-b border-gray-100 pb-1">
+                        <div>
+                          <span className="font-mono font-medium">{r.item.code}</span>{" "}
+                          <span className="text-gray-500">{r.item.description}</span>
+                          {r.job && <span className="text-gray-400 ml-1">({r.job.projectId})</span>}
+                        </div>
+                        <span className="text-orange-600 font-medium">x{Number(r.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Low stock alerts */}
+              {data.materials.lowStockItems.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-red-700 mb-1">Low Stock ({data.materials.lowStockItems.length})</div>
+                  <div className="space-y-1">
+                    {data.materials.lowStockItems.slice(0, 3).map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1">
+                        <div>
+                          <span className="font-mono font-medium">{item.itemCode}</span>{" "}
+                          <span className="text-gray-500">{item.itemDescription}</span>
+                          <span className="text-gray-400 ml-1">@ {item.locationName}</span>
+                        </div>
+                        <div className="text-red-600 font-medium">{item.currentStock} / {item.minimumStockLevel}</div>
+                      </div>
+                    ))}
+                    {data.materials.lowStockItems.length > 3 && (
+                      <Link href="/materials/stock?belowMinimum=true" className="text-xs text-blue-600 hover:text-blue-800">
+                        +{data.materials.lowStockItems.length - 3} more
+                      </Link>
+                    )}
                   </div>
                 </div>
               )}
@@ -624,6 +699,14 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
+              )}
+
+              {/* Empty state */}
+              {data.materials.recentJobActivity.length === 0 &&
+                data.materials.recentGeneralMovements.length === 0 &&
+                data.materials.pendingJobMaterials.length === 0 &&
+                data.materials.lowStockItems.length === 0 && (
+                <div className="text-sm text-gray-400 py-4 text-center">No recent stock activity</div>
               )}
             </div>
           )}

@@ -18,18 +18,28 @@ export async function GET() {
 
   // Resolve employee ID in parallel with material queries (which don't need it)
   const identityId = session.user.identityId ?? null;
-  const [employeeResult, assignees, lowStockItems, recentMovements, openStocktakes, itemCount, locationCount] = await Promise.all([
+  const [
+    employeeResult,
+    assignees,
+    lowStockItems,
+    recentMovements,
+    openStocktakes,
+    pendingJobMaterials,
+    pendingClientReturns,
+  ] = await Promise.all([
     identityId ? getEmployeeByIdentityId(identityId) : Promise.resolve(null),
     getAssignableEmployees(),
     getStockLevels({ belowMinimumOnly: true }),
+    // Recent movements with job context (last 20 to group by job)
     prisma.stockMovement.findMany({
       include: {
         item: { select: { code: true, description: true } },
         fromLocation: { select: { name: true } },
         toLocation: { select: { name: true } },
+        job: { select: { id: true, projectId: true, name: true, client: true } },
       },
       orderBy: { createdAt: "desc" },
-      take: 5,
+      take: 20,
     }),
     prisma.stocktake.findMany({
       where: { status: "DRAFT" },
@@ -39,9 +49,76 @@ export async function GET() {
       },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.item.count({ where: { isArchived: false } }),
-    prisma.location.count({ where: { isArchived: false } }),
+    // Jobs with pending/requested materials (awaiting materials)
+    prisma.job.findMany({
+      where: {
+        isArchived: false,
+        materials: { some: { status: { in: ["PENDING", "REQUESTED"] } } },
+      },
+      select: {
+        id: true,
+        projectId: true,
+        name: true,
+        client: true,
+        _count: { select: { materials: { where: { status: { in: ["PENDING", "REQUESTED"] } } } } },
+      },
+      take: 5,
+    }),
+    // Client returns due
+    prisma.clientReturn.findMany({
+      where: { status: "TO_BE_RETURNED" },
+      include: {
+        item: { select: { code: true, description: true } },
+        job: { select: { projectId: true, name: true, client: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
   ]);
+
+  // Group recent movements: first 5 jobs with activity, then non-job movements
+  const jobMovementMap = new Map<string, {
+    jobId: string;
+    projectId: string;
+    jobName: string;
+    client: string;
+    movementCount: number;
+    movementTypes: string[];
+    lastActivity: string;
+    totalIssued: number;
+  }>();
+  const generalMovements: typeof recentMovements = [];
+
+  for (const m of recentMovements) {
+    if (m.job) {
+      const existing = jobMovementMap.get(m.job.id);
+      if (existing) {
+        existing.movementCount++;
+        if (!existing.movementTypes.includes(m.movementType)) {
+          existing.movementTypes.push(m.movementType);
+        }
+        if (m.movementType === "ISSUED") {
+          existing.totalIssued += Number(m.quantity);
+        }
+      } else {
+        jobMovementMap.set(m.job.id, {
+          jobId: m.job.id,
+          projectId: m.job.projectId,
+          jobName: m.job.name,
+          client: m.job.client,
+          movementCount: 1,
+          movementTypes: [m.movementType],
+          lastActivity: m.createdAt.toISOString(),
+          totalIssued: m.movementType === "ISSUED" ? Number(m.quantity) : 0,
+        });
+      }
+    } else {
+      generalMovements.push(m);
+    }
+  }
+
+  const recentJobActivity = Array.from(jobMovementMap.values()).slice(0, 5);
+  const recentGeneralMovements = generalMovements.slice(0, 5);
 
   const employeeId = employeeResult?.id ?? null;
   const taskAssigneeFilter = employeeId ? { assigneeId: employeeId } : {};
@@ -227,10 +304,11 @@ export async function GET() {
     // Materials data
     materials: {
       lowStockItems,
-      recentMovements,
+      recentJobActivity,
+      recentGeneralMovements,
       openStocktakes,
-      itemCount,
-      locationCount,
+      pendingJobMaterials,
+      pendingClientReturns,
     },
   });
 }
