@@ -530,6 +530,13 @@ export default function TaskManagerPage() {
               {quickTaskBadges.overdue > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">{quickTaskBadges.overdue}</span>}
               {quickTaskBadges.dueToday > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none">{quickTaskBadges.dueToday}</span>}
               {quickTaskBadges.dueSoon > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-500 text-white text-[10px] font-bold leading-none">{quickTaskBadges.dueSoon}</span>}
+              {isAdmin && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); setShowAddTask(true); setError(""); }}
+                  className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gray-200 text-gray-600 hover:bg-blue-500 hover:text-white text-[12px] font-bold leading-none cursor-pointer transition-colors"
+                  title="Add quick task"
+                >+</span>
+              )}
             </>
           )}
         </button>
@@ -545,6 +552,13 @@ export default function TaskManagerPage() {
               {recurringTaskBadges.overdue > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.overdue}</span>}
               {recurringTaskBadges.dueToday > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.dueToday}</span>}
               {recurringTaskBadges.dueSoon > 0 && <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-yellow-500 text-white text-[10px] font-bold leading-none">{recurringTaskBadges.dueSoon}</span>}
+              {isAdmin && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); setShowAddRecurring(true); setError(""); }}
+                  className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gray-200 text-gray-600 hover:bg-blue-500 hover:text-white text-[12px] font-bold leading-none cursor-pointer transition-colors"
+                  title="Add recurring task"
+                >+</span>
+              )}
             </>
           )}
         </button>
@@ -555,8 +569,19 @@ export default function TaskManagerPage() {
           }`}
         >
           Quick Notes
-          {activeTab !== "notes" && notes.length > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">{notes.length}</span>
+          {activeTab !== "notes" && (
+            <>
+              {notes.length > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">{notes.length}</span>
+              )}
+              {isAdmin && (
+                <span
+                  onClick={(e) => { e.stopPropagation(); handleCreateNote(); }}
+                  className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gray-200 text-gray-600 hover:bg-amber-500 hover:text-white text-[12px] font-bold leading-none cursor-pointer transition-colors"
+                  title="Add quick note"
+                >+</span>
+              )}
+            </>
           )}
         </button>
       </div>
