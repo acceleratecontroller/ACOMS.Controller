@@ -23,7 +23,7 @@ export async function getEmployeeByIdentityId(identityId: string): Promise<Emplo
       `${getBaseUrl()}/api/employees/lookup?identityId=${encodeURIComponent(identityId)}`,
       {
         headers: { Authorization: `Bearer ${getToken()}` },
-        next: { revalidate: 60 },
+        cache: "no-store",
       }
     );
     if (!res.ok) return null;
@@ -39,24 +39,27 @@ export async function getEmployeeByIdentityId(identityId: string): Promise<Emplo
 export async function getAssignableEmployees(): Promise<Employee[]> {
   const baseUrl = getBaseUrl();
   const token = getToken();
-  console.log("[acoms-os] getAssignableEmployees called");
-  console.log("[acoms-os] baseUrl:", baseUrl ? `${baseUrl.slice(0, 20)}...` : "EMPTY");
-  console.log("[acoms-os] token present:", token.length > 0, "length:", token.length);
 
   try {
     const url = `${baseUrl}/api/employees/assignees`;
     console.log("[acoms-os] fetching:", url);
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 60 },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
     });
     console.log("[acoms-os] response status:", res.status);
+    console.log("[acoms-os] content-type:", res.headers.get("content-type"));
     if (!res.ok) {
       const text = await res.text();
-      console.log("[acoms-os] error response:", text);
+      console.log("[acoms-os] error response:", text.slice(0, 200));
       return [];
     }
-    const data = await res.json();
+    const text = await res.text();
+    console.log("[acoms-os] raw response:", text.slice(0, 300));
+    const data = JSON.parse(text);
     console.log("[acoms-os] employees returned:", data.employees?.length ?? 0);
     return data.employees || [];
   } catch (err) {
