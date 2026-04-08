@@ -22,6 +22,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow requests with embed tokens through — these are API calls from
+  // the ACOMS.OS iframe. Token validation happens in requireAuth()/requireAdmin().
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer embed:")) {
+    return NextResponse.next();
+  }
+
   // Check for NextAuth session cookie
   const hasSession =
     request.cookies.has("authjs.session-token") ||
