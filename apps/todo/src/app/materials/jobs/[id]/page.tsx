@@ -807,7 +807,7 @@ export default function JobDetailPage() {
       {/* Bulk Add Modal */}
       <Modal isOpen={showBulkModal} onClose={() => setShowBulkModal(false)} title="Quick Add Received Items to Requirements">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             These received items are not yet in your material requirements. The received quantity will be used as the required quantity.
           </p>
 
