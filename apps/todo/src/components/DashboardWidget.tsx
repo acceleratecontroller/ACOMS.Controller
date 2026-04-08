@@ -22,10 +22,10 @@ export function DashboardWidget({
   badgeColor = "bg-gray-500",
 }: DashboardWidgetProps) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-gray-900">{title}</h3>
+          <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">{title}</h3>
           {badge !== undefined && badge > 0 && (
             <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-white text-[10px] font-bold ${badgeColor}`}>
               {badge}
@@ -35,7 +35,7 @@ export function DashboardWidget({
         {action && (
           <button
             onClick={action.onClick}
-            className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
             {action.label}
           </button>
@@ -45,7 +45,7 @@ export function DashboardWidget({
       {viewAllHref && (
         <Link
           href={viewAllHref}
-          className="text-xs text-blue-600 hover:text-blue-800 mt-3 inline-block"
+          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mt-3 inline-block"
         >
           {viewAllLabel || "View all"}
         </Link>

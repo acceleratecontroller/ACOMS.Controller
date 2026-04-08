@@ -79,24 +79,24 @@ export default function LocationsPage() {
       </div>
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
       ) : locations.length === 0 ? (
-        <p className="text-gray-500 text-sm">No locations found. Create one to get started.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No locations found. Create one to get started.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Name</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Name</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Description</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Actions</th>
               </tr>
             </thead>
             <tbody>
               {locations.map((loc) => (
-                <tr key={loc.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr key={loc.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-3 font-medium">{loc.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{loc.description || "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{loc.description || "—"}</td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => openEdit(loc)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">Edit</button>
                     <button onClick={() => setArchiveTarget(loc)} className="text-red-600 hover:text-red-800 text-sm">Archive</button>
@@ -111,15 +111,15 @@ export default function LocationsPage() {
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingLocation ? "Edit Location" : "Add Location"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-            <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
+            <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowModal(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">{editingLocation ? "Save" : "Create"}</button>
           </div>
         </form>

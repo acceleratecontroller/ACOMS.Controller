@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const tasks = await prisma.recurringTask.findMany({
     where: { isArchived: showArchived },
-    orderBy: { createdAt: "desc" },
+    orderBy: { nextDue: "asc" },
   });
 
   return NextResponse.json(tasks);

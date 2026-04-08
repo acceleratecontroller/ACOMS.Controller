@@ -75,7 +75,7 @@ export default function ClientReturnsPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
         >
           <option value="TO_BE_RETURNED">To Be Returned</option>
           <option value="RETURNED">Returned</option>
@@ -94,10 +94,10 @@ export default function ClientReturnsPage() {
       )}
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
       ) : returns.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <p className="text-gray-500 text-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             {statusFilter === "TO_BE_RETURNED"
               ? "No materials pending return."
               : statusFilter === "RETURNED"
@@ -110,11 +110,11 @@ export default function ClientReturnsPage() {
           {/* Mobile card layout */}
           <div className="space-y-3 md:hidden">
             {returns.map((ret) => (
-              <div key={ret.id} className="bg-white rounded-lg border border-gray-200 p-3 overflow-hidden">
+              <div key={ret.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 overflow-hidden">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="min-w-0 flex-1">
-                    <div className="font-mono text-xs text-gray-500 break-all">{ret.item.code}</div>
-                    <div className="text-sm font-medium text-gray-900 truncate">{ret.item.description}</div>
+                    <div className="font-mono text-xs text-gray-500 dark:text-gray-400 break-all">{ret.item.code}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{ret.item.description}</div>
                   </div>
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
                     ret.status === "TO_BE_RETURNED"
@@ -124,29 +124,29 @@ export default function ClientReturnsPage() {
                     {CLIENT_RETURN_STATUS_LABELS[ret.status]}
                   </span>
                 </div>
-                <div className="text-sm font-medium text-gray-700 mb-2">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {Number(ret.quantity)} {UOM_LABELS[ret.item.unitOfMeasure] || ret.item.unitOfMeasure}
                 </div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
                   {ret.job && (
                     <div className="min-w-0">
-                      <span className="text-gray-400 text-xs">Job</span>
-                      <div className="font-mono text-xs text-gray-700 truncate">{ret.job.projectId}</div>
+                      <span className="text-gray-400 dark:text-gray-500 text-xs">Job</span>
+                      <div className="font-mono text-xs text-gray-700 dark:text-gray-300 truncate">{ret.job.projectId}</div>
                     </div>
                   )}
                   {ret.job?.client && (
                     <div className="min-w-0">
-                      <span className="text-gray-400 text-xs">Client</span>
-                      <div className="text-gray-700 truncate">{ret.job.client}</div>
+                      <span className="text-gray-400 dark:text-gray-500 text-xs">Client</span>
+                      <div className="text-gray-700 dark:text-gray-300 truncate">{ret.job.client}</div>
                     </div>
                   )}
                   <div className="min-w-0">
-                    <span className="text-gray-400 text-xs">Location</span>
-                    <div className="text-gray-700 truncate">{ret.location.name}</div>
+                    <span className="text-gray-400 dark:text-gray-500 text-xs">Location</span>
+                    <div className="text-gray-700 dark:text-gray-300 truncate">{ret.location.name}</div>
                   </div>
                   <div>
-                    <span className="text-gray-400 text-xs">Date</span>
-                    <div className="text-gray-700 text-xs">
+                    <span className="text-gray-400 dark:text-gray-500 text-xs">Date</span>
+                    <div className="text-gray-700 dark:text-gray-300 text-xs">
                       {ret.status === "RETURNED" && ret.returnedAt
                         ? new Date(ret.returnedAt).toLocaleDateString()
                         : new Date(ret.createdAt).toLocaleDateString()}
@@ -154,7 +154,7 @@ export default function ClientReturnsPage() {
                   </div>
                 </div>
                 {statusFilter !== "RETURNED" && ret.status === "TO_BE_RETURNED" && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 flex gap-3">
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex gap-3">
                     <button
                       onClick={() => setConfirmAction({ id: ret.id, action: "MARK_RETURNED", item: ret })}
                       disabled={processing === ret.id}
@@ -176,41 +176,41 @@ export default function ClientReturnsPage() {
           </div>
 
           {/* Desktop table layout */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto hidden md:block">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto hidden md:block">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Item</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Qty</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Job</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Date</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Qty</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Job</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Client</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Location</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Date</th>
                   {statusFilter !== "RETURNED" && (
-                    <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Actions</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {returns.map((ret) => (
-                  <tr key={ret.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={ret.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-gray-500">{ret.item.code}</span>{" "}
-                      <span className="text-gray-700">{ret.item.description}</span>
+                      <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{ret.item.code}</span>{" "}
+                      <span className="text-gray-700 dark:text-gray-300">{ret.item.description}</span>
                     </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                    <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-gray-100">
                       {Number(ret.quantity)} {UOM_LABELS[ret.item.unitOfMeasure] || ret.item.unitOfMeasure}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       {ret.job ? (
                         <span className="font-mono text-xs">{ret.job.projectId}</span>
                       ) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                       {ret.job?.client || "—"}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{ret.location.name}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{ret.location.name}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                         ret.status === "TO_BE_RETURNED"
@@ -220,7 +220,7 @@ export default function ClientReturnsPage() {
                         {CLIENT_RETURN_STATUS_LABELS[ret.status]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">
+                    <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs">
                       {ret.status === "RETURNED" && ret.returnedAt
                         ? new Date(ret.returnedAt).toLocaleDateString()
                         : new Date(ret.createdAt).toLocaleDateString()}
@@ -259,19 +259,19 @@ export default function ClientReturnsPage() {
       <Modal isOpen={!!confirmAction} onClose={() => setConfirmAction(null)} title={confirmAction?.action === "MARK_RETURNED" ? "Confirm Return to Client" : "Confirm Return to Stock"}>
         {confirmAction && (
           <div className="space-y-4">
-            <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50">
               <div className="text-sm">
-                <span className="font-mono text-xs text-gray-500">{confirmAction.item.item.code}</span>{" "}
-                <span className="font-medium text-gray-900">{confirmAction.item.item.description}</span>
+                <span className="font-mono text-xs text-gray-500 dark:text-gray-400">{confirmAction.item.item.code}</span>{" "}
+                <span className="font-medium text-gray-900 dark:text-gray-100">{confirmAction.item.item.description}</span>
               </div>
-              <div className="text-sm text-gray-500 mt-1">
+              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {Number(confirmAction.item.quantity)} {UOM_LABELS[confirmAction.item.item.unitOfMeasure] || confirmAction.item.item.unitOfMeasure}
                 {confirmAction.item.job && <span> from job <span className="font-mono">{confirmAction.item.job.projectId}</span></span>}
                 {confirmAction.item.job?.client && <span> ({confirmAction.item.job.client})</span>}
               </div>
             </div>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {confirmAction.action === "MARK_RETURNED"
                 ? "This will mark the material as returned to the client and remove it from stock. This cannot be undone."
                 : "This will add the material back into unallocated stock at the current location and remove it from the returns queue."}
@@ -281,7 +281,7 @@ export default function ClientReturnsPage() {
               <button
                 type="button"
                 onClick={() => setConfirmAction(null)}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+                className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancel
               </button>

@@ -43,17 +43,17 @@ export function NoteCard({
   return (
     <div
       onClick={!note.isArchived ? onEdit : undefined}
-      className={`bg-amber-50 border border-amber-200 rounded-lg p-4 shadow-sm transition-all ${
-        !note.isArchived ? "hover:shadow-md cursor-pointer hover:bg-amber-100/70" : "opacity-70"
+      className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4 shadow-sm transition-all ${
+        !note.isArchived ? "hover:shadow-md cursor-pointer hover:bg-amber-100/70 dark:hover:bg-amber-900/40" : "opacity-70"
       }`}
     >
       {/* Content preview */}
-      <div className="text-sm text-gray-800 whitespace-pre-wrap line-clamp-6 mb-3 min-h-[3rem]">
-        {note.content || <span className="text-gray-400 italic">Empty note</span>}
+      <div className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap line-clamp-6 mb-3 min-h-[3rem]">
+        {note.content || <span className="text-gray-400 dark:text-gray-500 italic">Empty note</span>}
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-amber-200 pt-2">
+      <div className="flex items-center justify-between border-t border-amber-200 dark:border-amber-700 pt-2">
         <span className="text-[11px] text-gray-400">
           {formatNoteDate(note.createdAt)}
         </span>
@@ -69,7 +69,7 @@ export function NoteCard({
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); onConvertToTask(); }}
-                className="p-1.5 rounded hover:bg-blue-100 text-blue-600 transition-colors"
+                className="p-1.5 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 transition-colors"
                 title="Create task from note"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -78,7 +78,7 @@ export function NoteCard({
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onArchive(); }}
-                className="p-1.5 rounded hover:bg-red-100 text-red-500 transition-colors"
+                className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
                 title="Archive note"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -91,7 +91,7 @@ export function NoteCard({
           {isAdmin && note.isArchived && !isConverted && (
             <button
               onClick={(e) => { e.stopPropagation(); onRestore(); }}
-              className="p-1.5 rounded hover:bg-green-100 text-green-600 transition-colors"
+              className="p-1.5 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 transition-colors"
               title="Restore note"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

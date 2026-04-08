@@ -69,7 +69,7 @@ export default function MovementHistoryPage() {
         <select
           value={filters.movementType}
           onChange={(e) => { setFilters({ ...filters, movementType: e.target.value }); setOffset(0); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
         >
           <option value="">All types</option>
           {MOVEMENT_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -77,7 +77,7 @@ export default function MovementHistoryPage() {
         <select
           value={filters.locationId}
           onChange={(e) => { setFilters({ ...filters, locationId: e.target.value }); setOffset(0); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
         >
           <option value="">All locations</option>
           {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
@@ -87,60 +87,60 @@ export default function MovementHistoryPage() {
           placeholder="Client name..."
           value={filters.clientName}
           onChange={(e) => { setFilters({ ...filters, clientName: e.target.value }); setOffset(0); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-40"
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm w-full sm:w-40"
         />
         <input
           type="text"
           placeholder="Project code..."
           value={filters.projectCode}
           onChange={(e) => { setFilters({ ...filters, projectCode: e.target.value }); setOffset(0); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-40"
+          className="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm w-full sm:w-40"
         />
-        <span className="text-xs text-gray-400 ml-auto">{total} movements</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500 ml-auto">{total} movements</span>
       </div>
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
       ) : movements.length === 0 ? (
-        <p className="text-gray-500 text-sm">No movements found.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No movements found.</p>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Date</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Item</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Qty</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">From</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">To</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Client</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Project</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Reference</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Date</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Type</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Qty</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">From</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">To</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Client</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Project</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Reference</th>
                 </tr>
               </thead>
               <tbody>
                 {movements.map((m) => (
-                  <tr key={m.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(m.createdAt)}</td>
+                  <tr key={m.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(m.createdAt)}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                         {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs">{m.item.code}</span>{" "}
-                      <span className="text-gray-500">{m.item.description}</span>
+                      <span className="text-gray-500 dark:text-gray-400">{m.item.description}</span>
                     </td>
                     <td className="px-4 py-3 text-right font-medium">
                       {Number(m.quantity)} {UOM_LABELS[m.item.unitOfMeasure] || ""}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{m.fromLocation?.name || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500">{m.toLocation?.name || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500">{m.clientName || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500">{m.projectCode || m.projectName || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500">{m.reference || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{m.fromLocation?.name || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{m.toLocation?.name || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{m.clientName || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{m.projectCode || m.projectName || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{m.reference || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -151,17 +151,17 @@ export default function MovementHistoryPage() {
             <button
               onClick={() => setOffset(Math.max(0, offset - limit))}
               disabled={offset === 0}
-              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 dark:disabled:text-gray-500"
             >
               Previous
             </button>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               Showing {offset + 1}–{Math.min(offset + limit, total)} of {total}
             </span>
             <button
               onClick={() => setOffset(offset + limit)}
               disabled={offset + limit >= total}
-              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 dark:disabled:text-gray-500"
             >
               Next
             </button>

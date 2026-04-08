@@ -137,10 +137,10 @@ function RequirementItemPicker({
         onBlur={() => { setTimeout(() => setOpen(false), 150); }}
         onKeyDown={handleKeyDown}
         placeholder="Type item code..."
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
       />
       {open && filtered.length > 0 && (
-        <div ref={listRef} className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+        <div ref={listRef} className="absolute z-20 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
           {filtered.map((item, idx) => {
             const available = item.unallocated > 0;
             const uom = UOM_LABELS[item.unitOfMeasure] || "";
@@ -150,14 +150,14 @@ function RequirementItemPicker({
                 onMouseDown={(e) => { e.preventDefault(); selectItem(item); }}
                 className={`px-3 py-2 text-sm cursor-pointer ${
                   idx === highlightIdx
-                    ? "bg-blue-50 text-blue-800"
-                    : "hover:bg-gray-50"
+                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300"
+                    : "hover:bg-gray-50 dark:hover:bg-gray-700"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="font-mono font-medium">{item.itemCode}</span>
-                    <span className="text-gray-500 ml-2">— {item.itemDescription}</span>
+                    <span className="text-gray-500 dark:text-gray-400 ml-2">— {item.itemDescription}</span>
                   </div>
                   <div className="text-right ml-4 whitespace-nowrap">
                     {available ? (
@@ -194,7 +194,7 @@ function StatusBadge({ status }: { status: string }) {
     FULFILLED: "Fulfilled",
   };
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[status] || "bg-gray-100 text-gray-600"}`}>
+    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[status] || "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"}`}>
       {labels[status] || status}
     </span>
   );
@@ -236,7 +236,7 @@ function InlineNumberCell({
     return (
       <span
         onClick={() => { if (!disabled) setEditing(true); }}
-        className={`${className || ""} ${!disabled ? "cursor-pointer hover:bg-blue-50 hover:ring-1 hover:ring-blue-200 rounded px-1 -mx-1 transition-all" : ""}`}
+        className={`${className || ""} ${!disabled ? "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:ring-1 hover:ring-blue-200 dark:hover:ring-blue-800 rounded px-1 -mx-1 transition-all" : ""}`}
         title={!disabled ? "Click to edit" : undefined}
       >
         {value} {suffix}
@@ -293,7 +293,7 @@ function InlineTextCell({
     return (
       <span
         onClick={() => { if (!disabled) setEditing(true); }}
-        className={`text-gray-500 text-xs max-w-[150px] truncate block ${!disabled ? "cursor-pointer hover:bg-blue-50 hover:ring-1 hover:ring-blue-200 rounded px-1 -mx-1 transition-all" : ""}`}
+        className={`text-gray-500 dark:text-gray-400 text-xs max-w-[150px] truncate block ${!disabled ? "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:ring-1 hover:ring-blue-200 dark:hover:ring-blue-800 rounded px-1 -mx-1 transition-all" : ""}`}
         title={!disabled ? "Click to edit" : undefined}
       >
         {value || "—"}
@@ -480,7 +480,7 @@ export default function JobDetailPage() {
     return new Date(d).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
   }
 
-  if (loading) return <p className="text-gray-500 text-sm p-8">Loading...</p>;
+  if (loading) return <p className="text-gray-500 dark:text-gray-400 text-sm p-8">Loading...</p>;
   if (error || !job) return (
     <div className="p-8">
       <p className="text-red-600 text-sm mb-4">{error || "Job not found"}</p>
@@ -506,20 +506,20 @@ export default function JobDetailPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-xs font-medium text-gray-500 uppercase">Total Received</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total Received</div>
           <div className="text-2xl font-bold text-green-600 mt-1">{job.summary.totalReceived}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-xs font-medium text-gray-500 uppercase">Movements</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{job.summary.movementCount}</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Movements</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{job.summary.movementCount}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-xs font-medium text-gray-500 uppercase">Requirements</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{job.materials.length}</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Requirements</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{job.materials.length}</div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-xs font-medium text-gray-500 uppercase">Outstanding</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Outstanding</div>
           <div className="text-2xl font-bold text-orange-600 mt-1">
             {job.materials.filter((m) => m.status !== "FULFILLED").length}
           </div>
@@ -530,10 +530,10 @@ export default function JobDetailPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Material Requirements
               {job.materials.length > 0 && (
-                <span className="font-normal text-gray-500 ml-2">
+                <span className="font-normal text-gray-500 dark:text-gray-400 ml-2">
                   ({fulfilledCount} fulfilled, {requestedCount} requested, {pendingCount} pending)
                 </span>
               )}
@@ -542,7 +542,7 @@ export default function JobDetailPage() {
               onClick={() => setLocked(!locked)}
               className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
                 locked
-                  ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  ? "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
                   : "bg-blue-100 text-blue-700 hover:bg-blue-200"
               }`}
               title={locked ? "Unlock to edit requirements" : "Lock to prevent edits"}
@@ -562,32 +562,32 @@ export default function JobDetailPage() {
         </div>
 
         {job.materials.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
-            <p className="text-gray-500 text-sm">No material requirements added yet. Unlock and add requirements, or use Quick Add from the received summary below.</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 text-center">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No material requirements added yet. Unlock and add requirements, or use Quick Add from the received summary below.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Item</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Required</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">From Stock</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Received</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Outstanding</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Notes</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Required</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">From Stock</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Received</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Outstanding</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Notes</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {job.materials.map((mat) => {
                   const uom = UOM_LABELS[mat.item.unitOfMeasure] || "";
                   return (
-                    <tr key={mat.id} className={`border-b border-gray-100 ${mat.outstanding > 0 ? "bg-orange-50/50" : ""}`}>
+                    <tr key={mat.id} className={`border-b border-gray-100 dark:border-gray-700 ${mat.outstanding > 0 ? "bg-orange-50/50" : ""}`}>
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs">{mat.item.code}</span>{" "}
-                        <span className="text-gray-500">{mat.item.description}</span>
+                        <span className="text-gray-500 dark:text-gray-400">{mat.item.description}</span>
                       </td>
                       <td className="px-4 py-3 text-right font-medium">
                         <InlineNumberCell
@@ -624,7 +624,7 @@ export default function JobDetailPage() {
                           </button>
                         )}
                         {mat.status === "REQUESTED" && (
-                          <button onClick={() => updateMaterial(mat.id, { status: "PENDING" })} className="text-gray-500 hover:text-gray-700 text-xs mr-2">
+                          <button onClick={() => updateMaterial(mat.id, { status: "PENDING" })} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-xs mr-2">
                             Back to Pending
                           </button>
                         )}
@@ -652,7 +652,7 @@ export default function JobDetailPage() {
       {job.itemSummary.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-gray-900">Received Materials Summary</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Received Materials Summary</h3>
             {newItemsAvailable && (
               <button
                 onClick={openBulkAdd}
@@ -662,29 +662,29 @@ export default function JobDetailPage() {
               </button>
             )}
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Qty Received</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-700">Movements</th>
-                  <th className="text-center px-4 py-3 font-medium text-gray-700">In Requirements</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item Code</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Description</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Qty Received</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Movements</th>
+                  <th className="text-center px-4 py-3 font-medium text-gray-700 dark:text-gray-300">In Requirements</th>
                 </tr>
               </thead>
               <tbody>
                 {job.itemSummary.map((item) => (
-                  <tr key={item.itemId} className="border-b border-gray-100">
+                  <tr key={item.itemId} className="border-b border-gray-100 dark:border-gray-700">
                     <td className="px-4 py-3 font-mono text-xs">{item.code}</td>
-                    <td className="px-4 py-3 text-gray-700">{item.description}</td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{item.description}</td>
                     <td className="px-4 py-3 text-right text-green-600 font-medium">{item.received} {UOM_LABELS[item.unitOfMeasure] || ""}</td>
-                    <td className="px-4 py-3 text-right text-gray-500">{item.movementCount}</td>
+                    <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">{item.movementCount}</td>
                     <td className="px-4 py-3 text-center">
                       {item.alreadyInRequirements ? (
                         <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Added</span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">Not added</span>
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Not added</span>
                       )}
                     </td>
                   </tr>
@@ -696,40 +696,40 @@ export default function JobDetailPage() {
       )}
 
       {/* Movement history */}
-      <h3 className="text-sm font-semibold text-gray-900 mb-2">Movement History</h3>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Movement History</h3>
       {job.movements.length === 0 ? (
-        <p className="text-gray-500 text-sm">No movements recorded against this job yet.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No movements recorded against this job yet.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Date</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Item</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Qty</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Reference</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Date</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Type</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Qty</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Location</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Reference</th>
               </tr>
             </thead>
             <tbody>
               {job.movements.map((m) => (
-                <tr key={m.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(m.createdAt)}</td>
+                <tr key={m.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(m.createdAt)}</td>
                   <td className="px-4 py-3">
-                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                       {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs">{m.item.code}</span>{" "}
-                    <span className="text-gray-500">{m.item.description}</span>
+                    <span className="text-gray-500 dark:text-gray-400">{m.item.description}</span>
                   </td>
                   <td className="px-4 py-3 text-right font-medium">
                     {Number(m.quantity)} {UOM_LABELS[m.item.unitOfMeasure] || ""}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{m.toLocation?.name || m.fromLocation?.name || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500">{m.reference || "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{m.toLocation?.name || m.fromLocation?.name || "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{m.reference || "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -746,7 +746,7 @@ export default function JobDetailPage() {
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Item *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Item *</label>
             <RequirementItemPicker
               availableItems={availableItems}
               existingMaterialItemIds={existingMaterialItemIds}
@@ -770,10 +770,10 @@ export default function JobDetailPage() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Required Quantity *
               {selectedAvailableItem && selectedAvailableItem.unallocated > 0 && (
-                <span className="font-normal text-gray-400 ml-2">({selectedAvailableItem.unallocated} available from stock)</span>
+                <span className="font-normal text-gray-400 dark:text-gray-500 ml-2">({selectedAvailableItem.unallocated} available from stock)</span>
               )}
             </label>
             <input
@@ -783,22 +783,22 @@ export default function JobDetailPage() {
               step="any"
               value={addForm.requiredQty}
               onChange={(e) => setAddForm({ ...addForm, requiredQty: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
             <input
               type="text"
               value={addForm.notes}
               onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               placeholder="e.g. Client to provide, ordered from supplier..."
             />
           </div>
           {addError && <div className="p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{addError}</div>}
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setShowAddModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowAddModal(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             <button type="submit" disabled={!addForm.itemId} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">Add</button>
           </div>
         </form>
@@ -807,34 +807,34 @@ export default function JobDetailPage() {
       {/* Bulk Add Modal */}
       <Modal isOpen={showBulkModal} onClose={() => setShowBulkModal(false)} title="Quick Add Received Items to Requirements">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             These received items are not yet in your material requirements. The received quantity will be used as the required quantity.
           </p>
 
           {bulkItems.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">All received items are already in requirements.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">All received items are already in requirements.</p>
           ) : (
-            <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+            <div className="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 sticky top-0">
                   <tr>
-                    <th className="text-left px-3 py-2 font-medium text-gray-700 w-8">
+                    <th className="text-left px-3 py-2 font-medium text-gray-700 dark:text-gray-300 w-8">
                       <input
                         type="checkbox"
                         checked={bulkItems.every((i) => i.selected)}
                         onChange={(e) => setBulkItems(bulkItems.map((i) => ({ ...i, selected: e.target.checked })))}
-                        className="rounded border-gray-300"
+                        className="rounded border-gray-300 dark:border-gray-600"
                       />
                     </th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-700">Item</th>
-                    <th className="text-right px-3 py-2 font-medium text-gray-700">Qty Received</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-700 dark:text-gray-300">Item</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-700 dark:text-gray-300">Qty Received</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bulkItems.map((item, idx) => {
                     const uom = UOM_LABELS[item.unitOfMeasure] || "";
                     return (
-                      <tr key={item.itemId} className={`border-b border-gray-100 ${!item.selected ? "opacity-50" : ""}`}>
+                      <tr key={item.itemId} className={`border-b border-gray-100 dark:border-gray-700 ${!item.selected ? "opacity-50" : ""}`}>
                         <td className="px-3 py-2">
                           <input
                             type="checkbox"
@@ -844,12 +844,12 @@ export default function JobDetailPage() {
                               updated[idx] = { ...item, selected: e.target.checked };
                               setBulkItems(updated);
                             }}
-                            className="rounded border-gray-300"
+                            className="rounded border-gray-300 dark:border-gray-600"
                           />
                         </td>
                         <td className="px-3 py-2">
                           <span className="font-mono text-xs">{item.code}</span>{" "}
-                          <span className="text-gray-500">{item.description}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{item.description}</span>
                         </td>
                         <td className="px-3 py-2 text-right text-green-600 font-medium">{item.received} {uom}</td>
                       </tr>
@@ -863,7 +863,7 @@ export default function JobDetailPage() {
           {bulkError && <div className="p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{bulkError}</div>}
 
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setShowBulkModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowBulkModal(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             <button
               onClick={handleBulkAdd}
               disabled={bulkSaving || bulkItems.filter((i) => i.selected).length === 0}

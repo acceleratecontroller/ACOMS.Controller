@@ -36,7 +36,7 @@ export function RecurringCalendar({ tasks }: { tasks: RecurringTask[] }) {
   }, [calendarDate, tasks]);
 
   return (
-    <div className="bg-white border rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-gray-800 text-white">
         <div className="flex items-center gap-3">
           <button
@@ -72,18 +72,18 @@ export function RecurringCalendar({ tasks }: { tasks: RecurringTask[] }) {
       </div>
       <div className="grid grid-cols-7">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="px-2 py-2 bg-gray-50 text-center text-xs font-semibold text-gray-500 border-b">
+          <div key={d} className="px-2 py-2 bg-gray-50 dark:bg-gray-700/50 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
             {d}
           </div>
         ))}
         {calendarDays.map((day, i) => (
           <div
             key={i}
-            className={`min-h-[80px] border-r border-b p-1 ${
-              !day.isCurrentMonth ? "bg-gray-50 text-gray-300" : ""
-            } ${day.isToday ? "bg-blue-50" : ""}`}
+            className={`min-h-[80px] border-r border-b border-gray-200 dark:border-gray-700 p-1 ${
+              !day.isCurrentMonth ? "bg-gray-50 dark:bg-gray-800/50 text-gray-300 dark:text-gray-600" : ""
+            } ${day.isToday ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
           >
-            <div className="text-xs text-gray-500 mb-1">{day.date.getDate()}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{day.date.getDate()}</div>
             {day.tasks.map((t) => {
               const overdue = isOverdue(t.nextDue);
               const today = isDueToday(t.nextDue);
