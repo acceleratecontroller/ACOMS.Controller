@@ -32,8 +32,8 @@ export function Modal({ isOpen, onClose, title, children, wide }: ModalProps) {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className={`bg-white rounded-t-xl md:rounded-lg shadow-xl w-full ${wide ? "max-w-2xl" : "max-w-lg"} mx-0 md:mx-4 p-4 md:p-6 max-h-[85vh] md:max-h-[90vh] overflow-y-auto`}>
-        {title && <h2 className="text-base md:text-lg font-bold text-gray-900 mb-3 md:mb-4">{title}</h2>}
+      <div className={`bg-white dark:bg-gray-800 rounded-t-xl md:rounded-lg shadow-xl w-full ${wide ? "max-w-2xl" : "max-w-lg"} mx-0 md:mx-4 p-4 md:p-6 max-h-[85vh] md:max-h-[90vh] overflow-y-auto`}>
+        {title && <h2 className="text-base md:text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 md:mb-4">{title}</h2>}
         {children}
       </div>
     </div>

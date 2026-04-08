@@ -170,6 +170,23 @@ export default function TaskManagerPage() {
     });
   }, [recurringTasks, recurringFilter, recurringOwnerFilter]);
 
+  const groupedRecurring = useMemo(() => {
+    const groups: { label: string; tasks: RecurringTask[] }[] = [];
+    let lastKey = "";
+    for (const t of filteredRecurring) {
+      const key = t.nextDue ? formatDateISO(t.nextDue) : "no-date";
+      if (key !== lastKey) {
+        groups.push({
+          label: key === "no-date" ? "No Due Date" : getDateGroupLabel(t.nextDue!),
+          tasks: [],
+        });
+        lastKey = key;
+      }
+      groups[groups.length - 1].tasks.push(t);
+    }
+    return groups;
+  }, [filteredRecurring]);
+
   const groupedTasks = useMemo(() => {
     const sorted = [...filteredTasks].sort((a, b) => {
       const aOverdue = a.status !== "COMPLETED" && isOverdue(a.dueDate);
@@ -729,27 +746,36 @@ export default function TaskManagerPage() {
                   <p className="text-sm mt-1">Add your first recurring task to start tracking schedules.</p>
                 </div>
               ) : (
-                <div className="bg-white border rounded-lg overflow-hidden">
-                  <div className="hidden md:grid md:grid-cols-8 gap-2 px-4 py-2 bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    <div className="col-span-2">Task</div>
-                    <div>Owner</div>
-                    <div>Frequency</div>
-                    <div>Last Done</div>
-                    <div>Next Due</div>
-                    <div>Status</div>
-                    <div className="text-right">Actions</div>
-                  </div>
-                  {filteredRecurring.map((task) => (
-                    <RecurringTaskRow
-                      key={task.id}
-                      task={task}
-                      assignees={assignees}
-                      isAdmin={isAdmin}
-                      onEdit={() => { setEditingRecurring(task); setError(""); }}
-                      onComplete={() => setConfirmAction({ type: "complete", id: task.id, entity: "recurring", title: task.title })}
-                      onArchive={() => setConfirmAction({ type: "archive", id: task.id, entity: "recurring", title: task.title })}
-                      onRestore={() => setConfirmAction({ type: "restore", id: task.id, entity: "recurring", title: task.title })}
-                    />
+                <div className="space-y-1">
+                  {groupedRecurring.map((group) => (
+                    <div key={group.label}>
+                      <div className="text-xs font-medium text-gray-400 uppercase tracking-wider py-2 mt-3 first:mt-0">
+                        {group.label} &middot; {group.tasks.length} task{group.tasks.length !== 1 ? "s" : ""}
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                        <div className="hidden md:grid md:grid-cols-8 gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <div className="col-span-2">Task</div>
+                          <div>Owner</div>
+                          <div>Frequency</div>
+                          <div>Last Done</div>
+                          <div>Next Due</div>
+                          <div>Status</div>
+                          <div className="text-right">Actions</div>
+                        </div>
+                        {group.tasks.map((task) => (
+                          <RecurringTaskRow
+                            key={task.id}
+                            task={task}
+                            assignees={assignees}
+                            isAdmin={isAdmin}
+                            onEdit={() => { setEditingRecurring(task); setError(""); }}
+                            onComplete={() => setConfirmAction({ type: "complete", id: task.id, entity: "recurring", title: task.title })}
+                            onArchive={() => setConfirmAction({ type: "archive", id: task.id, entity: "recurring", title: task.title })}
+                            onRestore={() => setConfirmAction({ type: "restore", id: task.id, entity: "recurring", title: task.title })}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
