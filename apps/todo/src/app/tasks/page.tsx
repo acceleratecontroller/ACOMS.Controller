@@ -147,7 +147,7 @@ export default function TaskManagerPage() {
   }, [tasks, taskFilter, taskOwnerFilter, showArchived]);
 
   const filteredRecurring = useMemo(() => {
-    return recurringTasks.filter((t) => {
+    const filtered = recurringTasks.filter((t) => {
       let match = true;
       switch (recurringFilter) {
         case "overdue": match = isOverdue(t.nextDue); break;
@@ -157,6 +157,16 @@ export default function TaskManagerPage() {
       }
       if (recurringOwnerFilter && t.assigneeId !== recurringOwnerFilter) match = false;
       return match;
+    });
+    return [...filtered].sort((a, b) => {
+      const aOverdue = isOverdue(a.nextDue);
+      const bOverdue = isOverdue(b.nextDue);
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      if (!a.nextDue && !b.nextDue) return 0;
+      if (!a.nextDue) return 1;
+      if (!b.nextDue) return -1;
+      return new Date(a.nextDue).getTime() - new Date(b.nextDue).getTime();
     });
   }, [recurringTasks, recurringFilter, recurringOwnerFilter]);
 
