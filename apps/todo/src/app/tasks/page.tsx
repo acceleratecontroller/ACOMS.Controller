@@ -534,7 +534,7 @@ export default function TaskManagerPage() {
     return (
       <div>
         <PageHeader title="Task Manager" description="Loading..." />
-        <div className="text-center py-12 text-gray-500">Loading tasks...</div>
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading tasks...</div>
       </div>
     );
   }
@@ -548,7 +548,7 @@ export default function TaskManagerPage() {
         <button
           onClick={() => setActiveTab("quick")}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
-            activeTab === "quick" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-700"
+            activeTab === "quick" ? "text-blue-600 border-blue-600" : "text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
           Quick Tasks
@@ -560,7 +560,7 @@ export default function TaskManagerPage() {
               {isAdmin && (
                 <span
                   onClick={(e) => { e.stopPropagation(); setShowAddTask(true); setError(""); }}
-                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer transition-colors"
+                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 cursor-pointer transition-colors"
                   title="Add quick task"
                 ><svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></span>
               )}
@@ -570,7 +570,7 @@ export default function TaskManagerPage() {
         <button
           onClick={() => setActiveTab("recurring")}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
-            activeTab === "recurring" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-700"
+            activeTab === "recurring" ? "text-blue-600 border-blue-600" : "text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
           Recurring Tasks
@@ -582,7 +582,7 @@ export default function TaskManagerPage() {
               {isAdmin && (
                 <span
                   onClick={(e) => { e.stopPropagation(); setShowAddRecurring(true); setError(""); }}
-                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer transition-colors"
+                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 cursor-pointer transition-colors"
                   title="Add recurring task"
                 ><svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></span>
               )}
@@ -592,7 +592,7 @@ export default function TaskManagerPage() {
         <button
           onClick={() => setActiveTab("notes")}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
-            activeTab === "notes" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-700"
+            activeTab === "notes" ? "text-blue-600 border-blue-600" : "text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
           Quick Notes
@@ -604,7 +604,7 @@ export default function TaskManagerPage() {
               {isAdmin && (
                 <span
                   onClick={(e) => { e.stopPropagation(); handleCreateNote(); }}
-                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer transition-colors"
+                  className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 cursor-pointer transition-colors"
                   title="Add quick note"
                 ><svg className="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></span>
               )}
@@ -624,7 +624,7 @@ export default function TaskManagerPage() {
             )}
             <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${showArchived ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${showArchived ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
             >
               {showArchived ? "Showing Archived" : "Active"}
             </button>
@@ -643,7 +643,7 @@ export default function TaskManagerPage() {
               <button
                 key={f.key}
                 onClick={() => setTaskFilter(f.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${taskFilter === f.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${taskFilter === f.key ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 {f.label}
               </button>
@@ -651,7 +651,7 @@ export default function TaskManagerPage() {
             <select
               value={taskOwnerFilter}
               onChange={(e) => setTaskOwnerFilter(e.target.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${taskOwnerFilter ? "border-blue-600 bg-blue-50" : "border-gray-200 bg-white text-gray-600"}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${taskOwnerFilter ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30" : "border-gray-200 bg-white text-gray-600"}`}
             >
               <option value="">All Owners</option>
               {taskOwners.map((e) => (
@@ -661,7 +661,7 @@ export default function TaskManagerPage() {
           </div>
 
           {filteredTasks.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <p className="font-medium">No tasks found</p>
               <p className="text-sm mt-1">Try adjusting your filters or add a new task.</p>
             </div>
@@ -700,11 +700,11 @@ export default function TaskManagerPage() {
                 + Add Recurring Task
               </button>
             )}
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-              <button onClick={() => setRecurringView("list")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${recurringView === "list" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <button onClick={() => setRecurringView("list")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${recurringView === "list" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>
                 List
               </button>
-              <button onClick={() => setRecurringView("calendar")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${recurringView === "calendar" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+              <button onClick={() => setRecurringView("calendar")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${recurringView === "calendar" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>
                 Calendar
               </button>
             </div>
@@ -721,7 +721,7 @@ export default function TaskManagerPage() {
               <button
                 key={f.key}
                 onClick={() => setRecurringFilter(f.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${recurringFilter === f.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${recurringFilter === f.key ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 {f.label}
               </button>
@@ -729,7 +729,7 @@ export default function TaskManagerPage() {
             <select
               value={recurringOwnerFilter}
               onChange={(e) => setRecurringOwnerFilter(e.target.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${recurringOwnerFilter ? "border-blue-600 bg-blue-50" : "border-gray-200 bg-white text-gray-600"}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${recurringOwnerFilter ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30" : "border-gray-200 bg-white text-gray-600"}`}
             >
               <option value="">All Owners</option>
               {recurringOwners.map((e) => (
@@ -741,7 +741,7 @@ export default function TaskManagerPage() {
           {recurringView === "list" && (
             <>
               {filteredRecurring.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                   <p className="font-medium">No recurring tasks found</p>
                   <p className="text-sm mt-1">Add your first recurring task to start tracking schedules.</p>
                 </div>
@@ -797,14 +797,14 @@ export default function TaskManagerPage() {
             )}
             <button
               onClick={() => setShowArchivedNotes(!showArchivedNotes)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${showArchivedNotes ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${showArchivedNotes ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
             >
               {showArchivedNotes ? "Showing Archived" : "Active"}
             </button>
           </div>
 
           {notes.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <p className="font-medium">{showArchivedNotes ? "No archived notes" : "No quick notes yet"}</p>
               <p className="text-sm mt-1">{showArchivedNotes ? "Archived and converted notes will appear here." : "Jot down a quick note to get started."}</p>
             </div>
@@ -834,7 +834,7 @@ export default function TaskManagerPage() {
       {editingNote && (
         <Modal isOpen onClose={handleCloseNoteEditor} wide>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-gray-900">Quick Note</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Quick Note</h2>
             <span className="text-xs text-gray-400">
               {noteSaveStatus === "saving" && "Saving..."}
               {noteSaveStatus === "saved" && "Saved"}
@@ -844,7 +844,7 @@ export default function TaskManagerPage() {
             value={noteContent}
             onChange={(e) => handleNoteContentChange(e.target.value)}
             rows={12}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
             placeholder="Type your note here..."
             autoFocus
           />
@@ -854,16 +854,16 @@ export default function TaskManagerPage() {
       {/* ─── Add Task Modal ────────────────────────────────── */}
       {showAddTask && (
         <Modal isOpen onClose={() => { setShowAddTask(false); setNoteForTask(null); }}>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">{noteForTask ? "Create Task from Note" : "Add Quick Task"}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{noteForTask ? "Create Task from Note" : "Add Quick Task"}</h2>
           <form onSubmit={handleCreateTask} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-              <input name="title" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What needs to be done?" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Task Title *</label>
+              <input name="title" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What needs to be done?" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
-                <select name="assigneeId" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee *</label>
+                <select name="assigneeId" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select assignee...</option>
                   {assignees.map((e) => (
                     <option key={e.id} value={e.id}>{assigneeName(e)}</option>
@@ -871,36 +871,36 @@ export default function TaskManagerPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
-                <input name="projectId" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., NBN-001" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project ID</label>
+                <input name="projectId" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., NBN-001" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input name="dueDate" type="date" defaultValue={tomorrowISO()} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+                <input name="dueDate" type="date" defaultValue={tomorrowISO()} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                <select name="priority" defaultValue="LOW" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+                <select name="priority" defaultValue="LOW" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {PRIORITY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
-                <input name="label" defaultValue="Task" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task, Meeting, Report" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label</label>
+                <input name="label" defaultValue="Task" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task, Meeting, Report" />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea name="notes" rows={2} defaultValue={noteForTask?.content || ""} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <textarea name="notes" rows={2} defaultValue={noteForTask?.content || ""} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : noteForTask ? "Create Task" : "Add Task"}</button>
-              <button type="button" onClick={() => { setShowAddTask(false); setNoteForTask(null); }} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => { setShowAddTask(false); setNoteForTask(null); }} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             </div>
           </form>
         </Modal>
@@ -909,38 +909,38 @@ export default function TaskManagerPage() {
       {/* ─── Edit Task Modal ───────────────────────────────── */}
       {editingTask && (
         <Modal isOpen onClose={() => setEditingTask(null)}>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Edit Task</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Edit Task</h2>
           <form onSubmit={handleUpdateTask} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-              <input name="title" required defaultValue={editingTask.title} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Task Title *</label>
+              <input name="title" required defaultValue={editingTask.title} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
-                <select name="assigneeId" required defaultValue={editingTask.assigneeId} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee *</label>
+                <select name="assigneeId" required defaultValue={editingTask.assigneeId} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {assignees.map((e) => (
                     <option key={e.id} value={e.id}>{assigneeName(e)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
-                <input name="projectId" defaultValue={editingTask.projectId || ""} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project ID</label>
+                <input name="projectId" defaultValue={editingTask.projectId || ""} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Progress</label>
-                <select name="status" defaultValue={editingTask.status} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Progress</label>
+                <select name="status" defaultValue={editingTask.status} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {STATUS_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                <select name="priority" defaultValue={editingTask.priority} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+                <select name="priority" defaultValue={editingTask.priority} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {PRIORITY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -949,22 +949,22 @@ export default function TaskManagerPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input name="dueDate" type="date" defaultValue={formatDateISO(editingTask.dueDate)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+                <input name="dueDate" type="date" defaultValue={formatDateISO(editingTask.dueDate)} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
-                <input name="label" defaultValue={editingTask.label} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label</label>
+                <input name="label" defaultValue={editingTask.label} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea name="notes" rows={2} defaultValue={editingTask.notes || ""} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <textarea name="notes" rows={2} defaultValue={editingTask.notes || ""} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
-              <button type="button" onClick={() => setEditingTask(null)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => setEditingTask(null)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             </div>
           </form>
         </Modal>
@@ -973,16 +973,16 @@ export default function TaskManagerPage() {
       {/* ─── Add Recurring Task Modal ─────────────────────── */}
       {showAddRecurring && (
         <Modal isOpen onClose={() => setShowAddRecurring(false)}>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Add Recurring Task</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Add Recurring Task</h2>
           <form onSubmit={handleCreateRecurring} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-              <input name="title" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What recurring task needs tracking?" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Task Title *</label>
+              <input name="title" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What recurring task needs tracking?" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
-                <select name="assigneeId" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee *</label>
+                <select name="assigneeId" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select assignee...</option>
                   {assignees.map((e) => (
                     <option key={e.id} value={e.id}>{assigneeName(e)}</option>
@@ -990,8 +990,8 @@ export default function TaskManagerPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select name="category" defaultValue="Task" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <select name="category" defaultValue="Task" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {RECURRING_CATEGORY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -1000,20 +1000,20 @@ export default function TaskManagerPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
-                <select name="frequencyType" defaultValue="WEEKLY" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                <select name="frequencyType" defaultValue="WEEKLY" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {FREQUENCY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
-                <input name="frequencyValue" type="number" min={1} defaultValue={1} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Every</label>
+                <input name="frequencyValue" type="number" min={1} defaultValue={1} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Schedule Type</label>
-                <select name="scheduleType" defaultValue="FLOATING" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Schedule Type</label>
+                <select name="scheduleType" defaultValue="FLOATING" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {SCHEDULE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -1021,17 +1021,17 @@ export default function TaskManagerPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Completed</label>
-              <input name="lastCompleted" type="date" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Completed</label>
+              <input name="lastCompleted" type="date" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea name="description" rows={2} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <textarea name="description" rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : "Add Recurring Task"}</button>
-              <button type="button" onClick={() => setShowAddRecurring(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => setShowAddRecurring(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             </div>
           </form>
         </Modal>
@@ -1040,24 +1040,24 @@ export default function TaskManagerPage() {
       {/* ─── Edit Recurring Task Modal ────────────────────── */}
       {editingRecurring && (
         <Modal isOpen onClose={() => setEditingRecurring(null)}>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Edit Recurring Task</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Edit Recurring Task</h2>
           <form onSubmit={handleUpdateRecurring} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-              <input name="title" required defaultValue={editingRecurring.title} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Task Title *</label>
+              <input name="title" required defaultValue={editingRecurring.title} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
-                <select name="assigneeId" required defaultValue={editingRecurring.assigneeId} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee *</label>
+                <select name="assigneeId" required defaultValue={editingRecurring.assigneeId} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {assignees.map((e) => (
                     <option key={e.id} value={e.id}>{assigneeName(e)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select name="category" defaultValue={editingRecurring.category} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <select name="category" defaultValue={editingRecurring.category} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {RECURRING_CATEGORY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -1066,20 +1066,20 @@ export default function TaskManagerPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
-                <select name="frequencyType" defaultValue={editingRecurring.frequencyType} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                <select name="frequencyType" defaultValue={editingRecurring.frequencyType} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {FREQUENCY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
-                <input name="frequencyValue" type="number" min={1} defaultValue={editingRecurring.frequencyValue} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Every</label>
+                <input name="frequencyValue" type="number" min={1} defaultValue={editingRecurring.frequencyValue} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Schedule Type</label>
-                <select name="scheduleType" defaultValue={editingRecurring.scheduleType} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Schedule Type</label>
+                <select name="scheduleType" defaultValue={editingRecurring.scheduleType} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {SCHEDULE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -1087,17 +1087,17 @@ export default function TaskManagerPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Completed</label>
-              <input name="lastCompleted" type="date" defaultValue={formatDateISO(editingRecurring.lastCompleted)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Completed</label>
+              <input name="lastCompleted" type="date" defaultValue={formatDateISO(editingRecurring.lastCompleted)} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea name="description" rows={2} defaultValue={editingRecurring.description || ""} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <textarea name="description" rows={2} defaultValue={editingRecurring.description || ""} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
-              <button type="button" onClick={() => setEditingRecurring(null)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => setEditingRecurring(null)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             </div>
           </form>
         </Modal>

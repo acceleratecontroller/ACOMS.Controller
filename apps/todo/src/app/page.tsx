@@ -120,9 +120,9 @@ const MOVEMENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const PRIORITY_BADGE: Record<string, string> = {
-  LOW: "bg-green-100 text-green-700",
-  MEDIUM: "bg-yellow-100 text-yellow-700",
-  HIGH: "bg-red-100 text-red-700",
+  LOW: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
+  MEDIUM: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400",
+  HIGH: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
 };
 
 function formatShortDate(dateStr: string | null): string {
@@ -382,7 +382,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">Dashboard</h1>
 
       {/* ─── Quick Actions Bar ─────────────────────────────── */}
       {isAdmin && (
@@ -413,21 +413,21 @@ export default function DashboardPage() {
 
       {/* ─── Summary Stats ─────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="text-xs text-gray-500">Active Tasks</div>
-          {data ? <div className="text-2xl font-bold text-gray-900">{data.activeTaskCount}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400">Active Tasks</div>
+          {data ? <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{data.activeTaskCount}</div> : <div className="h-7 w-10 bg-gray-200 dark:bg-gray-600 rounded animate-pulse mt-1" />}
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="text-xs text-gray-500">Due Today</div>
-          {data ? <div className={`text-2xl font-bold ${totalDueToday > 0 ? "text-blue-600" : "text-gray-900"}`}>{totalDueToday}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400">Due Today</div>
+          {data ? <div className={`text-2xl font-bold ${totalDueToday > 0 ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-gray-100"}`}>{totalDueToday}</div> : <div className="h-7 w-10 bg-gray-200 dark:bg-gray-600 rounded animate-pulse mt-1" />}
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="text-xs text-gray-500">Overdue</div>
-          {data ? <div className={`text-2xl font-bold ${totalOverdue > 0 ? "text-red-600" : "text-gray-900"}`}>{totalOverdue}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400">Overdue</div>
+          {data ? <div className={`text-2xl font-bold ${totalOverdue > 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-100"}`}>{totalOverdue}</div> : <div className="h-7 w-10 bg-gray-200 dark:bg-gray-600 rounded animate-pulse mt-1" />}
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-3">
-          <div className="text-xs text-gray-500">Completed (7d)</div>
-          {data ? <div className="text-2xl font-bold text-green-600">{data.completedRecentCount}</div> : <div className="h-7 w-10 bg-gray-200 rounded animate-pulse mt-1" />}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+          <div className="text-xs text-gray-500 dark:text-gray-400">Completed (7d)</div>
+          {data ? <div className="text-2xl font-bold text-green-600 dark:text-green-400">{data.completedRecentCount}</div> : <div className="h-7 w-10 bg-gray-200 dark:bg-gray-600 rounded animate-pulse mt-1" />}
         </div>
       </div>
 
@@ -443,15 +443,15 @@ export default function DashboardPage() {
           viewAllLabel="Open Task Manager"
         >
           {needsAttentionItems.length === 0 ? (
-            <div className="text-sm text-gray-400 py-6 text-center">All clear — nothing needs attention right now.</div>
+            <div className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">All clear — nothing needs attention right now.</div>
           ) : (
             <div className="space-y-1 max-h-[400px] overflow-y-auto">
               {needsAttentionItems.map((item) => {
                 const urgencyColors: Record<string, string> = {
-                  overdue: "bg-red-100 text-red-700",
-                  "due-today": "bg-orange-100 text-orange-700",
-                  "due-soon": "bg-yellow-100 text-yellow-700",
-                  "high-priority": "bg-red-100 text-red-700",
+                  overdue: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
+                  "due-today": "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400",
+                  "due-soon": "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400",
+                  "high-priority": "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
                 };
                 const urgencyLabels: Record<string, string> = {
                   overdue: "Overdue",
@@ -460,19 +460,19 @@ export default function DashboardPage() {
                   "high-priority": "High Priority",
                 };
                 return (
-                  <div key={`${item.type}-${item.id}`} className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm ${item.urgency === "overdue" ? "bg-red-50 border-red-200" : item.urgency === "due-today" ? "bg-orange-50 border-orange-200" : "bg-white border-gray-200"}`}>
+                  <div key={`${item.type}-${item.id}`} className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm ${item.urgency === "overdue" ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800" : item.urgency === "due-today" ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800" : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"}`}>
                     {isAdmin && (
                       <button
                         onClick={() => item.type === "task" ? handleCompleteTask(item.id) : handleCompleteRecurring(item.id)}
-                        className="p-1 rounded hover:bg-green-100 text-green-600 transition-colors shrink-0"
+                        className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 transition-colors shrink-0"
                         title={item.type === "task" ? "Complete" : "Mark done"}
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                       </button>
                     )}
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium text-gray-900 truncate block">{item.title}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="font-medium text-gray-900 dark:text-gray-100 truncate block">{item.title}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {data?.assigneeMap[item.assigneeId] || "Unassigned"}
                         {item.date ? ` · ${formatShortDate(item.date)}` : ""}
                       </span>
@@ -482,7 +482,7 @@ export default function DashboardPage() {
                         {urgencyLabels[item.urgency]}
                       </span>
                       {item.type === "recurring" && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">Recurring</span>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">Recurring</span>
                       )}
                       {item.priority && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${PRIORITY_BADGE[item.priority] || ""}`}>{item.priority}</span>
@@ -502,27 +502,27 @@ export default function DashboardPage() {
           viewAllLabel="Open Task Manager"
         >
           {!data || data.upcomingRecurring.length === 0 ? (
-            <div className="text-sm text-gray-400 py-6 text-center">No upcoming recurring tasks.</div>
+            <div className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No upcoming recurring tasks.</div>
           ) : (
             <div className="space-y-1 max-h-[400px] overflow-y-auto">
               {data.upcomingRecurring.map((task) => (
-                <div key={task.id} className="flex items-center gap-2 px-3 py-2 rounded-md border border-gray-200 bg-white text-sm">
+                <div key={task.id} className="flex items-center gap-2 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm">
                   {isAdmin && (
                     <button
                       onClick={() => handleCompleteRecurring(task.id)}
-                      className="p-1 rounded hover:bg-green-100 text-green-600 transition-colors shrink-0"
+                      className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 transition-colors shrink-0"
                       title="Mark done"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                     </button>
                   )}
                   <div className="flex-1 min-w-0">
-                    <span className="font-medium text-gray-900 truncate block">{task.title}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="font-medium text-gray-900 dark:text-gray-100 truncate block">{task.title}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {data.assigneeMap[task.assigneeId] || "Unassigned"} · {frequencyLabel(task.frequencyType, task.frequencyValue)}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 shrink-0">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
                     {formatShortDate(task.nextDue)}
                   </div>
                 </div>
@@ -545,19 +545,19 @@ export default function DashboardPage() {
           viewAllLabel={data && data.totalNoteCount > 4 ? `View all ${data.totalNoteCount} notes` : "View all notes"}
         >
           {!data || data.recentNotes.length === 0 ? (
-            <div className="text-sm text-gray-400 py-6 text-center">No notes yet.</div>
+            <div className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">No notes yet.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {data.recentNotes.map((note) => (
                 <div
                   key={note.id}
                   onClick={() => handleEditNote(note)}
-                  className="bg-amber-50 border border-amber-200 rounded-lg p-3 cursor-pointer hover:shadow-md hover:bg-amber-100/70 transition-all"
+                  className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 cursor-pointer hover:shadow-md hover:bg-amber-100/70 dark:hover:bg-amber-900/30 transition-all"
                 >
-                  <div className="text-xs text-gray-800 whitespace-pre-wrap line-clamp-3 mb-2 min-h-[2.5rem]">
-                    {note.content || <span className="text-gray-400 italic">Empty note</span>}
+                  <div className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap line-clamp-3 mb-2 min-h-[2.5rem]">
+                    {note.content || <span className="text-gray-400 dark:text-gray-500 italic">Empty note</span>}
                   </div>
-                  <div className="text-[10px] text-gray-400">{formatNoteDate(note.updatedAt)}</div>
+                  <div className="text-[10px] text-gray-400 dark:text-gray-500">{formatNoteDate(note.updatedAt)}</div>
                 </div>
               ))}
             </div>
@@ -571,30 +571,30 @@ export default function DashboardPage() {
           viewAllLabel="Open Materials"
         >
           {!data?.materials ? (
-            <div className="text-sm text-gray-400 py-6 text-center">Loading materials...</div>
+            <div className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">Loading materials...</div>
           ) : (
             <div className="space-y-3">
               {/* Recent job activity */}
               {data.materials.recentJobActivity.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-gray-700 mb-1">Recent Job Activity</div>
+                  <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Recent Job Activity</div>
                   <div className="space-y-1">
                     {data.materials.recentJobActivity.map((j) => (
-                      <Link key={j.jobId} href={`/materials/jobs/${j.jobId}`} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1 hover:bg-gray-50 -mx-1 px-1 rounded">
+                      <Link key={j.jobId} href={`/materials/jobs/${j.jobId}`} className="flex items-center justify-between text-xs border-b border-gray-100 dark:border-gray-700 pb-1 hover:bg-gray-50 dark:hover:bg-gray-700 -mx-1 px-1 rounded">
                         <div className="min-w-0">
                           <span className="font-mono font-medium">{j.projectId}</span>{" "}
-                          <span className="text-gray-600 truncate">{j.jobName}</span>
-                          <span className="text-gray-400 ml-1">({j.client})</span>
+                          <span className="text-gray-600 dark:text-gray-400 truncate">{j.jobName}</span>
+                          <span className="text-gray-400 dark:text-gray-500 ml-1">({j.client})</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-2">
                           <div className="flex gap-0.5">
                             {j.movementTypes.slice(0, 2).map((t) => (
-                              <span key={t} className="inline-block px-1 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-medium">
+                              <span key={t} className="inline-block px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-[10px] font-medium">
                                 {MOVEMENT_TYPE_LABELS[t] || t}
                               </span>
                             ))}
                           </div>
-                          <span className="text-gray-400">{j.movementCount} mov</span>
+                          <span className="text-gray-400 dark:text-gray-500">{j.movementCount} mov</span>
                         </div>
                       </Link>
                     ))}
@@ -605,18 +605,18 @@ export default function DashboardPage() {
               {/* General stock movements (non-job) */}
               {data.materials.recentGeneralMovements.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-gray-700 mb-1">Stock Movements</div>
+                  <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Stock Movements</div>
                   <div className="space-y-1">
                     {data.materials.recentGeneralMovements.slice(0, 5).map((m) => (
-                      <div key={m.id} className="text-xs flex items-center justify-between border-b border-gray-100 pb-1">
+                      <div key={m.id} className="text-xs flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-1">
                         <span>
-                          <span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium mr-1">
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-[10px] font-medium mr-1">
                             {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
                           </span>
                           <span className="font-mono">{m.item.code}</span>
-                          <span className="text-gray-400 ml-1">x{Number(m.quantity)}</span>
+                          <span className="text-gray-400 dark:text-gray-500 ml-1">x{Number(m.quantity)}</span>
                         </span>
-                        <span className="text-gray-400">{new Date(m.createdAt).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit" })}</span>
+                        <span className="text-gray-400 dark:text-gray-500">{new Date(m.createdAt).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit" })}</span>
                       </div>
                     ))}
                   </div>
@@ -626,16 +626,16 @@ export default function DashboardPage() {
               {/* Jobs awaiting materials */}
               {data.materials.pendingJobMaterials.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-amber-700 mb-1">Awaiting Materials</div>
+                  <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">Awaiting Materials</div>
                   <div className="space-y-1">
                     {data.materials.pendingJobMaterials.map((j) => (
-                      <Link key={j.id} href={`/materials/jobs/${j.id}`} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1 hover:bg-gray-50 -mx-1 px-1 rounded">
+                      <Link key={j.id} href={`/materials/jobs/${j.id}`} className="flex items-center justify-between text-xs border-b border-gray-100 dark:border-gray-700 pb-1 hover:bg-gray-50 dark:hover:bg-gray-700 -mx-1 px-1 rounded">
                         <div>
                           <span className="font-mono font-medium">{j.projectId}</span>{" "}
-                          <span className="text-gray-600">{j.name}</span>
-                          <span className="text-gray-400 ml-1">({j.client})</span>
+                          <span className="text-gray-600 dark:text-gray-400">{j.name}</span>
+                          <span className="text-gray-400 dark:text-gray-500 ml-1">({j.client})</span>
                         </div>
-                        <span className="text-amber-600 font-medium">{j._count.materials} item{j._count.materials !== 1 ? "s" : ""}</span>
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">{j._count.materials} item{j._count.materials !== 1 ? "s" : ""}</span>
                       </Link>
                     ))}
                   </div>
@@ -645,16 +645,16 @@ export default function DashboardPage() {
               {/* Client returns due */}
               {data.materials.pendingClientReturns.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-orange-700 mb-1">Client Returns Due</div>
+                  <div className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1">Client Returns Due</div>
                   <div className="space-y-1">
                     {data.materials.pendingClientReturns.map((r) => (
-                      <div key={r.id} className="text-xs flex items-center justify-between border-b border-gray-100 pb-1">
+                      <div key={r.id} className="text-xs flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-1">
                         <div>
                           <span className="font-mono font-medium">{r.item.code}</span>{" "}
-                          <span className="text-gray-500">{r.item.description}</span>
-                          {r.job && <span className="text-gray-400 ml-1">({r.job.projectId})</span>}
+                          <span className="text-gray-500 dark:text-gray-400">{r.item.description}</span>
+                          {r.job && <span className="text-gray-400 dark:text-gray-500 ml-1">({r.job.projectId})</span>}
                         </div>
-                        <span className="text-orange-600 font-medium">x{Number(r.quantity)}</span>
+                        <span className="text-orange-600 dark:text-orange-400 font-medium">x{Number(r.quantity)}</span>
                       </div>
                     ))}
                   </div>
@@ -664,20 +664,20 @@ export default function DashboardPage() {
               {/* Low stock alerts */}
               {data.materials.lowStockItems.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-red-700 mb-1">Low Stock ({data.materials.lowStockItems.length})</div>
+                  <div className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1">Low Stock ({data.materials.lowStockItems.length})</div>
                   <div className="space-y-1">
                     {data.materials.lowStockItems.slice(0, 3).map((item, i) => (
-                      <div key={i} className="flex items-center justify-between text-xs border-b border-gray-100 pb-1">
+                      <div key={i} className="flex items-center justify-between text-xs border-b border-gray-100 dark:border-gray-700 pb-1">
                         <div>
                           <span className="font-mono font-medium">{item.itemCode}</span>{" "}
-                          <span className="text-gray-500">{item.itemDescription}</span>
-                          <span className="text-gray-400 ml-1">@ {item.locationName}</span>
+                          <span className="text-gray-500 dark:text-gray-400">{item.itemDescription}</span>
+                          <span className="text-gray-400 dark:text-gray-500 ml-1">@ {item.locationName}</span>
                         </div>
-                        <div className="text-red-600 font-medium">{item.currentStock} / {item.minimumStockLevel}</div>
+                        <div className="text-red-600 dark:text-red-400 font-medium">{item.currentStock} / {item.minimumStockLevel}</div>
                       </div>
                     ))}
                     {data.materials.lowStockItems.length > 3 && (
-                      <Link href="/materials/stock?belowMinimum=true" className="text-xs text-blue-600 hover:text-blue-800">
+                      <Link href="/materials/stock?belowMinimum=true" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                         +{data.materials.lowStockItems.length - 3} more
                       </Link>
                     )}
@@ -688,14 +688,14 @@ export default function DashboardPage() {
               {/* Open stocktakes */}
               {data.materials.openStocktakes.length > 0 && (
                 <div>
-                  <div className="text-xs font-semibold text-gray-700 mb-1">Open Stocktakes</div>
+                  <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Open Stocktakes</div>
                   {data.materials.openStocktakes.map((st) => (
                     <div key={st.id} className="flex items-center justify-between text-xs pb-1">
                       <div>
                         <span className="font-medium">{st.location.name}</span>
-                        <span className="text-gray-400 ml-2">{st._count.lines} items</span>
+                        <span className="text-gray-400 dark:text-gray-500 ml-2">{st._count.lines} items</span>
                       </div>
-                      <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 hover:text-blue-800">Continue</Link>
+                      <Link href={`/materials/stocktakes/${st.id}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Continue</Link>
                     </div>
                   ))}
                 </div>
@@ -706,7 +706,7 @@ export default function DashboardPage() {
                 data.materials.recentGeneralMovements.length === 0 &&
                 data.materials.pendingJobMaterials.length === 0 &&
                 data.materials.lowStockItems.length === 0 && (
-                <div className="text-sm text-gray-400 py-4 text-center">No recent stock activity</div>
+                <div className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">No recent stock activity</div>
               )}
             </div>
           )}
@@ -717,8 +717,8 @@ export default function DashboardPage() {
       {noteModalOpen && (
         <Modal isOpen onClose={handleCloseNote} wide>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-gray-900">Quick Note</h2>
-            <span className="text-xs text-gray-400">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Quick Note</h2>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
               {noteSaveStatus === "saving" && "Saving..."}
               {noteSaveStatus === "saved" && "Saved"}
             </span>
@@ -727,11 +727,11 @@ export default function DashboardPage() {
             value={noteContent}
             onChange={(e) => handleNoteChange(e.target.value)}
             rows={12}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
             placeholder="Type your note here..."
             autoFocus
           />
-          <p className="text-xs text-gray-400 mt-2">Your note is auto-saved. Close this modal when done.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Your note is auto-saved. Close this modal when done.</p>
         </Modal>
       )}
 
@@ -739,8 +739,8 @@ export default function DashboardPage() {
       {editingNoteId && (
         <Modal isOpen onClose={handleCloseEditNote} wide>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-gray-900">Edit Note</h2>
-            <span className="text-xs text-gray-400">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Edit Note</h2>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
               {noteSaveStatus === "saving" && "Saving..."}
               {noteSaveStatus === "saved" && "Saved"}
             </span>
@@ -749,27 +749,27 @@ export default function DashboardPage() {
             value={editingNoteContent}
             onChange={(e) => handleEditNoteChange(e.target.value)}
             rows={12}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
             placeholder="Type your note here..."
             autoFocus
           />
-          <p className="text-xs text-gray-400 mt-2">Your note is auto-saved. Close this modal when done.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Your note is auto-saved. Close this modal when done.</p>
         </Modal>
       )}
 
       {/* ─── Add Task Modal ──────────────────────────────── */}
       {showAddTask && (
         <Modal isOpen onClose={() => setShowAddTask(false)}>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Add Quick Task</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Add Quick Task</h2>
           <form onSubmit={handleCreateTask} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-              <input name="title" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What needs to be done?" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Task Title *</label>
+              <input name="title" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What needs to be done?" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
-                <select name="assigneeId" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee *</label>
+                <select name="assigneeId" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select assignee...</option>
                   {assignees.map((e) => (
                     <option key={e.id} value={e.id}>{assigneeName(e)}</option>
@@ -777,36 +777,36 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
-                <input name="projectId" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., NBN-001" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project ID</label>
+                <input name="projectId" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., NBN-001" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <input name="dueDate" type="date" defaultValue={tomorrowISO()} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+                <input name="dueDate" type="date" defaultValue={tomorrowISO()} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                <select name="priority" defaultValue="LOW" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+                <select name="priority" defaultValue="LOW" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {PRIORITY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
-                <input name="label" defaultValue="Task" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task, Meeting, Report" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label</label>
+                <input name="label" defaultValue="Task" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task, Meeting, Report" />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea name="notes" rows={2} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <textarea name="notes" rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : "Add Task"}</button>
-              <button type="button" onClick={() => setShowAddTask(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => setShowAddTask(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             </div>
           </form>
         </Modal>
@@ -815,16 +815,16 @@ export default function DashboardPage() {
       {/* ─── Add Recurring Task Modal ────────────────────── */}
       {showAddRecurring && (
         <Modal isOpen onClose={() => setShowAddRecurring(false)}>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Add Recurring Task</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Add Recurring Task</h2>
           <form onSubmit={handleCreateRecurring} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-              <input name="title" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What recurring task needs tracking?" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Task Title *</label>
+              <input name="title" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="What recurring task needs tracking?" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
-                <select name="assigneeId" required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assignee *</label>
+                <select name="assigneeId" required className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select assignee...</option>
                   {assignees.map((e) => (
                     <option key={e.id} value={e.id}>{assigneeName(e)}</option>
@@ -832,8 +832,8 @@ export default function DashboardPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select name="category" defaultValue="Task" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <select name="category" defaultValue="Task" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {RECURRING_CATEGORY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -842,20 +842,20 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
-                <select name="frequencyType" defaultValue="WEEKLY" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                <select name="frequencyType" defaultValue="WEEKLY" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {FREQUENCY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
-                <input name="frequencyValue" type="number" min={1} defaultValue={1} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Every</label>
+                <input name="frequencyValue" type="number" min={1} defaultValue={1} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Schedule Type</label>
-                <select name="scheduleType" defaultValue="FLOATING" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Schedule Type</label>
+                <select name="scheduleType" defaultValue="FLOATING" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {SCHEDULE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -863,17 +863,17 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Completed</label>
-              <input name="lastCompleted" type="date" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Completed</label>
+              <input name="lastCompleted" type="date" className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea name="description" rows={2} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <textarea name="description" rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional details..." />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? "Adding..." : "Add Recurring Task"}</button>
-              <button type="button" onClick={() => setShowAddRecurring(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+              <button type="button" onClick={() => setShowAddRecurring(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             </div>
           </form>
         </Modal>

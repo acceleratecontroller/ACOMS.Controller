@@ -55,10 +55,10 @@ export default function ImportItemsPage() {
     <div>
       <PageHeader title="Import Items" description="Upload a CSV file to bulk-create items" />
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-3xl">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 max-w-3xl">
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">How to import</h3>
-          <div className="space-y-2 text-sm text-gray-600">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">How to import</h3>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
             <p>1. Prepare a CSV file with the columns listed below.</p>
             <p>2. Select the supplier these items belong to.</p>
             <p>3. Upload the file and click Import.</p>
@@ -67,53 +67,53 @@ export default function ImportItemsPage() {
         </div>
 
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Required CSV Columns</h3>
-          <div className="bg-gray-50 rounded-lg p-4 text-sm">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Required CSV Columns</h3>
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-sm">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-xs font-medium text-gray-500 uppercase">
+                <tr className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   <th className="pb-2 pr-4">Column Header</th>
                   <th className="pb-2 pr-4">Required</th>
                   <th className="pb-2">Description</th>
                 </tr>
               </thead>
-              <tbody className="text-gray-700">
-                <tr className="border-t border-gray-200">
+              <tbody className="text-gray-700 dark:text-gray-300">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">itemCode</td>
                   <td className="py-2 pr-4 text-green-700 font-medium">Yes</td>
                   <td className="py-2">Unique item code (e.g. FC-001)</td>
                 </tr>
-                <tr className="border-t border-gray-200">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">description</td>
                   <td className="py-2 pr-4 text-green-700 font-medium">Yes</td>
                   <td className="py-2">Item description</td>
                 </tr>
-                <tr className="border-t border-gray-200">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">category</td>
                   <td className="py-2 pr-4 text-gray-400">No</td>
                   <td className="py-2">Civil, Fibre Cable, Copper Cable, Fibre Joint, Copper Joint, or Other</td>
                 </tr>
-                <tr className="border-t border-gray-200">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">unitOfMeasure</td>
                   <td className="py-2 pr-4 text-gray-400">No</td>
                   <td className="py-2">EACH, METRE, ROLL, KILOGRAM, LITRE, BOX, PACK, LENGTH, SET, or OTHER (defaults to EACH)</td>
                 </tr>
-                <tr className="border-t border-gray-200">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">customUnitOfMeasure</td>
                   <td className="py-2 pr-4 text-gray-400">No</td>
                   <td className="py-2">Custom unit name (only when unitOfMeasure is OTHER)</td>
                 </tr>
-                <tr className="border-t border-gray-200">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">aliases</td>
                   <td className="py-2 pr-4 text-gray-400">No</td>
                   <td className="py-2">Alternative names, pipe-separated (e.g. &quot;name1|name2&quot;)</td>
                 </tr>
-                <tr className="border-t border-gray-200">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">minimumStockLevel</td>
                   <td className="py-2 pr-4 text-gray-400">No</td>
                   <td className="py-2">Minimum stock threshold (number)</td>
                 </tr>
-                <tr className="border-t border-gray-200">
+                <tr className="border-t border-gray-200 dark:border-gray-700">
                   <td className="py-2 pr-4 font-mono text-xs">notes</td>
                   <td className="py-2 pr-4 text-gray-400">No</td>
                   <td className="py-2">Any additional notes</td>
@@ -124,8 +124,8 @@ export default function ImportItemsPage() {
         </div>
 
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Example CSV</h3>
-          <div className="bg-gray-50 rounded p-3 text-xs font-mono text-gray-600 overflow-x-auto">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Example CSV</h3>
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded p-3 text-xs font-mono text-gray-600 dark:text-gray-400 overflow-x-auto">
             itemCode,description,category,unitOfMeasure,customUnitOfMeasure,aliases,minimumStockLevel,notes<br />
             FC-001,12 Core SM Fibre Cable,Fibre Cable,METRE,,,100,Main backbone cable<br />
             CC-001,50 Pair Copper Cable,Copper Cable,METRE,,,50,<br />
@@ -134,10 +134,10 @@ export default function ImportItemsPage() {
           </div>
         </div>
 
-        <div className="border-t border-gray-200 pt-4 space-y-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Supplier * — all imported items will be linked to this supplier</label>
-            <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm max-w-sm">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier * — all imported items will be linked to this supplier</label>
+            <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm max-w-sm">
               <option value="">Select supplier...</option>
               {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -151,7 +151,7 @@ export default function ImportItemsPage() {
                       Free Issue — {selected.clientName} (all imported items will be marked as client free issue)
                     </span>
                   ) : (
-                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                       Company Owned
                     </span>
                   )}
@@ -161,12 +161,12 @@ export default function ImportItemsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select CSV File</label>
             <input
               type="file"
               accept=".csv,.txt"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
 

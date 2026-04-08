@@ -155,21 +155,21 @@ export default function ItemsPage() {
           placeholder="Search items..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full sm:w-56"
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm w-full sm:w-56 dark:bg-gray-700 dark:text-gray-100"
         />
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
           <option value="">All Categories</option>
           {CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
-        <select value={filterSupplier} onChange={(e) => setFilterSupplier(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        <select value={filterSupplier} onChange={(e) => setFilterSupplier(e.target.value)} className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
           <option value="">All Suppliers</option>
           {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <select value={filterOwnership} onChange={(e) => setFilterOwnership(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        <select value={filterOwnership} onChange={(e) => setFilterOwnership(e.target.value)} className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
           <option value="">All Ownership</option>
           {OWNERSHIP_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        <label className="flex items-center gap-2 text-sm text-gray-600">
+        <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
           Archived
         </label>
@@ -178,7 +178,7 @@ export default function ItemsPage() {
           onClick={() => setLocked(!locked)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
             locked
-              ? "border-gray-300 text-gray-500 hover:bg-gray-50"
+              ? "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
               : "border-amber-300 bg-amber-50 text-amber-700"
           }`}
         >
@@ -197,42 +197,42 @@ export default function ItemsPage() {
       </div>
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
       ) : items.length === 0 ? (
-        <p className="text-gray-500 text-sm">No items found.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No items found.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Category</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">UoM</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Supplier</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Min Stock</th>
-                {!locked && <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>}
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item Code</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Description</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Category</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">UoM</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Supplier</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Type</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Min Stock</th>
+                {!locked && <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr key={item.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-3 font-mono font-medium">{item.code}</td>
                   <td className="px-4 py-3">{item.description}</td>
-                  <td className="px-4 py-3 text-gray-500">{item.category || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500">{getUomDisplay(item)}</td>
-                  <td className="px-4 py-3 text-gray-500">{item.supplier?.name || "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{item.category || "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{getUomDisplay(item)}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{item.supplier?.name || "—"}</td>
                   <td className="px-4 py-3">
                     {item.ownershipType === "CLIENT_FREE_ISSUE" ? (
                       <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
                         Free Issue{item.clientName ? ` (${item.clientName})` : ""}
                       </span>
                     ) : (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Company</span>
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Company</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{item.minimumStockLevel ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{item.minimumStockLevel ?? "—"}</td>
                   {!locked && (
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => openEdit(item)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">
@@ -256,48 +256,48 @@ export default function ItemsPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Item Code *</label>
-              <input type="text" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Item Code *</label>
+              <input type="text" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-              <input type="text" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description *</label>
+              <input type="text" required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, customCategory: "" })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value, customCategory: "" })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
                 <option value="">Select category...</option>
                 {CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
               {form.category === "Other" && (
-                <input type="text" placeholder="Enter custom category..." value={form.customCategory} onChange={(e) => setForm({ ...form, customCategory: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-2" />
+                <input type="text" placeholder="Enter custom category..." value={form.customCategory} onChange={(e) => setForm({ ...form, customCategory: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 mt-2" />
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
-              <select value={form.unitOfMeasure} onChange={(e) => setForm({ ...form, unitOfMeasure: e.target.value, customUnitOfMeasure: "" })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit of Measure</label>
+              <select value={form.unitOfMeasure} onChange={(e) => setForm({ ...form, unitOfMeasure: e.target.value, customUnitOfMeasure: "" })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
                 {UNIT_OF_MEASURE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               {form.unitOfMeasure === "OTHER" && (
-                <input type="text" placeholder="Enter custom unit..." value={form.customUnitOfMeasure} onChange={(e) => setForm({ ...form, customUnitOfMeasure: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-2" />
+                <input type="text" placeholder="Enter custom unit..." value={form.customUnitOfMeasure} onChange={(e) => setForm({ ...form, customUnitOfMeasure: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100 mt-2" />
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
-              <select required value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier *</label>
+              <select required value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
                 <option value="">Select supplier...</option>
                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Stock Level</label>
-              <input type="number" min="0" step="any" value={form.minimumStockLevel} onChange={(e) => setForm({ ...form, minimumStockLevel: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Minimum Stock Level</label>
+              <input type="number" min="0" step="any" value={form.minimumStockLevel} onChange={(e) => setForm({ ...form, minimumStockLevel: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
             </div>
           </div>
 
@@ -311,7 +311,7 @@ export default function ItemsPage() {
                     Free Issue — {selectedSupplier.clientName}
                   </span>
                 ) : (
-                  <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                  <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                     Company Owned
                   </span>
                 )}
@@ -320,15 +320,15 @@ export default function ItemsPage() {
           })()}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Aliases (comma separated)</label>
-            <input type="text" value={form.aliases} onChange={(e) => setForm({ ...form, aliases: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g. Alt Name 1, Alt Name 2" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliases (comma separated)</label>
+            <input type="text" value={form.aliases} onChange={(e) => setForm({ ...form, aliases: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" placeholder="e.g. Alt Name 1, Alt Name 2" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowModal(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">{editingItem ? "Save" : "Create"}</button>
           </div>
         </form>

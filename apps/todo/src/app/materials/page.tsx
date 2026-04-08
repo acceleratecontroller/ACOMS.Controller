@@ -26,8 +26,8 @@ export default function MaterialsPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Materials</h1>
-      <p className="text-gray-500 mb-8">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Materials</h1>
+      <p className="text-gray-500 dark:text-gray-400 mb-8">
         Manage inventory, track stock movements, and maintain supplier relationships.
       </p>
 
@@ -36,12 +36,12 @@ export default function MaterialsPage() {
           <Link
             key={item.href}
             href={item.href}
-            className="block bg-white border border-gray-200 rounded-lg p-6 hover:border-blue-300 hover:shadow-sm transition-all group"
+            className="block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:border-blue-300 hover:shadow-sm transition-all group"
           >
-            <div className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 transition-colors">
               {item.label}
             </div>
-            <div className="text-sm text-gray-500 mt-1">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {item.description}
             </div>
           </Link>
@@ -51,7 +51,7 @@ export default function MaterialsPage() {
       <div>
         <button
           onClick={() => setOtherOpen(!otherOpen)}
-          className="flex items-center gap-2 text-sm font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors"
+          className="flex items-center gap-2 text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
         >
           <svg
             className={`w-4 h-4 transition-transform ${otherOpen ? "rotate-90" : ""}`}
@@ -71,12 +71,12 @@ export default function MaterialsPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all group"
+                className="block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all group"
               >
-                <div className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">
+                <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-700 transition-colors">
                   {item.label}
                 </div>
-                <div className="text-sm text-gray-500 mt-1">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {item.description}
                 </div>
               </Link>

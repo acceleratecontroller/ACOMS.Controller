@@ -96,13 +96,13 @@ function JobAutocomplete({
         onBlur={() => { setTimeout(() => setOpen(false), 150); }}
         onKeyDown={handleKeyDown}
         placeholder="Type to search jobs..."
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
       />
       {value && (
         <button
           type="button"
           onClick={() => { onChange(""); inputRef.current?.focus(); }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-sm"
         >
           &times;
         </button>
@@ -110,18 +110,18 @@ function JobAutocomplete({
       {open && filtered.length > 0 && (
         <div
           ref={listRef}
-          className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-20 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         >
           {filtered.map((job, idx) => (
             <div
               key={job.id}
               onMouseDown={(e) => { e.preventDefault(); selectJob(job); }}
               className={`px-3 py-2 text-sm cursor-pointer ${
-                idx === highlightIdx ? "bg-blue-50 text-blue-800" : "hover:bg-gray-50"
+                idx === highlightIdx ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300" : "hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
               <span className="font-mono font-medium">{job.projectId}</span>
-              <span className="text-gray-500 ml-2">— {job.name}</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-2">— {job.name}</span>
             </div>
           ))}
         </div>
@@ -230,23 +230,23 @@ function ItemAutocomplete({
         }}
         onKeyDown={handleKeyDown}
         placeholder={disabled ? "Select a supplier first..." : "Type item code..."}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:text-gray-400 dark:disabled:text-gray-500"
       />
       {open && filtered.length > 0 && (
         <div
           ref={listRef}
-          className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-20 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
         >
           {filtered.map((item, idx) => (
             <div
               key={item.id}
               onMouseDown={(e) => { e.preventDefault(); selectItem(item); }}
               className={`px-3 py-2 text-sm cursor-pointer ${
-                idx === highlightIdx ? "bg-blue-50 text-blue-800" : "hover:bg-gray-50"
+                idx === highlightIdx ? "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300" : "hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
               <span className="font-mono font-medium">{item.code}</span>
-              <span className="text-gray-500 ml-2">— {item.description}</span>
+              <span className="text-gray-500 dark:text-gray-400 ml-2">— {item.description}</span>
             </div>
           ))}
         </div>
@@ -420,12 +420,12 @@ export default function ReceivePage() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 max-w-4xl">
           {/* Receipt header */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Receipt Details</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 md:p-6 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Receipt Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
-                <select value={header.supplierId} onChange={(e) => handleSupplierChange(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier *</label>
+                <select value={header.supplierId} onChange={(e) => handleSupplierChange(e.target.value)} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm">
                   <option value="">Select supplier...</option>
                   {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
@@ -436,7 +436,7 @@ export default function ReceivePage() {
                         Free Issue — {selectedSupplier.clientName}
                       </span>
                     ) : (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                         Company Supplier
                       </span>
                     )}
@@ -444,39 +444,39 @@ export default function ReceivePage() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Receive Into Location *</label>
-                <select value={header.toLocationId} onChange={(e) => setHeader({ ...header, toLocationId: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Receive Into Location *</label>
+                <select value={header.toLocationId} onChange={(e) => setHeader({ ...header, toLocationId: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm">
                   <option value="">Select location...</option>
                   {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-2">
-              <span className="text-sm font-medium text-gray-700">Receive To:</span>
-              <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Receive To:</span>
+              <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => { setReceiveMode("stock"); setHeader((h) => ({ ...h, jobId: "" })); }}
-                  className={`px-3 py-1.5 text-sm font-medium ${receiveMode === "stock" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                  className={`px-3 py-1.5 text-sm font-medium ${receiveMode === "stock" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
                 >
                   Stock
                 </button>
                 <button
                   type="button"
                   onClick={() => setReceiveMode("job")}
-                  className={`px-3 py-1.5 text-sm font-medium ${receiveMode === "job" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                  className={`px-3 py-1.5 text-sm font-medium ${receiveMode === "job" ? "bg-blue-600 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
                 >
                   Job
                 </button>
               </div>
               {receiveMode === "stock" && (
-                <span className="text-xs text-gray-400">Items will go into unallocated stock at the selected location</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">Items will go into unallocated stock at the selected location</span>
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {receiveMode === "job" ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Job *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job *</label>
                   <JobAutocomplete
                     jobs={jobs}
                     value={header.jobId}
@@ -487,37 +487,37 @@ export default function ReceivePage() {
                 <div />
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reference (PO, Docket, etc.)</label>
-                <input type="text" value={header.reference} onChange={(e) => setHeader({ ...header, reference: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reference (PO, Docket, etc.)</label>
+                <input type="text" value={header.reference} onChange={(e) => setHeader({ ...header, reference: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                <input type="text" value={header.notes} onChange={(e) => setHeader({ ...header, notes: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+                <input type="text" value={header.notes} onChange={(e) => setHeader({ ...header, notes: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm" />
               </div>
             </div>
           </div>
 
           {/* Line items */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 md:p-6">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Items to Receive
-                {header.supplierId && <span className="font-normal text-gray-500 ml-2">({supplierItems.length} items available)</span>}
+                {header.supplierId && <span className="font-normal text-gray-500 dark:text-gray-400 ml-2">({supplierItems.length} items available)</span>}
               </h3>
               {header.supplierId && (
-                <span className="text-xs text-gray-400">Press Enter or Tab after quantity to add a new line</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">Press Enter or Tab after quantity to add a new line</span>
               )}
             </div>
 
             {!header.supplierId ? (
-              <p className="text-sm text-gray-400 py-4 text-center">Select a supplier above to start adding items.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">Select a supplier above to start adding items.</p>
             ) : supplierItems.length === 0 ? (
               <p className="text-sm text-amber-600 py-4 text-center">No items are linked to this supplier. Add items to this supplier first.</p>
             ) : (
               <>
                 <div className="space-y-3">
                   {/* Desktop: side-by-side header */}
-                  <div className="hidden sm:grid grid-cols-[1fr_120px_40px] gap-3 text-xs font-medium text-gray-500 px-1">
+                  <div className="hidden sm:grid grid-cols-[1fr_120px_40px] gap-3 text-xs font-medium text-gray-500 dark:text-gray-400 px-1">
                     <span>Item</span>
                     <span>Quantity</span>
                     <span></span>
@@ -546,23 +546,23 @@ export default function ReceivePage() {
                               onChange={(e) => updateLine(line.key, "quantity", e.target.value)}
                               onKeyDown={(e) => handleQtyKeyDown(e, line.key)}
                               placeholder="Qty"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
                             />
                             {selectedItem && (
-                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">
                                 {UOM_LABELS[selectedItem.unitOfMeasure] || ""}
                               </span>
                             )}
                           </div>
-                          <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-lg">
+                          <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 dark:text-gray-500 hover:text-red-500 disabled:opacity-30 text-lg">
                             &times;
                           </button>
                         </div>
                         {/* Mobile: stacked layout */}
-                        <div className="sm:hidden bg-gray-50 rounded-lg p-3 space-y-2 overflow-hidden">
+                        <div className="sm:hidden bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2 overflow-hidden">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-500">Item {lineIdx + 1}</span>
-                            <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 hover:text-red-500 disabled:opacity-30 text-lg leading-none">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Item {lineIdx + 1}</span>
+                            <button type="button" onClick={() => removeLine(line.key)} disabled={lines.length <= 1} className="text-gray-400 dark:text-gray-500 hover:text-red-500 disabled:opacity-30 text-lg leading-none">
                               &times;
                             </button>
                           </div>
@@ -583,10 +583,10 @@ export default function ReceivePage() {
                               onChange={(e) => updateLine(line.key, "quantity", e.target.value)}
                               onKeyDown={(e) => handleQtyKeyDown(e, line.key)}
                               placeholder="Quantity"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
                             />
                             {selectedItem && (
-                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">
                                 {UOM_LABELS[selectedItem.unitOfMeasure] || ""}
                               </span>
                             )}
@@ -602,7 +602,7 @@ export default function ReceivePage() {
                   setLines([...lines, newLine]);
                   setFocusLineKey(newLine.key);
                   setFocusField("item");
-                }} className="mt-3 w-full border-2 border-dashed border-gray-300 rounded-lg py-2 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600">
+                }} className="mt-3 w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg py-2 text-sm text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600">
                   + Add another item
                 </button>
               </>
@@ -617,7 +617,7 @@ export default function ReceivePage() {
           )}
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
-            <button type="button" onClick={() => router.back()} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 w-full sm:w-auto">Cancel</button>
+            <button type="button" onClick={() => router.back()} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 w-full sm:w-auto">Cancel</button>
             <button type="submit" disabled={submitting || !header.supplierId} className="bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 w-full sm:w-auto">
               {submitting ? "Recording..." : `Receive ${lines.filter((l) => l.itemId && l.quantity).length} Item(s)`}
             </button>

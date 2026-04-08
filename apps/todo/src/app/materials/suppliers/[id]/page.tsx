@@ -89,7 +89,7 @@ export default function SupplierDetailPage() {
     return UOM_LABELS[item.unitOfMeasure] || item.unitOfMeasure;
   }
 
-  if (loading) return <p className="text-gray-500 text-sm p-8">Loading...</p>;
+  if (loading) return <p className="text-gray-500 dark:text-gray-400 text-sm p-8">Loading...</p>;
   if (error || !supplier) return (
     <div className="p-8">
       <p className="text-red-600 text-sm mb-4">{error || "Supplier not found"}</p>
@@ -112,7 +112,7 @@ export default function SupplierDetailPage() {
                 Free Issue — {supplier.clientName}
               </span>
             ) : (
-              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Company Supplier</span>
+              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Company Supplier</span>
             )}
           </div>
         </div>
@@ -127,40 +127,40 @@ export default function SupplierDetailPage() {
         </div>
       )}
 
-      <h3 className="text-sm font-semibold text-gray-900 mb-2">Items from this supplier ({supplier.items.length})</h3>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Items from this supplier ({supplier.items.length})</h3>
 
       {supplier.items.length === 0 ? (
-        <p className="text-gray-500 text-sm">No items linked to this supplier yet.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No items linked to this supplier yet.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Category</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">UoM</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Type</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Min Stock</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item Code</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Description</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Category</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">UoM</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Type</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Min Stock</th>
               </tr>
             </thead>
             <tbody>
               {supplier.items.map((item) => (
-                <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr key={item.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-3 font-mono font-medium">{item.code}</td>
                   <td className="px-4 py-3">{item.description}</td>
-                  <td className="px-4 py-3 text-gray-500">{item.category || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500">{getUomDisplay(item)}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{item.category || "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{getUomDisplay(item)}</td>
                   <td className="px-4 py-3">
                     {item.ownershipType === "CLIENT_FREE_ISSUE" ? (
                       <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
                         Free Issue{item.clientName ? ` (${item.clientName})` : ""}
                       </span>
                     ) : (
-                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Company</span>
+                      <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">Company</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{item.minimumStockLevel ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{item.minimumStockLevel ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -171,47 +171,47 @@ export default function SupplierDetailPage() {
       <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Supplier">
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name *</label>
-            <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier Name *</label>
+            <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
-              <input type="text" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Name</label>
+              <input type="text" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label>
+              <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
           </div>
-          <div className="border-t border-gray-200 pt-4">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <input
                 type="checkbox"
                 checked={form.isFreeIssue}
                 onChange={(e) => setForm({ ...form, isFreeIssue: e.target.checked, clientName: e.target.checked ? form.clientName : "" })}
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 dark:border-gray-600"
               />
               Free Issue Supplier
             </label>
-            <p className="text-xs text-gray-500 mb-2">When enabled, all items from this supplier will be marked as client free issue.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">When enabled, all items from this supplier will be marked as client free issue.</p>
             {form.isFreeIssue && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Client Name *</label>
-                <input type="text" required value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Which client provides these items?" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Name *</label>
+                <input type="text" required value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" placeholder="Which client provides these items?" />
               </div>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" />
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setShowEditModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowEditModal(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Save</button>
           </div>
         </form>

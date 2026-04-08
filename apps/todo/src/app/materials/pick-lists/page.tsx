@@ -115,20 +115,20 @@ export default function PickListsPage() {
       </div>
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading...</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
       ) : pickLists.length === 0 ? (
-        <p className="text-gray-500 text-sm">No pick lists yet.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No pick lists yet.</p>
       ) : (
         <div className="space-y-3">
           {pickLists.map((pl) => (
-            <div key={pl.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div key={pl.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3">
                 <div>
-                  <button onClick={() => setExpandedId(expandedId === pl.id ? null : pl.id)} className="font-medium text-gray-900 hover:text-blue-700">
+                  <button onClick={() => setExpandedId(expandedId === pl.id ? null : pl.id)} className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-700">
                     {pl.name}
                   </button>
-                  {pl.description && <p className="text-xs text-gray-500 mt-0.5">{pl.description}</p>}
-                  <span className="text-xs text-gray-400">{pl._count.items} items</span>
+                  {pl.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{pl.description}</p>}
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{pl._count.items} items</span>
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => openEdit(pl)} className="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
@@ -136,10 +136,10 @@ export default function PickListsPage() {
                 </div>
               </div>
               {expandedId === pl.id && (
-                <div className="border-t border-gray-200 px-4 py-3">
+                <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-gray-500">
+                      <tr className="text-gray-500 dark:text-gray-400">
                         <th className="text-left py-1">Code</th>
                         <th className="text-left py-1">Description</th>
                         <th className="text-right py-1">Default Qty</th>
@@ -148,11 +148,11 @@ export default function PickListsPage() {
                     </thead>
                     <tbody>
                       {pl.items.map((item) => (
-                        <tr key={item.id} className="border-t border-gray-100">
+                        <tr key={item.id} className="border-t border-gray-100 dark:border-gray-700">
                           <td className="py-1 font-mono">{item.item.code}</td>
                           <td className="py-1">{item.item.description}</td>
                           <td className="py-1 text-right">{Number(item.defaultQty)}</td>
-                          <td className="py-1 text-gray-500">{UOM_LABELS[item.item.unitOfMeasure] || ""}</td>
+                          <td className="py-1 text-gray-500 dark:text-gray-400">{UOM_LABELS[item.item.unitOfMeasure] || ""}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -168,18 +168,18 @@ export default function PickListsPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-              <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
+              <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">Items *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Items *</label>
               <button type="button" onClick={addFormItem} className="text-xs text-blue-600 hover:text-blue-800">+ Add item</button>
             </div>
             <div className="space-y-2">
@@ -192,7 +192,7 @@ export default function PickListsPage() {
                       updated[idx] = { ...updated[idx], itemId: e.target.value };
                       setFormItems(updated);
                     }}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm"
+                    className="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm"
                   >
                     <option value="">Select item...</option>
                     {allItems.map((i) => <option key={i.id} value={i.id}>{i.code} — {i.description}</option>)}
@@ -207,7 +207,7 @@ export default function PickListsPage() {
                       updated[idx] = { ...updated[idx], defaultQty: Number(e.target.value) };
                       setFormItems(updated);
                     }}
-                    className="w-20 border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                    className="w-20 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm text-right"
                   />
                   {formItems.length > 1 && (
                     <button type="button" onClick={() => removeFormItem(idx)} className="text-red-500 hover:text-red-700 text-sm">x</button>
@@ -218,7 +218,7 @@ export default function PickListsPage() {
           </div>
 
           <div className="flex gap-3 justify-end pt-2">
-            <button type="button" onClick={() => setShowModal(false)} className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowModal(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">{editingList ? "Save" : "Create"}</button>
           </div>
         </form>

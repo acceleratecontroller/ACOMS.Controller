@@ -93,7 +93,7 @@ export default function StocktakeDetailPage() {
   }
 
   if (loading || !stocktake) {
-    return <p className="text-gray-500 text-sm">Loading...</p>;
+    return <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>;
   }
 
   const isDraft = stocktake.status === "DRAFT";
@@ -146,18 +146,18 @@ export default function StocktakeDetailPage() {
             const uom = UOM_LABELS[line.item.unitOfMeasure] || "";
 
             return (
-              <div key={line.id} className={`bg-white rounded-lg border p-3 overflow-hidden ${variance !== 0 ? "border-yellow-200 bg-yellow-50" : "border-gray-200"}`}>
+              <div key={line.id} className={`bg-white dark:bg-gray-800 rounded-lg border p-3 overflow-hidden ${variance !== 0 ? "border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20" : "border-gray-200 dark:border-gray-700"}`}>
                 <div className="mb-2">
-                  <div className="font-mono text-xs font-medium text-gray-900 break-all">{line.item.code}</div>
-                  <div className="text-sm text-gray-600">{line.item.description}</div>
+                  <div className="font-mono text-xs font-medium text-gray-900 dark:text-gray-100 break-all">{line.item.code}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">{line.item.description}</div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center bg-gray-50 rounded-lg p-2 mb-2">
+                <div className="grid grid-cols-3 gap-2 text-center bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 mb-2">
                   <div>
-                    <div className="text-xs text-gray-400">Expected</div>
-                    <div className="text-sm text-gray-600">{expected} {uom}</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">Expected</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">{expected} {uom}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-400">Counted</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">Counted</div>
                     {isDraft ? (
                       <input
                         type="number"
@@ -170,15 +170,15 @@ export default function StocktakeDetailPage() {
                             [line.id]: { ...counts[line.id], countedQty: e.target.value },
                           })
                         }
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-center mt-0.5"
+                        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm text-center mt-0.5"
                       />
                     ) : (
                       <div className="text-sm font-medium">{counted} {uom}</div>
                     )}
                   </div>
                   <div>
-                    <div className="text-xs text-gray-400">Variance</div>
-                    <div className={`text-sm font-medium ${variance > 0 ? "text-green-600" : variance < 0 ? "text-red-600" : "text-gray-400"}`}>
+                    <div className="text-xs text-gray-400 dark:text-gray-500">Variance</div>
+                    <div className={`text-sm font-medium ${variance > 0 ? "text-green-600" : variance < 0 ? "text-red-600" : "text-gray-400 dark:text-gray-500"}`}>
                       {variance === 0 ? "—" : `${variance > 0 ? "+" : ""}${variance}`}
                     </div>
                   </div>
@@ -193,11 +193,11 @@ export default function StocktakeDetailPage() {
                         [line.id]: { ...counts[line.id], notes: e.target.value },
                       })
                     }
-                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                    className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1.5 text-sm"
                     placeholder="Notes..."
                   />
                 ) : line.notes ? (
-                  <div className="text-sm text-gray-500">{line.notes}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{line.notes}</div>
                 ) : null}
               </div>
             );
@@ -205,16 +205,16 @@ export default function StocktakeDetailPage() {
         </div>
 
         {/* Desktop table layout */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto hidden md:block">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto hidden md:block">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Item Code</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Description</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Expected</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Counted</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-700">Variance</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Notes</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item Code</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Description</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Expected</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Counted</th>
+                <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Variance</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -225,10 +225,10 @@ export default function StocktakeDetailPage() {
                 const uom = UOM_LABELS[line.item.unitOfMeasure] || "";
 
                 return (
-                  <tr key={line.id} className={`border-b border-gray-100 ${variance !== 0 ? "bg-yellow-50" : ""}`}>
+                  <tr key={line.id} className={`border-b border-gray-100 dark:border-gray-700 ${variance !== 0 ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}`}>
                     <td className="px-4 py-3 font-mono font-medium">{line.item.code}</td>
                     <td className="px-4 py-3">{line.item.description}</td>
-                    <td className="px-4 py-3 text-right text-gray-500">{expected} {uom}</td>
+                    <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400">{expected} {uom}</td>
                     <td className="px-4 py-3 text-right">
                       {isDraft ? (
                         <input
@@ -242,13 +242,13 @@ export default function StocktakeDetailPage() {
                               [line.id]: { ...counts[line.id], countedQty: e.target.value },
                             })
                           }
-                          className="w-24 border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                          className="w-24 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm text-right"
                         />
                       ) : (
                         <span className="font-medium">{counted} {uom}</span>
                       )}
                     </td>
-                    <td className={`px-4 py-3 text-right font-medium ${variance > 0 ? "text-green-600" : variance < 0 ? "text-red-600" : "text-gray-400"}`}>
+                    <td className={`px-4 py-3 text-right font-medium ${variance > 0 ? "text-green-600" : variance < 0 ? "text-red-600" : "text-gray-400 dark:text-gray-500"}`}>
                       {variance === 0 ? "—" : `${variance > 0 ? "+" : ""}${variance}`}
                     </td>
                     <td className="px-4 py-3">
@@ -262,11 +262,11 @@ export default function StocktakeDetailPage() {
                               [line.id]: { ...counts[line.id], notes: e.target.value },
                             })
                           }
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 text-sm"
                           placeholder="Optional note..."
                         />
                       ) : (
-                        <span className="text-gray-500">{line.notes || "—"}</span>
+                        <span className="text-gray-500 dark:text-gray-400">{line.notes || "—"}</span>
                       )}
                     </td>
                   </tr>
