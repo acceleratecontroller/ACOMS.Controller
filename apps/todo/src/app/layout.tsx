@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import Sidebar from "@/components/Sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { LayoutShell } from "@/components/LayoutShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,10 +23,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors">
         <ThemeProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 min-w-0 p-4 md:p-8 pt-16 md:pt-8">{children}</main>
-          </div>
+          <LayoutShell>{children}</LayoutShell>
         </ThemeProvider>
       </body>
     </html>
