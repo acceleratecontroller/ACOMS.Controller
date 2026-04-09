@@ -9,6 +9,7 @@ const navItems = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/tasks", label: "Task Manager" },
   { href: "/materials", label: "Materials" },
+  { href: "/diary", label: "Diary" },
 ];
 
 export default function Sidebar() {

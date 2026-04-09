@@ -126,6 +126,43 @@ model QuickNote {
   @@index([appId])
 }
 
+// ─── Diary ──────────────────────────────────────────────
+
+enum DiaryEntryType {
+  NOTE
+  EVENT
+  CONVERSATION
+}
+
+model DiaryEntry {
+  id      String         @id @default(uuid())
+  type    DiaryEntryType @default(NOTE)
+  date    DateTime                            // user-editable, defaults to today
+  heading String
+  people  String[]       @default([])         // tag-style array of names
+  content String         @default("")         // free-text body
+
+  isImportant Boolean @default(false)         // red dot toggle
+
+  // Owner — each user only sees their own entries
+  createdById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isArchived   Boolean   @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
+  appId String @default("default")
+
+  @@index([createdById])
+  @@index([date])
+  @@index([type])
+  @@index([isArchived])
+  @@index([appId])
+}
+
 // ─── Audit Log ───────────────────────────────────────────
 
 model AuditLog {
