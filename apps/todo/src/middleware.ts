@@ -22,6 +22,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Machine-to-machine API endpoints authenticate via API key, not cookies.
+  // Auth validation happens in the route handlers themselves.
+  if (pathname === "/api/email-digest/ingest" || pathname === "/api/email-digest/items") {
+    return NextResponse.next();
+  }
+
   // Allow requests with embed tokens through — these are API calls from
   // the ACOMS.OS iframe. Token validation happens in requireAuth()/requireAdmin().
   const authHeader = request.headers.get("authorization");
