@@ -110,10 +110,9 @@ export async function POST(request: NextRequest) {
             },
           });
 
-      // 4. Delete existing items for this window, then insert new ones
-      if (existingWindow) {
-        await tx.emailDigestItem.deleteMany({ where: { windowId: window.id } });
-      }
+      // 4. Always delete existing items for this window before inserting
+      // (handles both re-ingests and cleanup of orphaned records from partial failures)
+      await tx.emailDigestItem.deleteMany({ where: { windowId: window.id } });
 
       // 5. Insert new items, preserving actioned state from previous ingest
       const items = await Promise.all(
