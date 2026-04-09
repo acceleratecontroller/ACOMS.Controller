@@ -70,6 +70,15 @@ function formatDisplayDate(dateStr: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function shiftDate(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + days);
+  const ny = dt.getFullYear();
+  const nm = String(dt.getMonth() + 1).padStart(2, "0");
+  const nd = String(dt.getDate()).padStart(2, "0");
+  return `${ny}-${nm}-${nd}`;
+}
+
 function windowLabel(windowType: string): string {
   return WINDOW_OPTIONS.find((w) => w.value === windowType)?.label ?? windowType;
 }
@@ -165,11 +174,7 @@ export default function EmailDigestPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              const d = new Date(date + "T00:00:00");
-              d.setDate(d.getDate() - 1);
-              setDate(d.toISOString().split("T")[0]);
-            }}
+            onClick={() => setDate(shiftDate(date, -1))}
             className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             &larr; Prev
@@ -190,11 +195,7 @@ export default function EmailDigestPage() {
           )}
           {date !== todayDateString() && (
             <button
-              onClick={() => {
-                const d = new Date(date + "T00:00:00");
-                d.setDate(d.getDate() + 1);
-                setDate(d.toISOString().split("T")[0]);
-              }}
+              onClick={() => setDate(shiftDate(date, 1))}
               className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               Next &rarr;
