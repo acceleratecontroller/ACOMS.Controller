@@ -5,6 +5,8 @@ export interface QuickNote {
   content: string;
   createdById: string;
   convertedToTaskId: string | null;
+  isPinned: boolean;
+  pinnedAt: string | null;
   isArchived: boolean;
   archivedAt: string | null;
   createdAt: string;
@@ -30,6 +32,7 @@ export function NoteCard({
   onArchive,
   onRestore,
   onConvertToTask,
+  onTogglePin,
 }: {
   note: QuickNote;
   isAdmin: boolean;
@@ -37,18 +40,36 @@ export function NoteCard({
   onArchive: () => void;
   onRestore: () => void;
   onConvertToTask: () => void;
+  onTogglePin: () => void;
 }) {
   const isConverted = !!note.convertedToTaskId;
 
   return (
     <div
       onClick={!note.isArchived ? onEdit : undefined}
-      className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4 shadow-sm transition-all ${
+      className={`relative bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4 shadow-sm transition-all ${
         !note.isArchived ? "hover:shadow-md cursor-pointer hover:bg-amber-100/70 dark:hover:bg-amber-900/40" : "opacity-70"
       }`}
     >
+      {/* Pin button */}
+      {!note.isArchived && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
+          className={`absolute top-2 right-2 p-1 rounded transition-colors ${
+            note.isPinned
+              ? "text-amber-600 dark:text-amber-400"
+              : "text-gray-300 dark:text-gray-600 hover:text-gray-400 dark:hover:text-gray-500"
+          }`}
+          title={note.isPinned ? "Unpin note" : "Pin note"}
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill={note.isPinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16 3l-4 4-4-1-3 3 5 5-4 6 6-4 5 5 3-3-1-4 4-4-7-7z" />
+          </svg>
+        </button>
+      )}
+
       {/* Content preview */}
-      <div className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap line-clamp-6 mb-3 min-h-[3rem]">
+      <div className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap line-clamp-6 mb-3 min-h-[3rem] pr-6">
         {note.content || <span className="text-gray-400 dark:text-gray-500 italic">Empty note</span>}
       </div>
 

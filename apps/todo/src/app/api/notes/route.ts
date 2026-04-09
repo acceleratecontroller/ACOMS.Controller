@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
       createdById: session.user.id,
       isArchived: showArchived,
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [
+      { isPinned: "desc" },
+      { updatedAt: "desc" },
+    ],
   });
 
   return NextResponse.json(notes);
