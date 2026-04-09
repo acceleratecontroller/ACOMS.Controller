@@ -190,7 +190,7 @@ export default function DiaryPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <PageHeader title="Diary" description="Personal timeline of events, conversations, and notes" />
+      <PageHeader title="Diary" description="Private to you — only you can see your entries." />
 
       {/* Toolbar */}
       <div className="mb-4 space-y-2">
