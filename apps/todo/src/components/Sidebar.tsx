@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
 
-const navItems = [
+const baseNavItems = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/tasks", label: "Task Manager" },
   { href: "/materials", label: "Materials" },
@@ -16,6 +16,19 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const [showEmailDigest, setShowEmailDigest] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/dashboard")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.emailDigest) setShowEmailDigest(true); })
+      .catch(() => {});
+  }, []);
+
+  const navItems = [
+    ...baseNavItems,
+    ...(showEmailDigest ? [{ href: "/email-digest", label: "Email Digest" }] : []),
+  ];
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;

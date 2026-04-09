@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Modal } from "@/components/Modal";
 import { DashboardWidget } from "@/components/DashboardWidget";
+import { EmailDigestWidget } from "@/components/EmailDigestWidget";
 import {
   PRIORITY_OPTIONS,
   FREQUENCY_OPTIONS,
@@ -110,6 +111,13 @@ interface DashboardData {
       job: { projectId: string; name: string; client: string } | null;
     }[];
   };
+  emailDigest: {
+    enabled: boolean;
+    unactionedCount: number;
+    totalUnactioned: number;
+    totalDraftsReady: number;
+    windowsCompleted: number;
+  } | null;
 }
 
 const MOVEMENT_TYPE_LABELS: Record<string, string> = {
@@ -172,6 +180,10 @@ export default function DashboardPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteContent, setEditingNoteContent] = useState("");
 
+  // Email digest state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [digestData, setDigestData] = useState<{ digest: any; stats: any } | null>(null);
+
   // Diary entry modal state
   const [showAddDiary, setShowAddDiary] = useState(false);
   const [diaryType, setDiaryType] = useState<"NOTE" | "EVENT" | "CONVERSATION">("NOTE");
@@ -185,7 +197,17 @@ export default function DashboardPage() {
 
   const loadDashboard = useCallback(async () => {
     const res = await fetch("/api/dashboard");
-    if (res.ok) setData(await res.json());
+    if (res.ok) {
+      const dashData = await res.json();
+      setData(dashData);
+      // If user has email digest access, fetch the full digest for the widget
+      if (dashData.emailDigest) {
+        fetch("/api/email-digest")
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => { if (d?.digest) setDigestData(d); })
+          .catch(() => {});
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -438,6 +460,17 @@ export default function DashboardPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             Diary Entry
           </button>
+        </div>
+      )}
+
+      {/* ─── Email Digest Widget (owner only) ─────────────── */}
+      {digestData && (
+        <div className="mb-6">
+          <EmailDigestWidget
+            digest={digestData.digest}
+            stats={digestData.stats}
+            onRefresh={loadDashboard}
+          />
         </div>
       )}
 

@@ -532,3 +532,121 @@ model PickListItem {
   @@unique([pickListId, itemId])
   @@index([pickListId])
 }
+
+// ═════════════════════════════════════════════════════════
+// EMAIL DIGEST
+// ═════════════════════════════════════════════════════════
+
+// ─── Email Digest Enums ─────────────────────────────────
+
+enum EmailDigestTier {
+  TIER_1_ACTION
+  TIER_2_UPDATE
+  TIER_3_FYI
+}
+
+enum EmailDigestWindowType {
+  EARLY_MORNING
+  MORNING
+  MIDDAY
+  AFTERNOON
+}
+
+// ─── Email Digest (one per day) ─────────────────────────
+
+model EmailDigest {
+  id   String @id @default(uuid())
+  date String @unique              // "YYYY-MM-DD" string, one digest per day
+
+  createdById String
+  appId       String @default("default")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  windows EmailDigestWindow[]
+
+  @@index([date])
+  @@index([createdById])
+}
+
+// ─── Email Digest Window (up to 4 per day) ──────────────
+
+model EmailDigestWindow {
+  id            String                @id @default(uuid())
+  digestId      String
+  windowType    EmailDigestWindowType
+  windowStart   String                // Human-readable, e.g. "3 PM yesterday"
+  windowEnd     String                // Human-readable, e.g. "5:30 AM"
+
+  totalEmails       Int @default(0)
+  threadCount       Int @default(0)
+  continuingThreads Int @default(0)
+  actionRequired    Int @default(0)
+
+  rawSummary     String?               // Full markdown of briefing + drafts
+  lastIngestedAt DateTime @default(now())
+
+  appId String @default("default")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  digest EmailDigest       @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  items  EmailDigestItem[]
+
+  @@unique([digestId, windowType])
+  @@index([digestId])
+  @@index([windowType])
+}
+
+// ─── Email Digest Item (individual emails) ──────────────
+
+model EmailDigestItem {
+  id       String          @id @default(uuid())
+  windowId String
+  tier     EmailDigestTier
+  position Int             // Sort order within the tier (1, 2, 3...)
+
+  // Email metadata
+  sender        String
+  senderEmail   String?
+  subject       String
+  folder        String
+  receivedAt    DateTime?
+  threadSize    Int     @default(1)
+  hasAttachment Boolean @default(false)
+
+  // Digest content
+  summary      String
+  actionNeeded String?
+  isDeadline   Boolean   @default(false)
+  deadlineDate DateTime?
+
+  // Draft response
+  needsResponse Boolean @default(false)
+  draftResponse String?
+  draftContext  String?
+
+  // Status tracking
+  isActioned        Boolean   @default(false)
+  actionedAt        DateTime?
+  convertedToTaskId String?
+
+  // Carried-forward tracking
+  isCarriedForward  Boolean @default(false)
+  carriedFromWindow String?
+
+  appId String @default("default")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  window EmailDigestWindow @relation(fields: [windowId], references: [id], onDelete: Cascade)
+
+  @@unique([windowId, tier, position])
+  @@index([windowId, tier])
+  @@index([isActioned])
+  @@index([needsResponse])
+  @@index([isCarriedForward])
+}

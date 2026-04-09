@@ -129,6 +129,9 @@ export async function GET() {
     assigneeMap[emp.id] = `${emp.firstName} ${emp.lastName}`;
   }
 
+  // Email digest stats (only for digest owner)
+  const isDigestOwner = identityId === process.env.EMAIL_DIGEST_OWNER_ID;
+
   const [
     activeTaskCount,
     pendingTaskCount,
@@ -278,6 +281,61 @@ export async function GET() {
     }),
   ]);
 
+  // Email digest: only query if this is the digest owner
+  let emailDigest: {
+    enabled: true;
+    unactionedCount: number;
+    totalUnactioned: number;
+    totalDraftsReady: number;
+    windowsCompleted: number;
+  } | null = null;
+
+  if (isDigestOwner) {
+    // Always return the object for the owner (so sidebar knows to show the nav item)
+    emailDigest = {
+      enabled: true,
+      unactionedCount: 0,
+      totalUnactioned: 0,
+      totalDraftsReady: 0,
+      windowsCompleted: 0,
+    };
+
+    try {
+      // Get today's date as AEST string
+      const formatter = new Intl.DateTimeFormat("en-AU", {
+        timeZone: "Australia/Sydney",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      const parts = formatter.formatToParts(new Date());
+      const todayStr = `${parts.find((p) => p.type === "year")!.value}-${parts.find((p) => p.type === "month")!.value}-${parts.find((p) => p.type === "day")!.value}`;
+
+      const digest = await prisma.emailDigest.findUnique({
+        where: { date: todayStr },
+        include: {
+          windows: {
+            include: {
+              items: {
+                orderBy: [{ tier: "asc" }, { position: "asc" }],
+              },
+            },
+          },
+        },
+      });
+
+      if (digest) {
+        const allItems = digest.windows.flatMap((w) => w.items);
+        emailDigest.unactionedCount = allItems.filter((i) => i.tier === "TIER_1_ACTION" && !i.isActioned).length;
+        emailDigest.totalUnactioned = allItems.filter((i) => !i.isActioned).length;
+        emailDigest.totalDraftsReady = allItems.filter((i) => i.needsResponse && i.draftResponse).length;
+        emailDigest.windowsCompleted = digest.windows.length;
+      }
+    } catch (err) {
+      console.error("[dashboard] Failed to fetch email digest stats:", err);
+    }
+  }
+
   return NextResponse.json({
     // Task summary counts
     activeTaskCount,
@@ -310,5 +368,7 @@ export async function GET() {
       pendingJobMaterials,
       pendingClientReturns,
     },
+    // Email digest (null for non-owners)
+    emailDigest,
   });
 }
