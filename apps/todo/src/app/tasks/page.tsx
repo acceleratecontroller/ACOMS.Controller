@@ -495,6 +495,11 @@ export default function TaskManagerPage() {
     setNoteSaveStatus("idle");
   }
 
+  async function handleTogglePin(id: string) {
+    const res = await fetch(`/api/notes/${id}/pin`, { method: "PUT" });
+    if (res.ok) await loadNotes(showArchivedNotes);
+  }
+
   async function handleArchiveNote(id: string) {
     const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
     if (res.ok) await loadNotes(showArchivedNotes);
@@ -820,6 +825,7 @@ export default function TaskManagerPage() {
                     setNoteContent(note.content);
                     setNoteSaveStatus("idle");
                   }}
+                  onTogglePin={() => handleTogglePin(note.id)}
                   onArchive={() => setConfirmAction({ type: "archive", id: note.id, entity: "note", title: "this note" })}
                   onRestore={() => handleRestoreNote(note.id)}
                   onConvertToTask={() => handleConvertNoteToTask(note)}
