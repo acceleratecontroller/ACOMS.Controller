@@ -10,7 +10,10 @@ import {
   SCHEDULE_OPTIONS,
   RECURRING_CATEGORY_OPTIONS,
 } from "@/modules/tasks/constants";
+import { DIARY_TYPE_OPTIONS } from "@/modules/diary/constants";
 import { Assignee, assigneeName, tomorrowISO } from "./tasks/types";
+import { todayISO } from "./diary/types";
+import { PeopleTagInput } from "./diary/PeopleTagInput";
 
 interface DashboardTask {
   id: string;
@@ -168,6 +171,17 @@ export default function DashboardPage() {
   // Edit note modal (for clicking existing notes)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteContent, setEditingNoteContent] = useState("");
+
+  // Diary entry modal state
+  const [showAddDiary, setShowAddDiary] = useState(false);
+  const [diaryType, setDiaryType] = useState<"NOTE" | "EVENT" | "CONVERSATION">("NOTE");
+  const [diaryDate, setDiaryDate] = useState(todayISO());
+  const [diaryHeading, setDiaryHeading] = useState("");
+  const [diaryPeople, setDiaryPeople] = useState<string[]>([]);
+  const [diaryContent, setDiaryContent] = useState("");
+  const [diaryImportant, setDiaryImportant] = useState(false);
+  const [diaryAllPeople, setDiaryAllPeople] = useState<string[]>([]);
+  const [diarySaving, setDiarySaving] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     const res = await fetch("/api/dashboard");
@@ -407,6 +421,22 @@ export default function DashboardPage() {
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             Quick Note
+          </button>
+          <button
+            onClick={() => {
+              setDiaryType("NOTE");
+              setDiaryDate(todayISO());
+              setDiaryHeading("");
+              setDiaryPeople([]);
+              setDiaryContent("");
+              setDiaryImportant(false);
+              setShowAddDiary(true);
+              fetch("/api/diary/people").then((r) => r.ok ? r.json() : []).then(setDiaryAllPeople).catch(() => {});
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            Diary Entry
           </button>
         </div>
       )}
@@ -809,6 +839,115 @@ export default function DashboardPage() {
               <button type="button" onClick={() => setShowAddTask(false)} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* ─── Add Diary Entry Modal ─────────────────────── */}
+      {showAddDiary && (
+        <Modal isOpen onClose={() => setShowAddDiary(false)} title="New Diary Entry" wide>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+              <select
+                value={diaryType}
+                onChange={(e) => setDiaryType(e.target.value as "NOTE" | "EVENT" | "CONVERSATION")}
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              >
+                {DIARY_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+              <input
+                type="date"
+                value={diaryDate}
+                onChange={(e) => setDiaryDate(e.target.value)}
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Heading</label>
+              <input
+                type="text"
+                value={diaryHeading}
+                onChange={(e) => setDiaryHeading(e.target.value)}
+                placeholder="Brief summary..."
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">People involved</label>
+              <PeopleTagInput value={diaryPeople} onChange={setDiaryPeople} allPeople={diaryAllPeople} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Details</label>
+              <textarea
+                value={diaryContent}
+                onChange={(e) => setDiaryContent(e.target.value)}
+                rows={6}
+                placeholder="Enter details..."
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 resize-y"
+              />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={diaryImportant}
+                onChange={(e) => setDiaryImportant(e.target.checked)}
+                className="rounded border-gray-300 dark:border-gray-600"
+              />
+              <span className="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block" />
+                Mark as important
+              </span>
+            </label>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowAddDiary(false)}
+                className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!diaryHeading.trim()) return;
+                  setDiarySaving(true);
+                  setError("");
+                  try {
+                    const res = await fetch("/api/diary", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        type: diaryType,
+                        date: diaryDate,
+                        heading: diaryHeading.trim(),
+                        people: diaryPeople,
+                        content: diaryContent,
+                        isImportant: diaryImportant,
+                      }),
+                    });
+                    if (res.ok) {
+                      setShowAddDiary(false);
+                    } else {
+                      const err = await res.json().catch(() => null);
+                      setError(err?.error || `Failed to create entry (${res.status})`);
+                    }
+                  } catch (ex) {
+                    setError(ex instanceof Error ? ex.message : "Network error");
+                  } finally {
+                    setDiarySaving(false);
+                  }
+                }}
+                disabled={diarySaving || !diaryHeading.trim()}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-md transition-colors"
+              >
+                {diarySaving ? "Saving..." : "Create Entry"}
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
 
