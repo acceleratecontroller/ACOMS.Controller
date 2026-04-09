@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const emailDigestItemSchema = z.object({
   tier: z.enum(["TIER_1_ACTION", "TIER_2_UPDATE", "TIER_3_FYI"]),
-  position: z.number().int().min(1),
+  position: z.number().int().min(0),
   sender: z.string().min(1),
   senderEmail: z.string().email().optional().nullable(),
   subject: z.string().min(1),

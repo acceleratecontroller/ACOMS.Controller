@@ -606,7 +606,7 @@ model EmailDigestItem {
   id       String          @id @default(uuid())
   windowId String
   tier     EmailDigestTier
-  position Int             // Sort order within the tier (1, 2, 3...)
+  position Int             // Sort order within the tier (0-based)
 
   // Email metadata
   sender        String
