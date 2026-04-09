@@ -115,6 +115,9 @@ model QuickNote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  isPinned Boolean  @default(false)
+  pinnedAt DateTime?
+
   isArchived   Boolean   @default(false)
   archivedAt   DateTime?
   archivedById String?
@@ -124,6 +127,7 @@ model QuickNote {
   @@index([createdById])
   @@index([isArchived])
   @@index([appId])
+  @@index([isPinned])
 }
 
 // ─── Diary ──────────────────────────────────────────────

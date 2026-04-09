@@ -74,6 +74,8 @@ export async function DELETE(
         isArchived: true,
         archivedAt: new Date(),
         archivedById: session.user.id,
+        isPinned: false,
+        pinnedAt: null,
       },
     }),
   );
