@@ -534,6 +534,78 @@ model PickListItem {
 }
 
 // ═════════════════════════════════════════════════════════
+// JOB CREATOR
+// ═════════════════════════════════════════════════════════
+
+// ─── Job Creator Enums ──────────────────────────────────
+
+enum Depot {
+  BRISBANE
+  HERVEY_BAY
+  BUNDABERG
+  MACKAY
+}
+
+enum JobType {
+  QUOTE
+  DIRECT_WORK_ORDER
+}
+
+enum JobRequestStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+// ─── Job Request ────────────────────────────────────────
+
+model JobRequest {
+  id                 String           @id @default(cuid())
+  acomsNumber        String           @unique         // Auto-generated: JR-0001, JR-0002, ...
+  depot              Depot
+  client             String
+  contract           String
+  jobType            JobType
+  financePONumber    String?
+  clientReference    String?
+  projectNameAddress String
+  jobReceivedDate    DateTime
+
+  // Client contact
+  clientContactName  String?
+  clientContactPhone String?
+  clientContactEmail String?
+
+  // Email content (pasted — placeholder for future AI parsing)
+  emailContent String?
+
+  // Workflow
+  status          JobRequestStatus @default(DRAFT)
+  rejectionReason String?
+  reviewedById    String?
+  reviewedAt      DateTime?
+
+  // Ownership & audit
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  isArchived   Boolean   @default(false)
+  archivedAt   DateTime?
+  archivedById String?
+
+  appId String @default("default")
+
+  @@index([status])
+  @@index([depot])
+  @@index([jobType])
+  @@index([createdById])
+  @@index([isArchived])
+  @@index([appId])
+}
+
+// ═════════════════════════════════════════════════════════
 // EMAIL DIGEST
 // ═════════════════════════════════════════════════════════
 
