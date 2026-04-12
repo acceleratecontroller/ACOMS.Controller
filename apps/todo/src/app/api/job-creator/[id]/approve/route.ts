@@ -4,6 +4,8 @@ import { approveJobRequestSchema } from "@/modules/job-creator/validation";
 import { requireAuth } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
+import { pushJobToSheet } from "@/lib/google-sheets";
+import { DEPOT_LABELS, JOB_TYPE_LABELS } from "@/modules/job-creator/constants";
 
 // POST /api/job-creator/[id]/approve — Approve a pending job request
 export async function POST(
@@ -67,5 +69,47 @@ export async function POST(
     changes,
   });
 
-  return NextResponse.json(job);
+  // Push to WIP Google Sheet (non-blocking — don't fail approval if sheet push fails)
+  let sheetResult: { row: number; acomsNumber: string | null } | null = null;
+  let sheetError: string | null = null;
+
+  try {
+    const contactParts = [
+      job.clientContactName,
+      job.clientContactPhone,
+      job.clientContactEmail,
+    ].filter(Boolean);
+
+    const jobReceivedDate = job.jobReceivedDate
+      ? new Date(job.jobReceivedDate).toLocaleDateString("en-AU")
+      : "";
+
+    const reviewLine = [
+      `Created by ${session.user.name || session.user.email || session.user.id}`,
+      `Approved ${new Date().toLocaleDateString("en-AU")}`,
+    ].join(" | ");
+
+    sheetResult = await pushJobToSheet({
+      depot: DEPOT_LABELS[job.depot] || job.depot,
+      client: job.client,
+      contract: job.contract,
+      initialStatus: JOB_TYPE_LABELS[job.jobType] || job.jobType,
+      financePONumber: job.financePONumber || "",
+      clientReference: job.clientReference || "",
+      projectNameAddress: job.projectNameAddress,
+      jobReceivedDate,
+      clientContact: contactParts.join(" | "),
+      jobCreationAndReview: reviewLine,
+    });
+  } catch (err) {
+    console.error("[approve] Google Sheets push failed:", err);
+    sheetError = err instanceof Error ? err.message : "Unknown error";
+  }
+
+  return NextResponse.json({
+    ...job,
+    _sheet: sheetResult
+      ? { pushed: true, row: sheetResult.row, acomsNumber: sheetResult.acomsNumber }
+      : { pushed: false, error: sheetError },
+  });
 }
