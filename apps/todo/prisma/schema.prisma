@@ -539,14 +539,14 @@ model PickListItem {
 
 // ─── Job Creator Enums ──────────────────────────────────
 
-enum Depot {
+enum JobRequestDepot {
   BRISBANE
   HERVEY_BAY
   BUNDABERG
   MACKAY
 }
 
-enum JobType {
+enum JobRequestType {
   QUOTE
   DIRECT_WORK_ORDER
 }
@@ -563,10 +563,10 @@ enum JobRequestStatus {
 model JobRequest {
   id                 String           @id @default(cuid())
   acomsNumber        String           @unique         // Auto-generated: JR-0001, JR-0002, ...
-  depot              Depot
+  depot              JobRequestDepot
   client             String
   contract           String
-  jobType            JobType
+  jobType            JobRequestType
   financePONumber    String?
   clientReference    String?
   projectNameAddress String
