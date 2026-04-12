@@ -9,6 +9,7 @@ const baseNavItems = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/tasks", label: "Task Manager" },
   { href: "/materials", label: "Materials" },
+  { href: "/job-creator", label: "Job Creator" },
   { href: "/diary", label: "Diary" },
 ];
 
