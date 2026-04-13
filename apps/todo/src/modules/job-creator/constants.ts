@@ -97,6 +97,26 @@ export const CLIENT_OPTIONS: SelectOption[] = [
   { value: "Zinfra", label: "Zinfra" },
 ];
 
+export const CONTRACT_OPTIONS: SelectOption[] = [
+  { value: "ARCW", label: "ARCW" },
+  { value: "IEN Rehab", label: "IEN Rehab" },
+  { value: "N2P", label: "N2P" },
+  { value: "N2P 622K", label: "N2P 622K" },
+  { value: "N2P622K", label: "N2P622K" },
+  { value: "NDM", label: "NDM" },
+  { value: "ODM", label: "ODM" },
+  { value: "ODMS", label: "ODMS" },
+  { value: "Powerup", label: "Powerup" },
+  { value: "Private Client", label: "Private Client" },
+  { value: "RW", label: "RW" },
+  { value: "TFO", label: "TFO" },
+  { value: "TSFMDCC NDC + ARCW", label: "TSFMDCC NDC + ARCW" },
+  { value: "Unify", label: "Unify" },
+  { value: "Unify - Field Module", label: "Unify - Field Module" },
+  { value: "WBA", label: "WBA" },
+  { value: "Wideband", label: "Wideband" },
+];
+
 export const JOB_REQUEST_STATUS_OPTIONS: SelectOption[] = [
   { value: "DRAFT", label: "Draft" },
   { value: "PENDING_REVIEW", label: "Pending Review" },
