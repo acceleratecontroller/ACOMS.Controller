@@ -14,6 +14,12 @@ import {
   JOB_TYPE_COLORS,
 } from "@/modules/job-creator/constants";
 
+interface IntegrationEntry {
+  status: string;
+  error?: string;
+  details?: Record<string, unknown>;
+}
+
 interface JobRequest {
   id: string;
   acomsNumber: string;
@@ -36,7 +42,13 @@ interface JobRequest {
   createdById: string;
   createdAt: string;
   updatedAt: string;
+  integrationLog: Record<string, IntegrationEntry> | null;
 }
+
+const INTEGRATION_NAMES: Record<string, string> = {
+  googleSheets: "Google Sheets (WIP)",
+  serviceM8: "ServiceM8",
+};
 
 export default function JobRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -83,6 +95,7 @@ export default function JobRequestDetailPage() {
 
   async function handleApprove() {
     setActionLoading(true);
+    setError("");
     const body: Record<string, string> = {};
     if (approveJobType !== job?.jobType) body.jobType = approveJobType;
     const res = await fetch(`/api/job-creator/${id}/approve`, {
@@ -90,12 +103,17 @@ export default function JobRequestDetailPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+    const data = await res.json();
     if (res.ok) {
-      setJob(await res.json());
+      setJob(data);
       setShowApproveModal(false);
     } else {
-      const err = await res.json();
-      setError(err.error || "Failed to approve");
+      // If integrations partially failed, update job with the integration log
+      if (data.integrationLog) {
+        setJob((prev) => prev ? { ...prev, integrationLog: data.integrationLog } : prev);
+      }
+      setError(data.error || "Failed to approve");
+      setShowApproveModal(false);
     }
     setActionLoading(false);
   }
@@ -135,6 +153,10 @@ export default function JobRequestDetailPage() {
 
   const fieldCls = "text-sm text-gray-900 dark:text-gray-100";
   const labelFieldCls = "text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5";
+
+  // Determine if there are integration failures to show
+  const integrationLog = job.integrationLog;
+  const hasIntegrationFailures = integrationLog && Object.values(integrationLog).some((v) => v.status === "failed");
 
   return (
     <div>
@@ -184,7 +206,7 @@ export default function JobRequestDetailPage() {
                 disabled={actionLoading}
                 className="px-3 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
-                Approve
+                {hasIntegrationFailures ? "Retry Approval" : "Approve"}
               </button>
               <button
                 onClick={() => setShowRejectModal(true)}
@@ -201,6 +223,64 @@ export default function JobRequestDetailPage() {
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
           {error}
+        </div>
+      )}
+
+      {/* Integration status panel — shown when there are results (success or failure) */}
+      {integrationLog && Object.keys(integrationLog).length > 0 && (
+        <div className={`mb-4 p-4 rounded-lg border ${
+          hasIntegrationFailures
+            ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800"
+            : "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
+        }`}>
+          <h3 className={`text-sm font-semibold mb-3 ${
+            hasIntegrationFailures
+              ? "text-red-800 dark:text-red-300"
+              : "text-green-800 dark:text-green-300"
+          }`}>
+            {hasIntegrationFailures ? "Integration Status — Some Failed" : "Integration Status — All Succeeded"}
+          </h3>
+          <div className="space-y-2">
+            {Object.entries(integrationLog).map(([key, entry]) => (
+              <div key={key} className="flex items-start gap-2">
+                {entry.status === "success" && (
+                  <svg className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {entry.status === "failed" && (
+                  <svg className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+                {entry.status === "skipped" && (
+                  <svg className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                  </svg>
+                )}
+                <div>
+                  <p className={`text-sm font-medium ${
+                    entry.status === "failed"
+                      ? "text-red-700 dark:text-red-400"
+                      : entry.status === "success"
+                        ? "text-green-700 dark:text-green-400"
+                        : "text-gray-500 dark:text-gray-400"
+                  }`}>
+                    {INTEGRATION_NAMES[key] || key}
+                    {entry.status === "skipped" && <span className="font-normal"> — Skipped (Quotes only)</span>}
+                  </p>
+                  {entry.error && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{entry.error}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {hasIntegrationFailures && job.status === "PENDING_REVIEW" && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-3 pt-2 border-t border-red-200 dark:border-red-700">
+              Fix the issue and click &quot;Retry Approval&quot; to try again. Integrations that already succeeded may create duplicates — check and clean up if needed.
+            </p>
+          )}
         </div>
       )}
 
@@ -303,11 +383,19 @@ export default function JobRequestDetailPage() {
       </div>
 
       {/* Approve modal */}
-      <Modal isOpen={showApproveModal} onClose={() => setShowApproveModal(false)} title="Approve Job Request">
+      <Modal isOpen={showApproveModal} onClose={() => setShowApproveModal(false)} title={hasIntegrationFailures ? "Retry Approval" : "Approve Job Request"}>
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Approve <strong>{job.acomsNumber}</strong> for <strong>{job.client}</strong>?
+            {hasIntegrationFailures
+              ? <>Retry approval for <strong>{job.acomsNumber}</strong>? This will re-run all integrations.</>
+              : <>Approve <strong>{job.acomsNumber}</strong> for <strong>{job.client}</strong>?</>
+            }
           </p>
+          {hasIntegrationFailures && (
+            <div className="p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded text-xs text-amber-700 dark:text-amber-400">
+              Warning: Integrations that previously succeeded may create duplicates. Check Google Sheets and ServiceM8 after approval.
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Job Type (change if needed)
@@ -347,7 +435,7 @@ export default function JobRequestDetailPage() {
               disabled={actionLoading}
               className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
             >
-              {actionLoading ? "Approving..." : "Approve"}
+              {actionLoading ? "Processing..." : hasIntegrationFailures ? "Retry Approval" : "Approve"}
             </button>
           </div>
         </div>

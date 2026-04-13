@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { approveJobRequestSchema } from "@/modules/job-creator/validation";
 import { requireAuth } from "@/lib/auth";
@@ -47,8 +48,7 @@ export async function POST(
   // ─── Run integrations BEFORE updating status ─────────────
   // Both are blocking — if either fails, approval does not proceed.
 
-  const integrationResults: Record<string, unknown> = {};
-  const integrationErrors: string[] = [];
+  const integrationLog: Record<string, { status: string; error?: string; details?: Record<string, unknown> }> = {};
 
   // Shared data
   const contactParts = [
@@ -60,6 +60,8 @@ export async function POST(
   const jobReceivedDate = existing.jobReceivedDate
     ? new Date(existing.jobReceivedDate).toLocaleDateString("en-AU")
     : "";
+
+  let hasErrors = false;
 
   // 1. Google Sheets (always)
   try {
@@ -75,16 +77,22 @@ export async function POST(
       clientContact: contactParts.join(" | "),
       jobCreationAndReview: jobReceivedDate,
     });
-    integrationResults.googleSheets = { pushed: true, row: sheetResult.row, acomsNumber: sheetResult.acomsNumber };
+    integrationLog.googleSheets = {
+      status: "success",
+      details: { row: sheetResult.row, acomsNumber: sheetResult.acomsNumber },
+    };
   } catch (err) {
     console.error("[approve] Google Sheets push failed:", err);
-    integrationErrors.push(`Google Sheets: ${err instanceof Error ? err.message : "Unknown error"}`);
+    hasErrors = true;
+    integrationLog.googleSheets = {
+      status: "failed",
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
   }
 
   // 2. ServiceM8 (only for Direct Work Orders)
   if (finalJobType === "DIRECT_WORK_ORDER") {
     try {
-      // If client ref and project name/address are the same, don't repeat
       const clientRef = existing.clientReference?.trim() || "";
       const projectAddr = existing.projectNameAddress.trim();
       const companyName = clientRef && clientRef.toLowerCase() !== projectAddr.toLowerCase()
@@ -100,22 +108,39 @@ export async function POST(
         purchaseOrderNumber: existing.client,
         jobDescription: existing.emailContent || "",
       });
-      integrationResults.serviceM8 = { pushed: true, jobUuid: sm8Result.jobUuid };
+      integrationLog.serviceM8 = {
+        status: "success",
+        details: { jobUuid: sm8Result.jobUuid, categoryUuid: sm8Result.categoryUuid },
+      };
     } catch (err) {
       console.error("[approve] ServiceM8 push failed:", err);
-      integrationErrors.push(`ServiceM8: ${err instanceof Error ? err.message : "Unknown error"}`);
+      hasErrors = true;
+      integrationLog.serviceM8 = {
+        status: "failed",
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
     }
   } else {
-    integrationResults.serviceM8 = { skipped: true, reason: "Quotes are not pushed to ServiceM8" };
+    integrationLog.serviceM8 = { status: "skipped" };
   }
 
-  // ─── If any integration failed, block the approval ────────
-  if (integrationErrors.length > 0) {
+  // ─── Save integration log and handle result ───────────────
+
+  if (hasErrors) {
+    // Save the partial results so the UI can show what happened
+    await prisma.jobRequest.update({
+      where: { id },
+      data: { integrationLog: integrationLog as unknown as Prisma.InputJsonValue },
+    });
+
+    const failedNames = Object.entries(integrationLog)
+      .filter(([, v]) => v.status === "failed")
+      .map(([k]) => k);
+
     return NextResponse.json(
       {
-        error: "Approval blocked — one or more integrations failed",
-        integrationErrors,
-        integrationResults,
+        error: `Approval blocked — failed: ${failedNames.join(", ")}`,
+        integrationLog,
       },
       { status: 502 },
     );
@@ -131,6 +156,7 @@ export async function POST(
     status: "APPROVED",
     reviewedById: session.user.id,
     reviewedAt: new Date(),
+    integrationLog: integrationLog as unknown as Prisma.InputJsonValue,
   };
 
   if (parsed.data.jobType && parsed.data.jobType !== existing.jobType) {
@@ -152,8 +178,5 @@ export async function POST(
     changes,
   });
 
-  return NextResponse.json({
-    ...job,
-    _integrations: integrationResults,
-  });
+  return NextResponse.json(job);
 }

@@ -586,6 +586,9 @@ model JobRequest {
   reviewedById    String?
   reviewedAt      DateTime?
 
+  // Integration tracking — stores JSON of what succeeded/failed on approval
+  integrationLog  Json?
+
   // Ownership & audit
   createdById  String
   createdAt    DateTime  @default(now())

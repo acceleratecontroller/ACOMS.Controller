@@ -50,6 +50,7 @@ async function findOrCreateCategory(name: string): Promise<string> {
     (c) => c.name.toLowerCase() === name.toLowerCase(),
   );
   if (existing) {
+    console.log(`[servicem8] Found existing category "${existing.name}" (uuid: ${existing.uuid}, active: ${existing.active})`);
     // Reactivate if inactive
     if (existing.active === 0) {
       await sm8Fetch(`/category/${existing.uuid}.json`, {
@@ -61,6 +62,7 @@ async function findOrCreateCategory(name: string): Promise<string> {
   }
 
   // Create new category
+  console.log(`[servicem8] Creating new category: "${name}"`);
   const res = await sm8Fetch("/category.json", {
     method: "POST",
     body: JSON.stringify({ name, active: 1 }),
@@ -72,6 +74,7 @@ async function findOrCreateCategory(name: string): Promise<string> {
 
   const uuid = res.headers.get("x-record-uuid");
   if (!uuid) throw new Error("ServiceM8 did not return category UUID");
+  console.log(`[servicem8] Created category "${name}" (uuid: ${uuid})`);
   return uuid;
 }
 
@@ -89,6 +92,7 @@ async function createCompany(name: string): Promise<string> {
 
   const uuid = res.headers.get("x-record-uuid");
   if (!uuid) throw new Error("ServiceM8 did not return company UUID");
+  console.log(`[servicem8] Created company "${name}" (uuid: ${uuid})`);
   return uuid;
 }
 
@@ -106,7 +110,6 @@ export interface SM8JobResult {
   jobUuid: string;
   categoryUuid: string;
   companyUuid: string;
-  generatedJobId?: string;
 }
 
 export async function createServiceM8Job(input: SM8JobInput): Promise<SM8JobResult> {
@@ -127,7 +130,9 @@ export async function createServiceM8Job(input: SM8JobInput): Promise<SM8JobResu
     job_description: input.jobDescription || "",
   };
 
-  const res = await sm8Fetch("/Job.json", {
+  console.log(`[servicem8] Creating job with category_uuid: ${categoryUuid}, company_uuid: ${companyUuid}`);
+
+  const res = await sm8Fetch("/job.json", {
     method: "POST",
     body: JSON.stringify(jobBody),
   });
@@ -139,6 +144,7 @@ export async function createServiceM8Job(input: SM8JobInput): Promise<SM8JobResu
 
   const jobUuid = res.headers.get("x-record-uuid");
   if (!jobUuid) throw new Error("ServiceM8 did not return job UUID");
+  console.log(`[servicem8] Created job (uuid: ${jobUuid})`);
 
   return {
     jobUuid,
