@@ -3,6 +3,15 @@
 const getBaseUrl = () => process.env.ACOMS_WIP_API_URL || "";
 const getToken = () => process.env.ACOMS_WIP_SERVICE_TOKEN || "";
 
+function wipHeaders(): Record<string, string> {
+  return {
+    Authorization: `Bearer ${getToken()}`,
+    "Content-Type": "application/json",
+  };
+}
+
+// ─── Projects ──────────────────────────────────────────────
+
 export interface WipProject {
   id: string;
   acomsNumber: number;
@@ -53,4 +62,65 @@ export async function getWipProject(id: string): Promise<WipProject | null> {
   } catch {
     return null;
   }
+}
+
+// ─── Clients ───────────────────────────────────────────────
+
+export interface WipContract {
+  id: string;
+  name: string;
+  contractNumber: string | null;
+}
+
+export interface WipClient {
+  id: string;
+  name: string;
+  simproCustomerId: number | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  contracts: WipContract[];
+}
+
+/**
+ * Fetch clients from ACOMS.WIP with optional search filter.
+ */
+export async function getWipClients(search?: string): Promise<WipClient[]> {
+  try {
+    const url = new URL(`${getBaseUrl()}/api/external/clients`);
+    if (search) url.searchParams.set("search", search);
+
+    const res = await fetch(url.toString(), {
+      headers: wipHeaders(),
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Create a new client in ACOMS.WIP.
+ */
+export async function createWipClient(data: {
+  name: string;
+  simproCustomerId?: number | null;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}): Promise<WipClient> {
+  const res = await fetch(`${getBaseUrl()}/api/external/clients`, {
+    method: "POST",
+    headers: wipHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(err.error || `Failed to create client: ${res.status}`);
+  }
+
+  return res.json();
 }

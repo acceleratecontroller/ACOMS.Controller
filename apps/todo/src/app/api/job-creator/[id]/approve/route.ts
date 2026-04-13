@@ -7,6 +7,8 @@ import { audit } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { pushJobToSheet } from "@/lib/google-sheets";
 import { createServiceM8Job } from "@/lib/servicem8";
+import { createSimProJob } from "@/lib/simpro";
+import { getWipClients } from "@/lib/acoms-wip";
 import { DEPOT_LABELS, JOB_TYPE_LABELS } from "@/modules/job-creator/constants";
 
 // POST /api/job-creator/[id]/approve — Approve a pending job request
@@ -46,7 +48,7 @@ export async function POST(
   const finalJobType = parsed.data.jobType || existing.jobType;
 
   // ─── Run integrations BEFORE updating status ─────────────
-  // Both are blocking — if either fails, approval does not proceed.
+  // All are blocking — if any fail, approval does not proceed.
 
   const integrationLog: Record<string, { status: string; error?: string; details?: Record<string, unknown> }> = {};
 
@@ -132,6 +134,45 @@ export async function POST(
     }
   } else {
     integrationLog.serviceM8 = { status: "skipped" };
+  }
+
+  // 3. SimPRO (only for Direct Work Orders)
+  if (finalJobType === "DIRECT_WORK_ORDER") {
+    try {
+      // Look up the client's simproCustomerId from WIP
+      const wipClients = await getWipClients();
+      const wipClient = wipClients.find(
+        (c) => c.name.toLowerCase() === existing.client.toLowerCase(),
+      );
+      const simproCustomerId = wipClient?.simproCustomerId;
+
+      if (!simproCustomerId) {
+        throw new Error(
+          `No SimPRO customer ID mapped for client "${existing.client}". ` +
+          `Set simproCustomerId on the client record in ACOMS.WIP.`,
+        );
+      }
+
+      const simproResult = await createSimProJob({
+        customerId: simproCustomerId,
+        siteName: projectNameAddress,
+        description: existing.emailContent || "",
+        orderNo: existing.clientReference || existing.financePONumber || "",
+      });
+      integrationLog.simPro = {
+        status: "success",
+        details: { jobId: simproResult.jobId, jobUrl: simproResult.jobUrl },
+      };
+    } catch (err) {
+      console.error("[approve] SimPRO push failed:", err);
+      hasErrors = true;
+      integrationLog.simPro = {
+        status: "failed",
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
+    }
+  } else {
+    integrationLog.simPro = { status: "skipped" };
   }
 
   // ─── Save integration log and handle result ───────────────

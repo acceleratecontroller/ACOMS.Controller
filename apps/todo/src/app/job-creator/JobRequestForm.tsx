@@ -1,8 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { DEPOT_OPTIONS, JOB_TYPE_OPTIONS, CLIENT_OPTIONS, CONTRACT_OPTIONS } from "@/modules/job-creator/constants";
+import { useState, useEffect, useCallback } from "react";
+import { DEPOT_OPTIONS, JOB_TYPE_OPTIONS } from "@/modules/job-creator/constants";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import { Modal } from "@/components/Modal";
+
+interface WipContract {
+  id: string;
+  name: string;
+  contractNumber: string | null;
+}
+
+interface WipClient {
+  id: string;
+  name: string;
+  simproCustomerId: number | null;
+  contracts: WipContract[];
+}
 
 export interface JobRequestFormData {
   depot: string;
@@ -48,8 +62,58 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
   const [form, setForm] = useState<JobRequestFormData>({ ...EMPTY, ...initial });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Live client/contract data from WIP
+  const [wipClients, setWipClients] = useState<WipClient[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(true);
+
+  // New Client modal
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientSaving, setNewClientSaving] = useState(false);
+  const [newClientError, setNewClientError] = useState("");
+
+  // Fetch clients from WIP on mount
+  const fetchClients = useCallback(async () => {
+    try {
+      const res = await fetch("/api/job-creator/clients");
+      if (res.ok) {
+        const data: WipClient[] = await res.json();
+        setWipClients(data);
+      }
+    } catch {
+      // Silently fail — form still works with typed-in values
+    } finally {
+      setClientsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  // Build client options from WIP data
+  const clientOptions = wipClients.map((c) => ({ value: c.name, label: c.name }));
+
+  // Build contract options filtered to selected client
+  const selectedClient = wipClients.find((c) => c.name === form.client);
+  const contractOptions = selectedClient
+    ? selectedClient.contracts.map((c) => ({ value: c.name, label: c.name }))
+    : // If no matching WIP client, show all unique contracts across all clients
+      Array.from(
+        new Map(
+          wipClients.flatMap((c) => c.contracts).map((c) => [c.name, { value: c.name, label: c.name }]),
+        ).values(),
+      );
+
   function set(field: keyof JobRequestFormData, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
+    setForm((f) => {
+      const next = { ...f, [field]: value };
+      // Clear contract when client changes (the old contract may not belong to the new client)
+      if (field === "client" && value !== f.client) {
+        next.contract = "";
+      }
+      return next;
+    });
     if (errors[field]) setErrors((e) => ({ ...e, [field]: "" }));
   }
 
@@ -69,6 +133,37 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
     e.preventDefault();
     if (!validate()) return;
     await onSubmit(form);
+  }
+
+  async function handleCreateClient() {
+    const name = newClientName.trim();
+    if (!name) {
+      setNewClientError("Client name is required");
+      return;
+    }
+    setNewClientSaving(true);
+    setNewClientError("");
+    try {
+      const res = await fetch("/api/job-creator/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setNewClientError(err.error || "Failed to create client");
+        return;
+      }
+      const client: WipClient = await res.json();
+      setWipClients((prev) => [...prev, client].sort((a, b) => a.name.localeCompare(b.name)));
+      set("client", client.name);
+      setShowNewClient(false);
+      setNewClientName("");
+    } catch {
+      setNewClientError("Network error — please try again");
+    } finally {
+      setNewClientSaving(false);
+    }
   }
 
   const inputCls = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none";
@@ -119,13 +214,25 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
 
         <div>
           <label className={labelCls}>Client *</label>
-          <SearchableSelect
-            value={form.client}
-            onChange={(v) => set("client", v)}
-            options={CLIENT_OPTIONS}
-            placeholder="Type to search clients..."
-            className={inputCls}
-          />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <SearchableSelect
+                value={form.client}
+                onChange={(v) => set("client", v)}
+                options={clientOptions}
+                placeholder={clientsLoading ? "Loading clients..." : "Type to search clients..."}
+                className={inputCls}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowNewClient(true)}
+              className="shrink-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              title="Add new client"
+            >
+              + New
+            </button>
+          </div>
           {errors.client && <p className={errorCls}>{errors.client}</p>}
         </div>
 
@@ -134,8 +241,12 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
           <SearchableSelect
             value={form.contract}
             onChange={(v) => set("contract", v)}
-            options={CONTRACT_OPTIONS}
-            placeholder="Type to search contracts..."
+            options={contractOptions}
+            placeholder={
+              form.client && selectedClient && contractOptions.length === 0
+                ? "No contracts for this client"
+                : "Type to search contracts..."
+            }
             className={inputCls}
           />
           {errors.contract && <p className={errorCls}>{errors.contract}</p>}
@@ -220,6 +331,53 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
           {saving ? "Saving..." : submitLabel}
         </button>
       </div>
+
+      {/* New Client Modal */}
+      <Modal isOpen={showNewClient} onClose={() => setShowNewClient(false)} title="New Client">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Create a new client in ACOMS.WIP. This will be available across all ACOMS portals.
+          </p>
+          <div>
+            <label className={labelCls}>Client Name *</label>
+            <input
+              type="text"
+              value={newClientName}
+              onChange={(e) => {
+                setNewClientName(e.target.value);
+                if (newClientError) setNewClientError("");
+              }}
+              placeholder="Enter client name..."
+              className={inputCls}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleCreateClient();
+                }
+              }}
+            />
+            {newClientError && <p className={errorCls}>{newClientError}</p>}
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => { setShowNewClient(false); setNewClientName(""); setNewClientError(""); }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateClient}
+              disabled={newClientSaving}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {newClientSaving ? "Creating..." : "Create Client"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </form>
   );
 }

@@ -49,6 +49,7 @@ interface JobRequest {
 const INTEGRATION_NAMES: Record<string, string> = {
   googleSheets: "Google Sheets (WIP)",
   serviceM8: "ServiceM8",
+  simPro: "SimPRO",
 };
 
 export default function JobRequestDetailPage() {
