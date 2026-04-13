@@ -69,14 +69,6 @@ export default function TaskManagerPage() {
 
   // ─── Data Loading ──────────────────────────────────────
 
-  const loadAssignees = useCallback(async () => {
-    const res = await fetch("/api/assignees");
-    if (res.ok) {
-      const data = await res.json();
-      setAssignees(data);
-    }
-  }, []);
-
   const loadTasks = useCallback(
     async (archived = false) => {
       const url = archived ? "/api/tasks?archived=true" : "/api/tasks";
@@ -104,23 +96,41 @@ export default function TaskManagerPage() {
     [],
   );
 
+  const [defaultOwnerSet, setDefaultOwnerSet] = useState(false);
+
   useEffect(() => {
     async function init() {
-      const [sessionRes] = await Promise.all([
+      const [sessionRes, assigneesRes] = await Promise.all([
         fetch("/api/auth/session").catch(() => null),
-        loadAssignees(),
+        fetch("/api/assignees").catch(() => null),
         loadTasks(showArchived),
         loadRecurringTasks(showArchived),
         loadNotes(showArchivedNotes),
       ]);
+
+      let assigneesList: Assignee[] = [];
+      if (assigneesRes?.ok) {
+        assigneesList = await assigneesRes.json();
+        setAssignees(assigneesList);
+      }
+
       if (sessionRes?.ok) {
         const sess = await sessionRes.json();
         setIsAdmin(sess?.user?.role === "ADMIN");
+        // Default filter to the logged-in user's tasks
+        if (!defaultOwnerSet && sess?.user?.identityId) {
+          const me = assigneesList.find((a: Assignee) => a.identityId === sess.user.identityId);
+          if (me) {
+            setTaskOwnerFilter(me.id);
+            setRecurringOwnerFilter(me.id);
+          }
+          setDefaultOwnerSet(true);
+        }
       }
       setLoading(false);
     }
     init();
-  }, [loadAssignees, loadTasks, loadRecurringTasks, loadNotes, showArchived, showArchivedNotes]);
+  }, [loadTasks, loadRecurringTasks, loadNotes, showArchived, showArchivedNotes, defaultOwnerSet]);
 
   // Reload notes when archived toggle changes
   useEffect(() => {

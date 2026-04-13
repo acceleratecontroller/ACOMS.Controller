@@ -10,6 +10,7 @@ export interface Assignee {
   firstName: string;
   lastName: string;
   employeeNumber: string;
+  identityId?: string;
 }
 
 export interface Task {

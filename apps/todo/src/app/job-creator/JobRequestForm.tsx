@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DEPOT_OPTIONS, JOB_TYPE_OPTIONS, CLIENT_OPTIONS, CONTRACT_OPTIONS } from "@/modules/job-creator/constants";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 export interface JobRequestFormData {
   depot: string;
@@ -116,23 +117,25 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
 
         <div>
           <label className={labelCls}>Client *</label>
-          <select value={form.client} onChange={(e) => set("client", e.target.value)} className={inputCls}>
-            <option value="">Select client...</option>
-            {CLIENT_OPTIONS.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
+          <SearchableSelect
+            value={form.client}
+            onChange={(v) => set("client", v)}
+            options={CLIENT_OPTIONS}
+            placeholder="Type to search clients..."
+            className={inputCls}
+          />
           {errors.client && <p className={errorCls}>{errors.client}</p>}
         </div>
 
         <div>
           <label className={labelCls}>Contract *</label>
-          <select value={form.contract} onChange={(e) => set("contract", e.target.value)} className={inputCls}>
-            <option value="">Select contract...</option>
-            {CONTRACT_OPTIONS.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
+          <SearchableSelect
+            value={form.contract}
+            onChange={(v) => set("contract", v)}
+            options={CONTRACT_OPTIONS}
+            placeholder="Type to search contracts..."
+            className={inputCls}
+          />
           {errors.contract && <p className={errorCls}>{errors.contract}</p>}
         </div>
 
