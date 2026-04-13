@@ -99,7 +99,7 @@ export async function POST(
       projectNameAddress: job.projectNameAddress,
       jobReceivedDate,
       clientContact: contactParts.join(" | "),
-      jobCreationAndReview: reviewLine,
+      jobCreationAndReview: jobReceivedDate,
     });
   } catch (err) {
     console.error("[approve] Google Sheets push failed:", err);
