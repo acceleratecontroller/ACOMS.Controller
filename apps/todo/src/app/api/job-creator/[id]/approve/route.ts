@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { pushJobToSheet } from "@/lib/google-sheets";
+import { createServiceM8Job } from "@/lib/servicem8";
 import { DEPOT_LABELS, JOB_TYPE_LABELS } from "@/modules/job-creator/constants";
 
 // POST /api/job-creator/[id]/approve — Approve a pending job request
@@ -40,6 +41,85 @@ export async function POST(
     );
   }
 
+  // Determine the final job type (reviewer may have changed it)
+  const finalJobType = parsed.data.jobType || existing.jobType;
+
+  // ─── Run integrations BEFORE updating status ─────────────
+  // Both are blocking — if either fails, approval does not proceed.
+
+  const integrationResults: Record<string, unknown> = {};
+  const integrationErrors: string[] = [];
+
+  // Shared data
+  const contactParts = [
+    existing.clientContactName,
+    existing.clientContactPhone,
+    existing.clientContactEmail,
+  ].filter(Boolean);
+
+  const jobReceivedDate = existing.jobReceivedDate
+    ? new Date(existing.jobReceivedDate).toLocaleDateString("en-AU")
+    : "";
+
+  // 1. Google Sheets (always)
+  try {
+    const sheetResult = await pushJobToSheet({
+      depot: DEPOT_LABELS[existing.depot] || existing.depot,
+      client: existing.client,
+      contract: existing.contract,
+      initialStatus: JOB_TYPE_LABELS[finalJobType] || finalJobType,
+      financePONumber: existing.financePONumber || "",
+      clientReference: existing.clientReference || "",
+      projectNameAddress: existing.projectNameAddress,
+      jobReceivedDate,
+      clientContact: contactParts.join(" | "),
+      jobCreationAndReview: jobReceivedDate,
+    });
+    integrationResults.googleSheets = { pushed: true, row: sheetResult.row, acomsNumber: sheetResult.acomsNumber };
+  } catch (err) {
+    console.error("[approve] Google Sheets push failed:", err);
+    integrationErrors.push(`Google Sheets: ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+
+  // 2. ServiceM8 (only for Direct Work Orders)
+  if (finalJobType === "DIRECT_WORK_ORDER") {
+    try {
+      const companyName = [existing.clientReference, existing.projectNameAddress]
+        .filter(Boolean)
+        .join(" - ");
+
+      const categoryName = `${existing.client} - ${existing.contract}`;
+
+      const sm8Result = await createServiceM8Job({
+        companyName: companyName || existing.projectNameAddress,
+        jobAddress: existing.projectNameAddress,
+        categoryName,
+        purchaseOrderNumber: existing.client,
+        jobDescription: existing.emailContent || "",
+      });
+      integrationResults.serviceM8 = { pushed: true, jobUuid: sm8Result.jobUuid };
+    } catch (err) {
+      console.error("[approve] ServiceM8 push failed:", err);
+      integrationErrors.push(`ServiceM8: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  } else {
+    integrationResults.serviceM8 = { skipped: true, reason: "Quotes are not pushed to ServiceM8" };
+  }
+
+  // ─── If any integration failed, block the approval ────────
+  if (integrationErrors.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Approval blocked — one or more integrations failed",
+        integrationErrors,
+        integrationResults,
+      },
+      { status: 502 },
+    );
+  }
+
+  // ─── All integrations succeeded — update status ───────────
+
   const changes: Record<string, { from: unknown; to: unknown }> = {
     status: { from: "PENDING_REVIEW", to: "APPROVED" },
   };
@@ -69,47 +149,8 @@ export async function POST(
     changes,
   });
 
-  // Push to WIP Google Sheet (non-blocking — don't fail approval if sheet push fails)
-  let sheetResult: { row: number; acomsNumber: string | null } | null = null;
-  let sheetError: string | null = null;
-
-  try {
-    const contactParts = [
-      job.clientContactName,
-      job.clientContactPhone,
-      job.clientContactEmail,
-    ].filter(Boolean);
-
-    const jobReceivedDate = job.jobReceivedDate
-      ? new Date(job.jobReceivedDate).toLocaleDateString("en-AU")
-      : "";
-
-    const reviewLine = [
-      `Created by ${session.user.name || session.user.email || session.user.id}`,
-      `Approved ${new Date().toLocaleDateString("en-AU")}`,
-    ].join(" | ");
-
-    sheetResult = await pushJobToSheet({
-      depot: DEPOT_LABELS[job.depot] || job.depot,
-      client: job.client,
-      contract: job.contract,
-      initialStatus: JOB_TYPE_LABELS[job.jobType] || job.jobType,
-      financePONumber: job.financePONumber || "",
-      clientReference: job.clientReference || "",
-      projectNameAddress: job.projectNameAddress,
-      jobReceivedDate,
-      clientContact: contactParts.join(" | "),
-      jobCreationAndReview: jobReceivedDate,
-    });
-  } catch (err) {
-    console.error("[approve] Google Sheets push failed:", err);
-    sheetError = err instanceof Error ? err.message : "Unknown error";
-  }
-
   return NextResponse.json({
     ...job,
-    _sheet: sheetResult
-      ? { pushed: true, row: sheetResult.row, acomsNumber: sheetResult.acomsNumber }
-      : { pushed: false, error: sheetError },
+    _integrations: integrationResults,
   });
 }
