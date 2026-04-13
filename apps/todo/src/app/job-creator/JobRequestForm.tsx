@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DEPOT_OPTIONS, JOB_TYPE_OPTIONS } from "@/modules/job-creator/constants";
+import { DEPOT_OPTIONS, JOB_TYPE_OPTIONS, CLIENT_OPTIONS } from "@/modules/job-creator/constants";
 
 export interface JobRequestFormData {
   depot: string;
@@ -116,7 +116,12 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
 
         <div>
           <label className={labelCls}>Client *</label>
-          <input type="text" value={form.client} onChange={(e) => set("client", e.target.value)} placeholder="Client name" className={inputCls} />
+          <select value={form.client} onChange={(e) => set("client", e.target.value)} className={inputCls}>
+            <option value="">Select client...</option>
+            {CLIENT_OPTIONS.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
           {errors.client && <p className={errorCls}>{errors.client}</p>}
         </div>
 
