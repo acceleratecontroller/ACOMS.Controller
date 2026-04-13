@@ -569,7 +569,8 @@ model JobRequest {
   jobType            JobRequestType
   financePONumber    String?
   clientReference    String?
-  projectNameAddress String
+  projectName        String
+  address            String?
   jobReceivedDate    DateTime
 
   // Client contact

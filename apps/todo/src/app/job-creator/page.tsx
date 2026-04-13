@@ -22,7 +22,8 @@ interface JobRequest {
   jobType: string;
   financePONumber: string | null;
   clientReference: string | null;
-  projectNameAddress: string;
+  projectName: string;
+  address: string | null;
   jobReceivedDate: string;
   status: string;
   createdAt: string;
@@ -166,7 +167,7 @@ export default function JobCreatorPage() {
                   </td>
                   <td className="py-2.5 pr-3 text-gray-900 dark:text-gray-100">{job.client}</td>
                   <td className="py-2.5 pr-3 text-gray-600 dark:text-gray-400 hidden md:table-cell max-w-[200px] truncate">
-                    {job.projectNameAddress}
+                    {job.address ? `${job.projectName} - ${job.address}` : job.projectName}
                   </td>
                   <td className="py-2.5 pr-3 text-gray-600 dark:text-gray-400 hidden sm:table-cell">
                     {DEPOT_LABELS[job.depot] || job.depot}

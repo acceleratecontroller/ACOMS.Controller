@@ -11,7 +11,8 @@ export interface JobRequestFormData {
   jobType: string;
   financePONumber: string;
   clientReference: string;
-  projectNameAddress: string;
+  projectName: string;
+  address: string;
   jobReceivedDate: string;
   clientContactName: string;
   clientContactPhone: string;
@@ -34,7 +35,8 @@ const EMPTY: JobRequestFormData = {
   jobType: "QUOTE",
   financePONumber: "",
   clientReference: "",
-  projectNameAddress: "",
+  projectName: "",
+  address: "",
   jobReceivedDate: "",
   clientContactName: "",
   clientContactPhone: "",
@@ -57,7 +59,7 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
     if (!form.client.trim()) errs.client = "Client is required";
     if (!form.contract.trim()) errs.contract = "Contract is required";
     if (!form.jobType) errs.jobType = "Job type is required";
-    if (!form.projectNameAddress.trim()) errs.projectNameAddress = "Project name/address is required";
+    if (!form.projectName.trim()) errs.projectName = "Project name is required";
     if (!form.jobReceivedDate) errs.jobReceivedDate = "Job received date is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -139,10 +141,15 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
           {errors.contract && <p className={errorCls}>{errors.contract}</p>}
         </div>
 
-        <div className="md:col-span-2">
-          <label className={labelCls}>Project Name / Address *</label>
-          <input type="text" value={form.projectNameAddress} onChange={(e) => set("projectNameAddress", e.target.value)} placeholder="Project name or site address" className={inputCls} />
-          {errors.projectNameAddress && <p className={errorCls}>{errors.projectNameAddress}</p>}
+        <div>
+          <label className={labelCls}>Project Name *</label>
+          <input type="text" value={form.projectName} onChange={(e) => set("projectName", e.target.value)} placeholder="Project or job name" className={inputCls} />
+          {errors.projectName && <p className={errorCls}>{errors.projectName}</p>}
+        </div>
+
+        <div>
+          <label className={labelCls}>Address</label>
+          <input type="text" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="Site address (e.g. 42 Victoria St, Grafton NSW 2460)" className={inputCls} />
         </div>
 
         <div>

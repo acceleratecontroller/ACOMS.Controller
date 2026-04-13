@@ -63,6 +63,13 @@ export async function POST(
 
   let hasErrors = false;
 
+  // Combine project name + address for sheets (dedup if same)
+  const projectName = existing.projectName.trim();
+  const siteAddress = existing.address?.trim() || "";
+  const projectNameAddress = siteAddress && siteAddress.toLowerCase() !== projectName.toLowerCase()
+    ? `${projectName} - ${siteAddress}`
+    : projectName;
+
   // 1. Google Sheets (always)
   try {
     const sheetResult = await pushJobToSheet({
@@ -72,7 +79,7 @@ export async function POST(
       initialStatus: finalJobType === "DIRECT_WORK_ORDER" ? "Work Order" : (JOB_TYPE_LABELS[finalJobType] || finalJobType),
       financePONumber: existing.financePONumber || "",
       clientReference: existing.clientReference || "",
-      projectNameAddress: existing.projectNameAddress,
+      projectNameAddress,
       jobReceivedDate,
       clientContact: contactParts.join(" | "),
       jobCreationAndReview: jobReceivedDate,
@@ -93,17 +100,20 @@ export async function POST(
   // 2. ServiceM8 (only for Direct Work Orders)
   if (finalJobType === "DIRECT_WORK_ORDER") {
     try {
+      // Company name: "{Client Ref} - {Project Name}" (dedup if same)
       const clientRef = existing.clientReference?.trim() || "";
-      const projectAddr = existing.projectNameAddress.trim();
-      const companyName = clientRef && clientRef.toLowerCase() !== projectAddr.toLowerCase()
-        ? `${clientRef} - ${projectAddr}`
-        : projectAddr;
+      const companyName = clientRef && clientRef.toLowerCase() !== projectName.toLowerCase()
+        ? `${clientRef} - ${projectName}`
+        : projectName;
 
       const categoryName = `${existing.client} - ${existing.contract}`;
 
+      // Address for ServiceM8 map — use the separate address field
+      const sm8Address = siteAddress || projectName;
+
       const sm8Result = await createServiceM8Job({
-        companyName: companyName || existing.projectNameAddress,
-        jobAddress: existing.projectNameAddress,
+        companyName,
+        jobAddress: sm8Address,
         categoryName,
         purchaseOrderNumber: existing.client,
         jobDescription: existing.emailContent || "",

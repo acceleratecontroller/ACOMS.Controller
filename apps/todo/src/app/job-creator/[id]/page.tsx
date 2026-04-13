@@ -29,7 +29,8 @@ interface JobRequest {
   jobType: string;
   financePONumber: string | null;
   clientReference: string | null;
-  projectNameAddress: string;
+  projectName: string;
+  address: string | null;
   jobReceivedDate: string;
   clientContactName: string | null;
   clientContactPhone: string | null;
@@ -168,7 +169,7 @@ export default function JobRequestDetailPage() {
           </Link>
           <PageHeader
             title={`${job.acomsNumber} — ${job.client}`}
-            description={job.projectNameAddress}
+            description={job.address ? `${job.projectName} — ${job.address}` : job.projectName}
           />
           <div className="flex gap-2 mt-2">
             <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[job.status] || ""}`}>
@@ -319,10 +320,16 @@ export default function JobRequestDetailPage() {
             <p className={labelFieldCls}>Job Received Date</p>
             <p className={fieldCls}>{new Date(job.jobReceivedDate).toLocaleDateString()}</p>
           </div>
-          <div className="sm:col-span-2 lg:col-span-3">
-            <p className={labelFieldCls}>Project Name / Address</p>
-            <p className={fieldCls}>{job.projectNameAddress}</p>
+          <div>
+            <p className={labelFieldCls}>Project Name</p>
+            <p className={fieldCls}>{job.projectName}</p>
           </div>
+          {job.address && (
+            <div className="sm:col-span-2">
+              <p className={labelFieldCls}>Address</p>
+              <p className={fieldCls}>{job.address}</p>
+            </div>
+          )}
           {job.financePONumber && (
             <div>
               <p className={labelFieldCls}>Finance / PO Number</p>

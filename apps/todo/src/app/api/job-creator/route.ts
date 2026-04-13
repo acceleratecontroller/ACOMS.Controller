@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
   if (search) {
     where.OR = [
       { client: { contains: search, mode: "insensitive" } },
-      { projectNameAddress: { contains: search, mode: "insensitive" } },
+      { projectName: { contains: search, mode: "insensitive" } },
+      { address: { contains: search, mode: "insensitive" } },
       { acomsNumber: { contains: search, mode: "insensitive" } },
       { clientReference: { contains: search, mode: "insensitive" } },
     ];
@@ -75,7 +76,8 @@ export async function POST(request: NextRequest) {
         jobType: data.jobType,
         financePONumber: data.financePONumber || null,
         clientReference: data.clientReference || null,
-        projectNameAddress: data.projectNameAddress,
+        projectName: data.projectName,
+        address: data.address || null,
         jobReceivedDate: new Date(data.jobReceivedDate),
         clientContactName: data.clientContactName || null,
         clientContactPhone: data.clientContactPhone || null,
