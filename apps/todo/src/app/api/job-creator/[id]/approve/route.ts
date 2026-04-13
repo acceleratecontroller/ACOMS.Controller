@@ -67,7 +67,7 @@ export async function POST(
       depot: DEPOT_LABELS[existing.depot] || existing.depot,
       client: existing.client,
       contract: existing.contract,
-      initialStatus: JOB_TYPE_LABELS[finalJobType] || finalJobType,
+      initialStatus: finalJobType === "DIRECT_WORK_ORDER" ? "Work Order" : (JOB_TYPE_LABELS[finalJobType] || finalJobType),
       financePONumber: existing.financePONumber || "",
       clientReference: existing.clientReference || "",
       projectNameAddress: existing.projectNameAddress,
@@ -84,9 +84,12 @@ export async function POST(
   // 2. ServiceM8 (only for Direct Work Orders)
   if (finalJobType === "DIRECT_WORK_ORDER") {
     try {
-      const companyName = [existing.clientReference, existing.projectNameAddress]
-        .filter(Boolean)
-        .join(" - ");
+      // If client ref and project name/address are the same, don't repeat
+      const clientRef = existing.clientReference?.trim() || "";
+      const projectAddr = existing.projectNameAddress.trim();
+      const companyName = clientRef && clientRef.toLowerCase() !== projectAddr.toLowerCase()
+        ? `${clientRef} - ${projectAddr}`
+        : projectAddr;
 
       const categoryName = `${existing.client} - ${existing.contract}`;
 
