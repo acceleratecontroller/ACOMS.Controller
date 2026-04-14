@@ -30,6 +30,7 @@ export default function DiaryPage() {
   // Form state
   const [formType, setFormType] = useState<"NOTE" | "EVENT" | "CONVERSATION">("NOTE");
   const [formDate, setFormDate] = useState(todayISO());
+  const [formTime, setFormTime] = useState("");
   const [formHeading, setFormHeading] = useState("");
   const [formPeople, setFormPeople] = useState<string[]>([]);
   const [formContent, setFormContent] = useState("");
@@ -91,10 +92,23 @@ export default function DiaryPage() {
     // Sort groups by key descending (latest first)
     const sortedKeys = Array.from(map.keys()).sort((a, b) => b.localeCompare(a));
     for (const key of sortedKeys) {
+      // Sort entries within group: by date desc, then time desc (latest at top)
+      // Entries without a time sort after entries with a time on the same date
+      const sorted = map.get(key)!.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        // Same date — sort by time descending; no time goes to bottom
+        const timeA = a.time || "";
+        const timeB = b.time || "";
+        if (timeB && !timeA) return 1;
+        if (timeA && !timeB) return -1;
+        return timeB.localeCompare(timeA);
+      });
       groups.push({
         key,
         label: getMonthYearLabel(key),
-        entries: map.get(key)!,
+        entries: sorted,
       });
     }
 
@@ -106,6 +120,7 @@ export default function DiaryPage() {
   function resetForm() {
     setFormType("NOTE");
     setFormDate(todayISO());
+    setFormTime("");
     setFormHeading("");
     setFormPeople([]);
     setFormContent("");
@@ -121,6 +136,7 @@ export default function DiaryPage() {
   function openEdit(entry: DiaryEntry) {
     setFormType(entry.type);
     setFormDate(entry.date.split("T")[0]);
+    setFormTime(entry.time || "");
     setFormHeading(entry.heading);
     setFormPeople([...entry.people]);
     setFormContent(entry.content);
@@ -143,6 +159,7 @@ export default function DiaryPage() {
     const body = {
       type: formType,
       date: formDate,
+      time: formTime || null,
       heading: formHeading.trim(),
       people: formPeople,
       content: formContent,
@@ -360,17 +377,30 @@ export default function DiaryPage() {
             </select>
           </div>
 
-          {/* Date */}
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Date
-            </label>
-            <input
-              type="date"
-              value={formDate}
-              onChange={(e) => setFormDate(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
+          {/* Date & Time */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Date
+              </label>
+              <input
+                type="date"
+                value={formDate}
+                onChange={(e) => setFormDate(e.target.value)}
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+            </div>
+            <div className="w-32">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Time <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="time"
+                value={formTime}
+                onChange={(e) => setFormTime(e.target.value)}
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              />
+            </div>
           </div>
 
           {/* Heading */}

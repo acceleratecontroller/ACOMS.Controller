@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
   const entries = await prisma.diaryEntry.findMany({
     where,
-    orderBy: { date: "desc" },
+    orderBy: [{ date: "desc" }, { time: "desc" }],
   });
 
   return NextResponse.json(entries);
@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
       data: {
         type: parsed.data.type,
         date: new Date(parsed.data.date),
+        time: parsed.data.time || null,
         heading: parsed.data.heading,
         people: parsed.data.people,
         content: parsed.data.content || "",

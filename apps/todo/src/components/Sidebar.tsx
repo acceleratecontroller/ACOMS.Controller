@@ -86,8 +86,8 @@ export default function Sidebar() {
       {/* Sidebar nav - always visible on desktop, slide-in on mobile */}
       <nav
         className={`
-          fixed md:static z-30 top-0 left-0 h-full
-          w-56 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-1 shrink-0
+          fixed md:sticky z-30 top-0 left-0 h-full md:h-screen
+          w-56 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-1 shrink-0 md:overflow-y-auto
           transform transition-transform duration-200 ease-in-out
           ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
         `}

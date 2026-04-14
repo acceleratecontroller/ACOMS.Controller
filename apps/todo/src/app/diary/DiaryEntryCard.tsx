@@ -62,9 +62,9 @@ export function DiaryEntryCard({ entry, onEdit, onToggleImportant, onArchive }: 
                 </h3>
               </div>
 
-              {/* Date */}
+              {/* Date & Time */}
               <span className="text-[10px] md:text-xs text-gray-400 dark:text-gray-500 shrink-0 whitespace-nowrap">
-                {formatDate(entry.date)}
+                {formatDate(entry.date)}{entry.time ? ` ${entry.time}` : ""}
               </span>
             </div>
 
