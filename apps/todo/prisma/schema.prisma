@@ -142,6 +142,7 @@ model DiaryEntry {
   id      String         @id @default(uuid())
   type    DiaryEntryType @default(NOTE)
   date    DateTime                            // user-editable, defaults to today
+  time    String?                             // optional HH:mm time for more specific ordering
   heading String
   people  String[]       @default([])         // tag-style array of names
   content String         @default("")         // free-text body

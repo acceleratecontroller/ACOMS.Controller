@@ -52,6 +52,7 @@ export async function PUT(
   const updateData: Record<string, unknown> = {};
   if (parsed.data.type !== undefined) updateData.type = parsed.data.type;
   if (parsed.data.date !== undefined) updateData.date = new Date(parsed.data.date);
+  if (parsed.data.time !== undefined) updateData.time = parsed.data.time || null;
   if (parsed.data.heading !== undefined) updateData.heading = parsed.data.heading;
   if (parsed.data.people !== undefined) updateData.people = parsed.data.people;
   if (parsed.data.content !== undefined) updateData.content = parsed.data.content;

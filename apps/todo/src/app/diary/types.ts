@@ -2,6 +2,7 @@ export interface DiaryEntry {
   id: string;
   type: "NOTE" | "EVENT" | "CONVERSATION";
   date: string;
+  time: string | null;
   heading: string;
   people: string[];
   content: string;
