@@ -110,6 +110,9 @@ export async function createWipClient(data: {
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
+  abn?: string;
+  address?: string;
+  skipSimPro?: boolean;
 }): Promise<WipClient> {
   const res = await fetch(`${getBaseUrl()}/api/external/clients`, {
     method: "POST",

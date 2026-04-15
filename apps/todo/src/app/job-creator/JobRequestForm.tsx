@@ -69,6 +69,11 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
   // New Client modal
   const [showNewClient, setShowNewClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
+  const [newClientAbn, setNewClientAbn] = useState("");
+  const [newClientPhone, setNewClientPhone] = useState("");
+  const [newClientEmail, setNewClientEmail] = useState("");
+  const [newClientAddress, setNewClientAddress] = useState("");
+  const [newClientSyncSimPro, setNewClientSyncSimPro] = useState(true);
   const [newClientSaving, setNewClientSaving] = useState(false);
   const [newClientError, setNewClientError] = useState("");
 
@@ -135,6 +140,17 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
     await onSubmit(form);
   }
 
+  function resetNewClientModal() {
+    setShowNewClient(false);
+    setNewClientName("");
+    setNewClientAbn("");
+    setNewClientPhone("");
+    setNewClientEmail("");
+    setNewClientAddress("");
+    setNewClientSyncSimPro(true);
+    setNewClientError("");
+  }
+
   async function handleCreateClient() {
     const name = newClientName.trim();
     if (!name) {
@@ -147,7 +163,14 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
       const res = await fetch("/api/job-creator/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({
+          name,
+          abn: newClientAbn.trim() || undefined,
+          contactPhone: newClientPhone.trim() || undefined,
+          contactEmail: newClientEmail.trim() || undefined,
+          address: newClientAddress.trim() || undefined,
+          skipSimPro: !newClientSyncSimPro,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -157,8 +180,7 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
       const client: WipClient = await res.json();
       setWipClients((prev) => [...prev, client].sort((a, b) => a.name.localeCompare(b.name)));
       set("client", client.name);
-      setShowNewClient(false);
-      setNewClientName("");
+      resetNewClientModal();
     } catch {
       setNewClientError("Network error — please try again");
     } finally {
@@ -333,36 +355,91 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
       </div>
 
       {/* New Client Modal */}
-      <Modal isOpen={showNewClient} onClose={() => setShowNewClient(false)} title="New Client">
+      <Modal isOpen={showNewClient} onClose={resetNewClientModal} title="New Client" wide>
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Create a new client in ACOMS.WIP. This will be available across all ACOMS portals.
           </p>
-          <div>
-            <label className={labelCls}>Client Name *</label>
-            <input
-              type="text"
-              value={newClientName}
-              onChange={(e) => {
-                setNewClientName(e.target.value);
-                if (newClientError) setNewClientError("");
-              }}
-              placeholder="Enter client name..."
-              className={inputCls}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleCreateClient();
-                }
-              }}
-            />
-            {newClientError && <p className={errorCls}>{newClientError}</p>}
+
+          {newClientError && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+              {newClientError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Client Name *</label>
+              <input
+                type="text"
+                value={newClientName}
+                onChange={(e) => {
+                  setNewClientName(e.target.value);
+                  if (newClientError) setNewClientError("");
+                }}
+                placeholder="Company name"
+                className={inputCls}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className={labelCls}>ABN</label>
+              <input
+                type="text"
+                value={newClientAbn}
+                onChange={(e) => setNewClientAbn(e.target.value)}
+                placeholder="Australian Business Number"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Phone</label>
+              <input
+                type="tel"
+                value={newClientPhone}
+                onChange={(e) => setNewClientPhone(e.target.value)}
+                placeholder="Phone number"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Email</label>
+              <input
+                type="email"
+                value={newClientEmail}
+                onChange={(e) => setNewClientEmail(e.target.value)}
+                placeholder="Email address"
+                className={inputCls}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelCls}>Address</label>
+              <input
+                type="text"
+                value={newClientAddress}
+                onChange={(e) => setNewClientAddress(e.target.value)}
+                placeholder="Business address"
+                className={inputCls}
+              />
+            </div>
           </div>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={newClientSyncSimPro}
+              onChange={(e) => setNewClientSyncSimPro(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Also create in SimPRO
+            </span>
+          </label>
+
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => { setShowNewClient(false); setNewClientName(""); setNewClientError(""); }}
+              onClick={resetNewClientModal}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               Cancel

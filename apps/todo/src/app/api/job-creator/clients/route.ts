@@ -48,6 +48,9 @@ export async function POST(request: NextRequest) {
         typeof body.contactEmail === "string" ? body.contactEmail : undefined,
       contactPhone:
         typeof body.contactPhone === "string" ? body.contactPhone : undefined,
+      abn: typeof body.abn === "string" ? body.abn : undefined,
+      address: typeof body.address === "string" ? body.address : undefined,
+      skipSimPro: body.skipSimPro === true,
     });
     return NextResponse.json(client, { status: 201 });
   } catch (err) {
