@@ -81,9 +81,9 @@ export function SearchableSelect({ value, onChange, options, placeholder = "Sear
           {filtered.length === 0 ? (
             <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No matches</li>
           ) : (
-            filtered.map((o) => (
+            filtered.map((o, idx) => (
               <li
-                key={o.value}
+                key={`${o.value}-${idx}`}
                 onClick={() => {
                   onChange(o.value);
                   setOpen(false);
