@@ -144,3 +144,56 @@ export async function createSimProJob(input: SimProJobInput): Promise<SimProJobR
     jobUrl: `${baseUrl}/companies/${COMPANY_ID}/jobs/${jobId}`,
   };
 }
+
+// ─── Quotes ───────────────────────────────────────────────
+
+export interface SimProQuoteInput {
+  customerId: number;          // SimPRO customer ID (from client record)
+  siteName: string;            // Project name / address
+  description: string;         // Job description (email content)
+  dueDate?: string;            // Quote submission due date (YYYY-MM-DD)
+}
+
+export interface SimProQuoteResult {
+  quoteId: number;
+  quoteUrl: string;
+}
+
+/**
+ * Create a quote in SimPRO.
+ */
+export async function createSimProQuote(input: SimProQuoteInput): Promise<SimProQuoteResult> {
+  const quoteBody: Record<string, unknown> = {
+    Customer: input.customerId,
+    Site: {
+      Name: input.siteName,
+    },
+    Type: "Service",
+    Description: input.description || "",
+    Stage: "InProgress",
+  };
+  if (input.dueDate) quoteBody.DueDate = input.dueDate;
+
+  console.log(`[simpro] Creating quote for customer ${input.customerId}`);
+
+  const res = await simproFetch("/quotes/", {
+    method: "POST",
+    body: JSON.stringify(quoteBody),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to create SimPRO quote: ${res.status} ${body}`);
+  }
+
+  const data = await res.json();
+  const quoteId = data.ID;
+  const baseUrl = getBaseUrl();
+
+  console.log(`[simpro] Created quote (ID: ${quoteId})`);
+
+  return {
+    quoteId,
+    quoteUrl: `${baseUrl}/companies/${COMPANY_ID}/quotes/${quoteId}`,
+  };
+}

@@ -99,11 +99,12 @@ async function createCompany(name: string): Promise<string> {
 // ─── Jobs ───────────────────────────────────────────────
 
 export interface SM8JobInput {
-  companyName: string;       // "{Client Ref} - {Project Name/Address}"
+  companyName: string;       // "{Client Ref} - {Project Name/Address}" for WO, Project Name for Quote
   jobAddress: string;        // Project Name/Address
   categoryName: string;      // "{Client} - {Contract}"
   purchaseOrderNumber: string; // Client name
   jobDescription: string;    // Email content
+  status?: "Work Order" | "Quote"; // ServiceM8 job status, defaults to "Work Order"
 }
 
 export interface SM8JobResult {
@@ -121,7 +122,7 @@ export async function createServiceM8Job(input: SM8JobInput): Promise<SM8JobResu
 
   // 3. Create the job
   const jobBody = {
-    status: "Work Order",
+    status: input.status || "Work Order",
     job_address: input.jobAddress,
     billing_address: input.jobAddress,
     company_uuid: companyUuid,

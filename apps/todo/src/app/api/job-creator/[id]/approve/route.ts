@@ -7,7 +7,7 @@ import { audit } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { pushJobToSheet, pushQuoteTabRow, pushConstructionTabRow } from "@/lib/google-sheets";
 import { createServiceM8Job } from "@/lib/servicem8";
-import { createSimProJob } from "@/lib/simpro";
+import { createSimProJob, createSimProQuote } from "@/lib/simpro";
 import { getWipClients } from "@/lib/acoms-wip";
 import { DEPOT_LABELS, JOB_TYPE_LABELS } from "@/modules/job-creator/constants";
 
@@ -134,60 +134,61 @@ export async function POST(
     };
   }
 
-  // 2. ServiceM8 (only for Direct Work Orders)
-  if (finalJobType === "DIRECT_WORK_ORDER") {
-    try {
+  // 2. ServiceM8 — Work Order or Quote (both create a job, different status)
+  try {
+    const categoryName = `${existing.client} - ${existing.contract}`;
+    const sm8Address = siteAddress || projectName;
+
+    let companyName: string;
+    if (finalJobType === "DIRECT_WORK_ORDER") {
       // Company name: "{Client Ref} - {Project Name}" (dedup if same)
       const clientRef = existing.clientReference?.trim() || "";
-      const companyName = clientRef && clientRef.toLowerCase() !== projectName.toLowerCase()
+      companyName = clientRef && clientRef.toLowerCase() !== projectName.toLowerCase()
         ? `${clientRef} - ${projectName}`
         : projectName;
-
-      const categoryName = `${existing.client} - ${existing.contract}`;
-
-      // Address for ServiceM8 map — use the separate address field
-      const sm8Address = siteAddress || projectName;
-
-      const sm8Result = await createServiceM8Job({
-        companyName,
-        jobAddress: sm8Address,
-        categoryName,
-        purchaseOrderNumber: existing.client,
-        jobDescription: existing.emailContent || "",
-      });
-      integrationLog.serviceM8 = {
-        status: "success",
-        details: { jobUuid: sm8Result.jobUuid, categoryUuid: sm8Result.categoryUuid },
-      };
-    } catch (err) {
-      console.error("[approve] ServiceM8 push failed:", err);
-      hasErrors = true;
-      integrationLog.serviceM8 = {
-        status: "failed",
-        error: err instanceof Error ? err.message : "Unknown error",
-      };
+    } else {
+      // Quotes: just the project name (+ address if different)
+      companyName = projectNameAddress;
     }
-  } else {
-    integrationLog.serviceM8 = { status: "skipped" };
+
+    const sm8Result = await createServiceM8Job({
+      companyName,
+      jobAddress: sm8Address,
+      categoryName,
+      purchaseOrderNumber: existing.client,
+      jobDescription: existing.emailContent || "",
+      status: finalJobType === "DIRECT_WORK_ORDER" ? "Work Order" : "Quote",
+    });
+    integrationLog.serviceM8 = {
+      status: "success",
+      details: { jobUuid: sm8Result.jobUuid, categoryUuid: sm8Result.categoryUuid },
+    };
+  } catch (err) {
+    console.error("[approve] ServiceM8 push failed:", err);
+    hasErrors = true;
+    integrationLog.serviceM8 = {
+      status: "failed",
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
   }
 
-  // 3. SimPRO (only for Direct Work Orders)
-  if (finalJobType === "DIRECT_WORK_ORDER") {
-    try {
-      // Look up the client's simproCustomerId from WIP
-      const wipClients = await getWipClients();
-      const wipClient = wipClients.find(
-        (c) => c.name.toLowerCase() === existing.client.toLowerCase(),
+  // 3. SimPRO — Work Order creates a Job, Quote creates a Quote
+  try {
+    // Look up the client's simproCustomerId from WIP
+    const wipClients = await getWipClients();
+    const wipClient = wipClients.find(
+      (c) => c.name.toLowerCase() === existing.client.toLowerCase(),
+    );
+    const simproCustomerId = wipClient?.simproCustomerId;
+
+    if (!simproCustomerId) {
+      throw new Error(
+        `No SimPRO customer ID mapped for client "${existing.client}". ` +
+        `Set simproCustomerId on the client record in ACOMS.WIP.`,
       );
-      const simproCustomerId = wipClient?.simproCustomerId;
+    }
 
-      if (!simproCustomerId) {
-        throw new Error(
-          `No SimPRO customer ID mapped for client "${existing.client}". ` +
-          `Set simproCustomerId on the client record in ACOMS.WIP.`,
-        );
-      }
-
+    if (finalJobType === "DIRECT_WORK_ORDER") {
       const simproResult = await createSimProJob({
         customerId: simproCustomerId,
         siteName: projectNameAddress,
@@ -198,16 +199,28 @@ export async function POST(
         status: "success",
         details: { jobId: simproResult.jobId, jobUrl: simproResult.jobUrl },
       };
-    } catch (err) {
-      console.error("[approve] SimPRO push failed:", err);
-      hasErrors = true;
+    } else {
+      const quoteDueDate = existing.quoteDueDate
+        ? new Date(existing.quoteDueDate).toISOString().slice(0, 10)
+        : undefined;
+      const simproResult = await createSimProQuote({
+        customerId: simproCustomerId,
+        siteName: projectNameAddress,
+        description: existing.emailContent || "",
+        dueDate: quoteDueDate,
+      });
       integrationLog.simPro = {
-        status: "failed",
-        error: err instanceof Error ? err.message : "Unknown error",
+        status: "success",
+        details: { quoteId: simproResult.quoteId, quoteUrl: simproResult.quoteUrl },
       };
     }
-  } else {
-    integrationLog.simPro = { status: "skipped" };
+  } catch (err) {
+    console.error("[approve] SimPRO push failed:", err);
+    hasErrors = true;
+    integrationLog.simPro = {
+      status: "failed",
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
   }
 
   // ─── Save integration log and handle result ───────────────
