@@ -5,7 +5,7 @@ import { approveJobRequestSchema } from "@/modules/job-creator/validation";
 import { requireAuth } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
-import { pushJobToSheet } from "@/lib/google-sheets";
+import { pushJobToSheet, pushQuoteTabRow, pushConstructionTabRow } from "@/lib/google-sheets";
 import { createServiceM8Job } from "@/lib/servicem8";
 import { createSimProJob } from "@/lib/simpro";
 import { getWipClients } from "@/lib/acoms-wip";
@@ -90,6 +90,32 @@ export async function POST(
       status: "success",
       details: { row: sheetResult.row, acomsNumber: sheetResult.acomsNumber },
     };
+
+    // Write to Quote or Construction tab at the same row
+    const dueDate = existing.dueDate
+      ? new Date(existing.dueDate).toLocaleDateString("en-AU")
+      : "";
+    const todayFormatted = new Date().toLocaleDateString("en-AU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+    });
+
+    if (finalJobType === "QUOTE") {
+      await pushQuoteTabRow(sheetResult.row, {
+        quoteReceivedDate: jobReceivedDate,
+        originalQuoteDueDate: dueDate,
+        comments: `${todayFormatted} - New RFQ`,
+      });
+      integrationLog.quoteTab = { status: "success", details: { row: sheetResult.row } };
+    } else {
+      await pushConstructionTabRow(sheetResult.row, {
+        jobReceivedDate,
+        originalDueDate: dueDate,
+        comments: `${todayFormatted} - New Work Order`,
+      });
+      integrationLog.constructionTab = { status: "success", details: { row: sheetResult.row } };
+    }
   } catch (err) {
     console.error("[approve] Google Sheets push failed:", err);
     hasErrors = true;

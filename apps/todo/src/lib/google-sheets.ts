@@ -138,3 +138,81 @@ export async function pushJobToSheet(row: JobSheetRow): Promise<{ row: number; a
 
   return { row: targetRow, acomsNumber };
 }
+
+// ─── Quote / Construction tab writes ──────────────────────
+
+interface QuoteTabRow {
+  quoteReceivedDate: string;  // Column H
+  originalQuoteDueDate: string;  // Column I
+  comments: string;  // Column N
+}
+
+interface ConstructionTabRow {
+  jobReceivedDate: string;  // Column H
+  originalDueDate: string;  // Column I
+  comments: string;  // Column Q
+}
+
+/**
+ * Write to the Quote tab at the given row number.
+ * Column H = Quote Received Date, Column I = Original Quote Due Date, Column N = Comments
+ */
+export async function pushQuoteTabRow(row: number, data: QuoteTabRow): Promise<void> {
+  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+  if (!spreadsheetId) throw new Error("GOOGLE_SHEETS_SPREADSHEET_ID not configured");
+
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+
+  // Write columns H–I (Quote Received Date, Original Quote Due Date)
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Quote!H${row}:I${row}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[data.quoteReceivedDate, data.originalQuoteDueDate]],
+    },
+  });
+
+  // Write column N (Comments)
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Quote!N${row}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[data.comments]],
+    },
+  });
+}
+
+/**
+ * Write to the Construction tab at the given row number.
+ * Column H = Job Received Date, Column I = Original Due Date, Column Q = Comments
+ */
+export async function pushConstructionTabRow(row: number, data: ConstructionTabRow): Promise<void> {
+  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
+  if (!spreadsheetId) throw new Error("GOOGLE_SHEETS_SPREADSHEET_ID not configured");
+
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+
+  // Write columns H–I (Job Received Date, Original Due Date)
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Construction!H${row}:I${row}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[data.jobReceivedDate, data.originalDueDate]],
+    },
+  });
+
+  // Write column Q (Comments)
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `Construction!Q${row}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[data.comments]],
+    },
+  });
+}

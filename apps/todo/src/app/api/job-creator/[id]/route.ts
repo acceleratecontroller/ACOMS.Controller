@@ -70,6 +70,7 @@ export async function PUT(
         ...(data.projectName !== undefined && { projectName: data.projectName }),
         ...(data.address !== undefined && { address: data.address || null }),
         ...(data.jobReceivedDate !== undefined && { jobReceivedDate: new Date(data.jobReceivedDate!) }),
+        ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
         ...(data.clientContactName !== undefined && { clientContactName: data.clientContactName || null }),
         ...(data.clientContactPhone !== undefined && { clientContactPhone: data.clientContactPhone || null }),
         ...(data.clientContactEmail !== undefined && { clientContactEmail: data.clientContactEmail || null }),

@@ -23,6 +23,7 @@ export interface JobRequestFormData {
   client: string;
   contract: string;
   jobType: string;
+  dueDate: string;
   financePONumber: string;
   clientReference: string;
   projectName: string;
@@ -47,6 +48,7 @@ const EMPTY: JobRequestFormData = {
   client: "",
   contract: "",
   jobType: "QUOTE",
+  dueDate: "",
   financePONumber: "",
   clientReference: "",
   projectName: "",
@@ -289,6 +291,13 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
           <label className={labelCls}>Job Received Date *</label>
           <input type="date" value={form.jobReceivedDate} onChange={(e) => set("jobReceivedDate", e.target.value)} className={inputCls} />
           {errors.jobReceivedDate && <p className={errorCls}>{errors.jobReceivedDate}</p>}
+        </div>
+
+        <div>
+          <label className={labelCls}>
+            {form.jobType === "DIRECT_WORK_ORDER" ? "Work Order Due Date" : "Quote Submission Due Date"}
+          </label>
+          <input type="date" value={form.dueDate} onChange={(e) => set("dueDate", e.target.value)} className={inputCls} />
         </div>
 
         <div>

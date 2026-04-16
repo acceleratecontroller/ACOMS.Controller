@@ -573,6 +573,7 @@ model JobRequest {
   projectName        String
   address            String?
   jobReceivedDate    DateTime
+  dueDate            DateTime?
 
   // Client contact
   clientContactName  String?

@@ -32,6 +32,7 @@ interface JobRequest {
   projectName: string;
   address: string | null;
   jobReceivedDate: string;
+  dueDate: string | null;
   clientContactName: string | null;
   clientContactPhone: string | null;
   clientContactEmail: string | null;
@@ -47,7 +48,9 @@ interface JobRequest {
 }
 
 const INTEGRATION_NAMES: Record<string, string> = {
-  googleSheets: "Google Sheets (WIP)",
+  googleSheets: "Google Sheets (Data)",
+  quoteTab: "Google Sheets (Quote)",
+  constructionTab: "Google Sheets (Construction)",
   serviceM8: "ServiceM8",
   simPro: "SimPRO",
 };
@@ -321,6 +324,14 @@ export default function JobRequestDetailPage() {
             <p className={labelFieldCls}>Job Received Date</p>
             <p className={fieldCls}>{new Date(job.jobReceivedDate).toLocaleDateString()}</p>
           </div>
+          {job.dueDate && (
+            <div>
+              <p className={labelFieldCls}>
+                {job.jobType === "DIRECT_WORK_ORDER" ? "Work Order Due Date" : "Quote Submission Due Date"}
+              </p>
+              <p className={fieldCls}>{new Date(job.dueDate).toLocaleDateString()}</p>
+            </div>
+          )}
           <div>
             <p className={labelFieldCls}>Project Name</p>
             <p className={fieldCls}>{job.projectName}</p>
