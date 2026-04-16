@@ -11,6 +11,8 @@ export const createJobRequestSchema = z.object({
   projectName: z.string().min(1, "Project name is required"),
   address: optionalString,
   jobReceivedDate: z.string().min(1, "Job received date is required"),
+  quoteReceivedDate: optionalString,
+  workOrderReceivedDate: optionalString,
   quoteDueDate: optionalString,
   workOrderDueDate: optionalString,
   clientContactName: optionalString,

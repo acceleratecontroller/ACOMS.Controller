@@ -1,3 +1,5 @@
--- Add separate due date fields for quotes and work orders
-ALTER TABLE "JobRequest" ADD COLUMN "quoteDueDate" TIMESTAMP(3);
-ALTER TABLE "JobRequest" ADD COLUMN "workOrderDueDate" TIMESTAMP(3);
+-- Add separate received date and due date fields for quotes and work orders
+ALTER TABLE "JobRequest" ADD COLUMN IF NOT EXISTS "quoteReceivedDate" TIMESTAMP(3);
+ALTER TABLE "JobRequest" ADD COLUMN IF NOT EXISTS "workOrderReceivedDate" TIMESTAMP(3);
+ALTER TABLE "JobRequest" ADD COLUMN IF NOT EXISTS "quoteDueDate" TIMESTAMP(3);
+ALTER TABLE "JobRequest" ADD COLUMN IF NOT EXISTS "workOrderDueDate" TIMESTAMP(3);

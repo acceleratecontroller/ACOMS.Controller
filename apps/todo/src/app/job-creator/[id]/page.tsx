@@ -32,6 +32,8 @@ interface JobRequest {
   projectName: string;
   address: string | null;
   jobReceivedDate: string;
+  quoteReceivedDate: string | null;
+  workOrderReceivedDate: string | null;
   quoteDueDate: string | null;
   workOrderDueDate: string | null;
   clientContactName: string | null;
@@ -325,10 +327,22 @@ export default function JobRequestDetailPage() {
             <p className={labelFieldCls}>Job Received Date</p>
             <p className={fieldCls}>{new Date(job.jobReceivedDate).toLocaleDateString()}</p>
           </div>
+          {job.quoteReceivedDate && (
+            <div>
+              <p className={labelFieldCls}>Quote Received Date</p>
+              <p className={fieldCls}>{new Date(job.quoteReceivedDate).toLocaleDateString()}</p>
+            </div>
+          )}
           {job.quoteDueDate && (
             <div>
               <p className={labelFieldCls}>Quote Submission Due Date</p>
               <p className={fieldCls}>{new Date(job.quoteDueDate).toLocaleDateString()}</p>
+            </div>
+          )}
+          {job.workOrderReceivedDate && (
+            <div>
+              <p className={labelFieldCls}>Work Order Received Date</p>
+              <p className={fieldCls}>{new Date(job.workOrderReceivedDate).toLocaleDateString()}</p>
             </div>
           )}
           {job.workOrderDueDate && (

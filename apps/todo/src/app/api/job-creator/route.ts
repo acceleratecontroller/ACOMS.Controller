@@ -79,6 +79,8 @@ export async function POST(request: NextRequest) {
         projectName: data.projectName,
         address: data.address || null,
         jobReceivedDate: new Date(data.jobReceivedDate),
+        quoteReceivedDate: data.quoteReceivedDate ? new Date(data.quoteReceivedDate) : null,
+        workOrderReceivedDate: data.workOrderReceivedDate ? new Date(data.workOrderReceivedDate) : null,
         quoteDueDate: data.quoteDueDate ? new Date(data.quoteDueDate) : null,
         workOrderDueDate: data.workOrderDueDate ? new Date(data.workOrderDueDate) : null,
         clientContactName: data.clientContactName || null,

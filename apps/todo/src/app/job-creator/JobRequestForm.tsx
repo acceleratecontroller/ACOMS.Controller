@@ -23,6 +23,8 @@ export interface JobRequestFormData {
   client: string;
   contract: string;
   jobType: string;
+  quoteReceivedDate: string;
+  workOrderReceivedDate: string;
   quoteDueDate: string;
   workOrderDueDate: string;
   financePONumber: string;
@@ -49,6 +51,8 @@ const EMPTY: JobRequestFormData = {
   client: "",
   contract: "",
   jobType: "QUOTE",
+  quoteReceivedDate: "",
+  workOrderReceivedDate: "",
   quoteDueDate: "",
   workOrderDueDate: "",
   financePONumber: "",
@@ -299,17 +303,29 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
         </div>
 
         {form.jobType === "QUOTE" && (
-          <div>
-            <label className={labelCls}>Quote Submission Due Date</label>
-            <input type="date" value={form.quoteDueDate} onChange={(e) => set("quoteDueDate", e.target.value)} className={inputCls} />
-          </div>
+          <>
+            <div>
+              <label className={labelCls}>Quote Received Date</label>
+              <input type="date" value={form.quoteReceivedDate} onChange={(e) => set("quoteReceivedDate", e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Quote Submission Due Date</label>
+              <input type="date" value={form.quoteDueDate} onChange={(e) => set("quoteDueDate", e.target.value)} className={inputCls} />
+            </div>
+          </>
         )}
 
         {form.jobType === "DIRECT_WORK_ORDER" && (
-          <div>
-            <label className={labelCls}>Work Order Due Date</label>
-            <input type="date" value={form.workOrderDueDate} onChange={(e) => set("workOrderDueDate", e.target.value)} className={inputCls} />
-          </div>
+          <>
+            <div>
+              <label className={labelCls}>Work Order Received Date</label>
+              <input type="date" value={form.workOrderReceivedDate} onChange={(e) => set("workOrderReceivedDate", e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Work Order Due Date</label>
+              <input type="date" value={form.workOrderDueDate} onChange={(e) => set("workOrderDueDate", e.target.value)} className={inputCls} />
+            </div>
+          </>
         )}
 
         <div>
