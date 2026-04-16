@@ -49,8 +49,12 @@ export async function POST(
 
   // ─── Run integrations BEFORE updating status ─────────────
   // All are blocking — if any fail, approval does not proceed.
+  // Retry: steps marked "success" in the prior integrationLog are
+  // skipped so retries don't duplicate records in external systems.
 
-  const integrationLog: Record<string, { status: string; error?: string; details?: Record<string, unknown> }> = {};
+  type IntegrationLogEntry = { status: string; error?: string; details?: Record<string, unknown> };
+  const prior = (existing.integrationLog as Record<string, IntegrationLogEntry> | null) || {};
+  const integrationLog: Record<string, IntegrationLogEntry> = {};
 
   // Shared data
   const contactParts = [
@@ -72,159 +76,187 @@ export async function POST(
     ? `${projectName} - ${siteAddress}`
     : projectName;
 
-  // 1. Google Sheets (always)
-  try {
-    const sheetResult = await pushJobToSheet({
-      depot: DEPOT_LABELS[existing.depot] || existing.depot,
-      client: existing.client,
-      contract: existing.contract,
-      initialStatus: finalJobType === "DIRECT_WORK_ORDER" ? "Work Order" : (JOB_TYPE_LABELS[finalJobType] || finalJobType),
-      financePONumber: existing.financePONumber || "",
-      clientReference: existing.clientReference || "",
-      projectNameAddress,
-      jobReceivedDate,
-      clientContact: contactParts.join(" | "),
-      jobCreationAndReview: jobReceivedDate,
-    });
-    integrationLog.googleSheets = {
-      status: "success",
-      details: { row: sheetResult.row, acomsNumber: sheetResult.acomsNumber },
-    };
-
-    // Write to Quote or Construction tab at the same row
-    const todayFormatted = new Date().toLocaleDateString("en-AU", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
-    });
-
-    if (finalJobType === "QUOTE") {
-      const quoteReceivedDate = existing.quoteReceivedDate
-        ? new Date(existing.quoteReceivedDate).toLocaleDateString("en-AU")
-        : "";
-      const quoteDueDate = existing.quoteDueDate
-        ? new Date(existing.quoteDueDate).toLocaleDateString("en-AU")
-        : "";
-      await pushQuoteTabRow(sheetResult.row, {
-        quoteReceivedDate,
-        originalQuoteDueDate: quoteDueDate,
-        comments: `${todayFormatted} - New RFQ`,
+  // 1a. Google Sheets — Data tab. Row number is needed by 1b.
+  let sheetRow: number | undefined;
+  if (prior.googleSheets?.status === "success") {
+    integrationLog.googleSheets = prior.googleSheets;
+    sheetRow = prior.googleSheets.details?.row as number | undefined;
+  } else {
+    try {
+      const sheetResult = await pushJobToSheet({
+        depot: DEPOT_LABELS[existing.depot] || existing.depot,
+        client: existing.client,
+        contract: existing.contract,
+        initialStatus: finalJobType === "DIRECT_WORK_ORDER" ? "Work Order" : (JOB_TYPE_LABELS[finalJobType] || finalJobType),
+        financePONumber: existing.financePONumber || "",
+        clientReference: existing.clientReference || "",
+        projectNameAddress,
+        jobReceivedDate,
+        clientContact: contactParts.join(" | "),
+        jobCreationAndReview: jobReceivedDate,
       });
-      integrationLog.quoteTab = { status: "success", details: { row: sheetResult.row } };
-    } else {
-      const workOrderReceivedDate = existing.workOrderReceivedDate
-        ? new Date(existing.workOrderReceivedDate).toLocaleDateString("en-AU")
-        : "";
-      const workOrderDueDate = existing.workOrderDueDate
-        ? new Date(existing.workOrderDueDate).toLocaleDateString("en-AU")
-        : "";
-      await pushConstructionTabRow(sheetResult.row, {
-        jobReceivedDate: workOrderReceivedDate,
-        originalDueDate: workOrderDueDate,
-        comments: `${todayFormatted} - New Work Order`,
-      });
-      integrationLog.constructionTab = { status: "success", details: { row: sheetResult.row } };
+      sheetRow = sheetResult.row;
+      integrationLog.googleSheets = {
+        status: "success",
+        details: { row: sheetResult.row, acomsNumber: sheetResult.acomsNumber },
+      };
+    } catch (err) {
+      console.error("[approve] Google Sheets push failed:", err);
+      hasErrors = true;
+      integrationLog.googleSheets = {
+        status: "failed",
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
     }
-  } catch (err) {
-    console.error("[approve] Google Sheets push failed:", err);
-    hasErrors = true;
-    integrationLog.googleSheets = {
-      status: "failed",
-      error: err instanceof Error ? err.message : "Unknown error",
-    };
+  }
+
+  // 1b. Google Sheets — Quote or Construction tab (needs sheetRow)
+  const subTabKey = finalJobType === "QUOTE" ? "quoteTab" : "constructionTab";
+  if (prior[subTabKey]?.status === "success") {
+    integrationLog[subTabKey] = prior[subTabKey];
+  } else if (sheetRow !== undefined) {
+    try {
+      const todayFormatted = new Date().toLocaleDateString("en-AU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      });
+
+      if (finalJobType === "QUOTE") {
+        const quoteReceivedDate = existing.quoteReceivedDate
+          ? new Date(existing.quoteReceivedDate).toLocaleDateString("en-AU")
+          : "";
+        const quoteDueDate = existing.quoteDueDate
+          ? new Date(existing.quoteDueDate).toLocaleDateString("en-AU")
+          : "";
+        await pushQuoteTabRow(sheetRow, {
+          quoteReceivedDate,
+          originalQuoteDueDate: quoteDueDate,
+          comments: `${todayFormatted} - New RFQ`,
+        });
+      } else {
+        const workOrderReceivedDate = existing.workOrderReceivedDate
+          ? new Date(existing.workOrderReceivedDate).toLocaleDateString("en-AU")
+          : "";
+        const workOrderDueDate = existing.workOrderDueDate
+          ? new Date(existing.workOrderDueDate).toLocaleDateString("en-AU")
+          : "";
+        await pushConstructionTabRow(sheetRow, {
+          jobReceivedDate: workOrderReceivedDate,
+          originalDueDate: workOrderDueDate,
+          comments: `${todayFormatted} - New Work Order`,
+        });
+      }
+      integrationLog[subTabKey] = { status: "success", details: { row: sheetRow } };
+    } catch (err) {
+      console.error(`[approve] ${subTabKey} push failed:`, err);
+      hasErrors = true;
+      integrationLog[subTabKey] = {
+        status: "failed",
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
+    }
   }
 
   // 2. ServiceM8 — Work Order or Quote (both create a job, different status)
-  try {
-    const categoryName = `${existing.client} - ${existing.contract}`;
-    const sm8Address = siteAddress || projectName;
+  if (prior.serviceM8?.status === "success") {
+    integrationLog.serviceM8 = prior.serviceM8;
+  } else {
+    try {
+      const categoryName = `${existing.client} - ${existing.contract}`;
+      const sm8Address = siteAddress || projectName;
 
-    let companyName: string;
-    if (finalJobType === "DIRECT_WORK_ORDER") {
-      // Company name: "{Client Ref} - {Project Name}" (dedup if same)
-      const clientRef = existing.clientReference?.trim() || "";
-      companyName = clientRef && clientRef.toLowerCase() !== projectName.toLowerCase()
-        ? `${clientRef} - ${projectName}`
-        : projectName;
-    } else {
-      // Quotes: just the project name (+ address if different)
-      companyName = projectNameAddress;
+      let companyName: string;
+      if (finalJobType === "DIRECT_WORK_ORDER") {
+        // Company name: "{Client Ref} - {Project Name}" (dedup if same)
+        const clientRef = existing.clientReference?.trim() || "";
+        companyName = clientRef && clientRef.toLowerCase() !== projectName.toLowerCase()
+          ? `${clientRef} - ${projectName}`
+          : projectName;
+      } else {
+        // Quotes: just the project name (+ address if different)
+        companyName = projectNameAddress;
+      }
+
+      const sm8Result = await createServiceM8Job({
+        companyName,
+        jobAddress: sm8Address,
+        categoryName,
+        purchaseOrderNumber: existing.client,
+        jobDescription: existing.emailContent || "",
+        status: finalJobType === "DIRECT_WORK_ORDER" ? "Work Order" : "Quote",
+      });
+      integrationLog.serviceM8 = {
+        status: "success",
+        details: { jobUuid: sm8Result.jobUuid, categoryUuid: sm8Result.categoryUuid },
+      };
+    } catch (err) {
+      console.error("[approve] ServiceM8 push failed:", err);
+      hasErrors = true;
+      integrationLog.serviceM8 = {
+        status: "failed",
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
     }
-
-    const sm8Result = await createServiceM8Job({
-      companyName,
-      jobAddress: sm8Address,
-      categoryName,
-      purchaseOrderNumber: existing.client,
-      jobDescription: existing.emailContent || "",
-      status: finalJobType === "DIRECT_WORK_ORDER" ? "Work Order" : "Quote",
-    });
-    integrationLog.serviceM8 = {
-      status: "success",
-      details: { jobUuid: sm8Result.jobUuid, categoryUuid: sm8Result.categoryUuid },
-    };
-  } catch (err) {
-    console.error("[approve] ServiceM8 push failed:", err);
-    hasErrors = true;
-    integrationLog.serviceM8 = {
-      status: "failed",
-      error: err instanceof Error ? err.message : "Unknown error",
-    };
   }
 
   // 3. SimPRO — Work Order creates a Job, Quote creates a Quote
-  try {
-    // Look up the client's simproCustomerId from WIP
-    const wipClients = await getWipClients();
-    const wipClient = wipClients.find(
-      (c) => c.name.toLowerCase() === existing.client.toLowerCase(),
-    );
-    const simproCustomerId = wipClient?.simproCustomerId;
-
-    if (!simproCustomerId) {
-      throw new Error(
-        `No SimPRO customer ID mapped for client "${existing.client}". ` +
-        `Set simproCustomerId on the client record in ACOMS.WIP.`,
+  if (prior.simPro?.status === "success") {
+    integrationLog.simPro = prior.simPro;
+  } else {
+    try {
+      // Look up the client's simproCustomerId from WIP
+      const wipClients = await getWipClients();
+      const wipClient = wipClients.find(
+        (c) => c.name.toLowerCase() === existing.client.toLowerCase(),
       );
-    }
+      const simproCustomerId = wipClient?.simproCustomerId;
 
-    const costCenterId = simProCostCentreForDepot(existing.depot);
+      if (!simproCustomerId) {
+        throw new Error(
+          `No SimPRO customer ID mapped for client "${existing.client}". ` +
+          `Set simproCustomerId on the client record in ACOMS.WIP.`,
+        );
+      }
 
-    if (finalJobType === "DIRECT_WORK_ORDER") {
-      const simproResult = await createSimProJob({
-        customerId: simproCustomerId,
-        siteName: projectNameAddress,
-        description: existing.emailContent || "",
-        orderNo: existing.clientReference || existing.financePONumber || "",
-        costCenterId,
-      });
+      const costCenterId = simProCostCentreForDepot(existing.depot);
+
+      if (finalJobType === "DIRECT_WORK_ORDER") {
+        const simproResult = await createSimProJob({
+          customerId: simproCustomerId,
+          siteName: projectNameAddress,
+          description: existing.emailContent || "",
+          orderNo: existing.clientReference || existing.financePONumber || "",
+          costCenterId,
+        });
+        integrationLog.simPro = {
+          status: "success",
+          details: { jobId: simproResult.jobId, jobUrl: simproResult.jobUrl },
+        };
+      } else {
+        const quoteDueDate = existing.quoteDueDate
+          ? new Date(existing.quoteDueDate).toISOString().slice(0, 10)
+          : undefined;
+        const simproResult = await createSimProQuote({
+          customerId: simproCustomerId,
+          siteName: projectNameAddress,
+          description: existing.emailContent || "",
+          dueDate: quoteDueDate,
+          costCenterId,
+        });
+        integrationLog.simPro = {
+          status: "success",
+          details: { quoteId: simproResult.quoteId, quoteUrl: simproResult.quoteUrl },
+        };
+      }
+    } catch (err) {
+      console.error("[approve] SimPRO push failed:", err);
+      hasErrors = true;
       integrationLog.simPro = {
-        status: "success",
-        details: { jobId: simproResult.jobId, jobUrl: simproResult.jobUrl },
-      };
-    } else {
-      const quoteDueDate = existing.quoteDueDate
-        ? new Date(existing.quoteDueDate).toISOString().slice(0, 10)
-        : undefined;
-      const simproResult = await createSimProQuote({
-        customerId: simproCustomerId,
-        siteName: projectNameAddress,
-        description: existing.emailContent || "",
-        dueDate: quoteDueDate,
-        costCenterId,
-      });
-      integrationLog.simPro = {
-        status: "success",
-        details: { quoteId: simproResult.quoteId, quoteUrl: simproResult.quoteUrl },
+        status: "failed",
+        error: err instanceof Error ? err.message : "Unknown error",
       };
     }
-  } catch (err) {
-    console.error("[approve] SimPRO push failed:", err);
-    hasErrors = true;
-    integrationLog.simPro = {
-      status: "failed",
-      error: err instanceof Error ? err.message : "Unknown error",
-    };
   }
 
   // ─── Save integration log and handle result ───────────────
