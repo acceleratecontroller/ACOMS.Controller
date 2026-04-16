@@ -138,7 +138,12 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
     if (!form.contract.trim()) errs.contract = "Contract is required";
     if (!form.jobType) errs.jobType = "Job type is required";
     if (!form.projectName.trim()) errs.projectName = "Project name is required";
-    if (!form.jobReceivedDate) errs.jobReceivedDate = "Job received date is required";
+    if (form.jobType === "QUOTE" && !form.quoteReceivedDate) {
+      errs.quoteReceivedDate = "Quote received date is required";
+    }
+    if (form.jobType === "DIRECT_WORK_ORDER" && !form.workOrderReceivedDate) {
+      errs.workOrderReceivedDate = "Work order received date is required";
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -146,7 +151,9 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(form);
+    const jobReceivedDate =
+      form.jobType === "QUOTE" ? form.quoteReceivedDate : form.workOrderReceivedDate;
+    await onSubmit({ ...form, jobReceivedDate });
   }
 
   function resetNewClientModal() {
@@ -296,17 +303,12 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
           <input type="text" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="Site address (e.g. 42 Victoria St, Grafton NSW 2460)" className={inputCls} />
         </div>
 
-        <div>
-          <label className={labelCls}>Job Received Date *</label>
-          <input type="date" value={form.jobReceivedDate} onChange={(e) => set("jobReceivedDate", e.target.value)} className={inputCls} />
-          {errors.jobReceivedDate && <p className={errorCls}>{errors.jobReceivedDate}</p>}
-        </div>
-
         {form.jobType === "QUOTE" && (
           <>
             <div>
-              <label className={labelCls}>Quote Received Date</label>
+              <label className={labelCls}>Quote Received Date *</label>
               <input type="date" value={form.quoteReceivedDate} onChange={(e) => set("quoteReceivedDate", e.target.value)} className={inputCls} />
+              {errors.quoteReceivedDate && <p className={errorCls}>{errors.quoteReceivedDate}</p>}
             </div>
             <div>
               <label className={labelCls}>Quote Submission Due Date</label>
@@ -318,8 +320,9 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
         {form.jobType === "DIRECT_WORK_ORDER" && (
           <>
             <div>
-              <label className={labelCls}>Work Order Received Date</label>
+              <label className={labelCls}>Work Order Received Date *</label>
               <input type="date" value={form.workOrderReceivedDate} onChange={(e) => set("workOrderReceivedDate", e.target.value)} className={inputCls} />
+              {errors.workOrderReceivedDate && <p className={errorCls}>{errors.workOrderReceivedDate}</p>}
             </div>
             <div>
               <label className={labelCls}>Work Order Due Date</label>
