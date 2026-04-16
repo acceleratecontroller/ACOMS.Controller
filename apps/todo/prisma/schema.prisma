@@ -573,7 +573,8 @@ model JobRequest {
   projectName        String
   address            String?
   jobReceivedDate    DateTime
-  dueDate            DateTime?
+  quoteDueDate       DateTime?
+  workOrderDueDate   DateTime?
 
   // Client contact
   clientContactName  String?

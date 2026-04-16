@@ -92,9 +92,6 @@ export async function POST(
     };
 
     // Write to Quote or Construction tab at the same row
-    const dueDate = existing.dueDate
-      ? new Date(existing.dueDate).toLocaleDateString("en-AU")
-      : "";
     const todayFormatted = new Date().toLocaleDateString("en-AU", {
       day: "2-digit",
       month: "2-digit",
@@ -102,16 +99,22 @@ export async function POST(
     });
 
     if (finalJobType === "QUOTE") {
+      const quoteDueDate = existing.quoteDueDate
+        ? new Date(existing.quoteDueDate).toLocaleDateString("en-AU")
+        : "";
       await pushQuoteTabRow(sheetResult.row, {
         quoteReceivedDate: jobReceivedDate,
-        originalQuoteDueDate: dueDate,
+        originalQuoteDueDate: quoteDueDate,
         comments: `${todayFormatted} - New RFQ`,
       });
       integrationLog.quoteTab = { status: "success", details: { row: sheetResult.row } };
     } else {
+      const workOrderDueDate = existing.workOrderDueDate
+        ? new Date(existing.workOrderDueDate).toLocaleDateString("en-AU")
+        : "";
       await pushConstructionTabRow(sheetResult.row, {
         jobReceivedDate,
-        originalDueDate: dueDate,
+        originalDueDate: workOrderDueDate,
         comments: `${todayFormatted} - New Work Order`,
       });
       integrationLog.constructionTab = { status: "success", details: { row: sheetResult.row } };
