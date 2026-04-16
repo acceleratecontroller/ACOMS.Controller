@@ -139,7 +139,12 @@ export async function createSimProJob(input: SimProJobInput): Promise<SimProJobR
     Description: input.description || "",
     OrderNo: input.orderNo || "",
     Stage: "Pending",
-    CostCenter: input.costCenterId,
+    Sections: [
+      {
+        Name: "Main",
+        CostCenters: [{ CostCenter: input.costCenterId }],
+      },
+    ],
   };
 
   console.log(`[simpro] Creating service job for customer ${input.customerId} (costCenter=${input.costCenterId})`);
@@ -193,7 +198,12 @@ export async function createSimProQuote(input: SimProQuoteInput): Promise<SimPro
     Type: "Service",
     Description: input.description || "",
     Stage: "InProgress",
-    CostCenter: input.costCenterId,
+    Sections: [
+      {
+        Name: "Main",
+        CostCenters: [{ CostCenter: input.costCenterId }],
+      },
+    ],
   };
   if (input.dueDate) quoteBody.DueDate = input.dueDate;
 
