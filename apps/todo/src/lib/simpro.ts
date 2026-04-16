@@ -111,6 +111,28 @@ export function simProCostCentreForDepot(depot: string): number {
   return id;
 }
 
+// ─── Sites ────────────────────────────────────────────────
+
+/**
+ * Create a new SimPRO site and return its ID.
+ * SimPRO Service Quotes/Jobs require `Site` to be an integer ID,
+ * not an inline `{ Name }` object, so we create the site first.
+ */
+async function createSimProSite(name: string): Promise<number> {
+  const res = await simproFetch("/sites/", {
+    method: "POST",
+    body: JSON.stringify({ Name: name }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to create SimPRO site: ${res.status} ${body}`);
+  }
+  const data = await res.json();
+  const siteId = data.ID;
+  console.log(`[simpro] Created site "${name}" (ID: ${siteId})`);
+  return siteId;
+}
+
 // ─── Service Jobs ─────────────────────────────────────────
 
 export interface SimProJobInput {
@@ -130,11 +152,11 @@ export interface SimProJobResult {
  * Create a service job in SimPRO.
  */
 export async function createSimProJob(input: SimProJobInput): Promise<SimProJobResult> {
+  const siteId = await createSimProSite(input.siteName);
+
   const jobBody = {
     Customer: input.customerId,
-    Site: {
-      Name: input.siteName,
-    },
+    Site: siteId,
     Type: "Service",
     Description: input.description || "",
     OrderNo: input.orderNo || "",
@@ -190,11 +212,11 @@ export interface SimProQuoteResult {
  * Create a quote in SimPRO.
  */
 export async function createSimProQuote(input: SimProQuoteInput): Promise<SimProQuoteResult> {
+  const siteId = await createSimProSite(input.siteName);
+
   const quoteBody: Record<string, unknown> = {
     Customer: input.customerId,
-    Site: {
-      Name: input.siteName,
-    },
+    Site: siteId,
     Type: "Service",
     Description: input.description || "",
     Stage: "InProgress",
