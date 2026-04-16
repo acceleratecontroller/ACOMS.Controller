@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       abn: typeof body.abn === "string" ? body.abn : undefined,
       address: typeof body.address === "string" ? body.address : undefined,
       skipSimPro: body.skipSimPro === true,
+      privateClient: body.privateClient === true,
     });
     return NextResponse.json(client, { status: 201 });
   } catch (err) {

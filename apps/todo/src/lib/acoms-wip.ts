@@ -113,6 +113,7 @@ export async function createWipClient(data: {
   abn?: string;
   address?: string;
   skipSimPro?: boolean;
+  privateClient?: boolean;
 }): Promise<WipClient> {
   const res = await fetch(`${getBaseUrl()}/api/external/clients`, {
     method: "POST",

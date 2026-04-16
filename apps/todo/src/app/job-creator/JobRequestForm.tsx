@@ -78,6 +78,7 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientAddress, setNewClientAddress] = useState("");
   const [newClientSyncSimPro, setNewClientSyncSimPro] = useState(true);
+  const [newClientPrivate, setNewClientPrivate] = useState(false);
   const [newClientSaving, setNewClientSaving] = useState(false);
   const [newClientError, setNewClientError] = useState("");
 
@@ -152,6 +153,7 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
     setNewClientEmail("");
     setNewClientAddress("");
     setNewClientSyncSimPro(true);
+    setNewClientPrivate(false);
     setNewClientError("");
   }
 
@@ -174,6 +176,7 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
           contactEmail: newClientEmail.trim() || undefined,
           address: newClientAddress.trim() || undefined,
           skipSimPro: !newClientSyncSimPro,
+          privateClient: newClientPrivate,
         }),
       });
       if (!res.ok) {
@@ -442,17 +445,30 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
             </div>
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={newClientSyncSimPro}
-              onChange={(e) => setNewClientSyncSimPro(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              Also create in SimPRO
-            </span>
-          </label>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newClientSyncSimPro}
+                onChange={(e) => setNewClientSyncSimPro(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Also create in SimPRO
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newClientPrivate}
+                onChange={(e) => setNewClientPrivate(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Private Client (auto-create &quot;Private Client&quot; contract)
+              </span>
+            </label>
+          </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <button
