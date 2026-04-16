@@ -7,7 +7,7 @@ import { audit } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { pushJobToSheet, pushQuoteTabRow, pushConstructionTabRow } from "@/lib/google-sheets";
 import { createServiceM8Job } from "@/lib/servicem8";
-import { createSimProJob, createSimProQuote } from "@/lib/simpro";
+import { createSimProJob, createSimProQuote, simProCostCentreForDepot } from "@/lib/simpro";
 import { getWipClients } from "@/lib/acoms-wip";
 import { DEPOT_LABELS, JOB_TYPE_LABELS } from "@/modules/job-creator/constants";
 
@@ -188,12 +188,15 @@ export async function POST(
       );
     }
 
+    const costCenterId = simProCostCentreForDepot(existing.depot);
+
     if (finalJobType === "DIRECT_WORK_ORDER") {
       const simproResult = await createSimProJob({
         customerId: simproCustomerId,
         siteName: projectNameAddress,
         description: existing.emailContent || "",
         orderNo: existing.clientReference || existing.financePONumber || "",
+        costCenterId,
       });
       integrationLog.simPro = {
         status: "success",
@@ -208,6 +211,7 @@ export async function POST(
         siteName: projectNameAddress,
         description: existing.emailContent || "",
         dueDate: quoteDueDate,
+        costCenterId,
       });
       integrationLog.simPro = {
         status: "success",

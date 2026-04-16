@@ -92,6 +92,25 @@ async function simproFetch(
   });
 }
 
+// ─── Cost Centres (Departments) ───────────────────────────
+
+// Depot → SimPRO cost centre (internally "department") ID.
+// Mackay = NQ (2). Brisbane / Hervey Bay / Bundaberg = SEQ (4).
+const SIMPRO_COST_CENTRE_BY_DEPOT: Record<string, number> = {
+  MACKAY: 2,
+  BRISBANE: 4,
+  HERVEY_BAY: 4,
+  BUNDABERG: 4,
+};
+
+export function simProCostCentreForDepot(depot: string): number {
+  const id = SIMPRO_COST_CENTRE_BY_DEPOT[depot];
+  if (!id) {
+    throw new Error(`No SimPRO cost centre mapped for depot "${depot}"`);
+  }
+  return id;
+}
+
 // ─── Service Jobs ─────────────────────────────────────────
 
 export interface SimProJobInput {
@@ -99,6 +118,7 @@ export interface SimProJobInput {
   siteName: string;            // Project name / address
   description: string;         // Job description (email content)
   orderNo?: string;            // Client reference / PO number
+  costCenterId: number;        // SimPRO cost centre / department ID
 }
 
 export interface SimProJobResult {
@@ -119,9 +139,10 @@ export async function createSimProJob(input: SimProJobInput): Promise<SimProJobR
     Description: input.description || "",
     OrderNo: input.orderNo || "",
     Stage: "Pending",
+    CostCenter: input.costCenterId,
   };
 
-  console.log(`[simpro] Creating service job for customer ${input.customerId}`);
+  console.log(`[simpro] Creating service job for customer ${input.customerId} (costCenter=${input.costCenterId})`);
 
   const res = await simproFetch("/jobs/", {
     method: "POST",
@@ -152,6 +173,7 @@ export interface SimProQuoteInput {
   siteName: string;            // Project name / address
   description: string;         // Job description (email content)
   dueDate?: string;            // Quote submission due date (YYYY-MM-DD)
+  costCenterId: number;        // SimPRO cost centre / department ID
 }
 
 export interface SimProQuoteResult {
@@ -171,10 +193,11 @@ export async function createSimProQuote(input: SimProQuoteInput): Promise<SimPro
     Type: "Service",
     Description: input.description || "",
     Stage: "InProgress",
+    CostCenter: input.costCenterId,
   };
   if (input.dueDate) quoteBody.DueDate = input.dueDate;
 
-  console.log(`[simpro] Creating quote for customer ${input.customerId}`);
+  console.log(`[simpro] Creating quote for customer ${input.customerId} (costCenter=${input.costCenterId})`);
 
   const res = await simproFetch("/quotes/", {
     method: "POST",
