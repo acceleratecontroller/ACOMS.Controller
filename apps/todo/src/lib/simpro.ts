@@ -163,7 +163,6 @@ export async function createSimProJob(input: SimProJobInput): Promise<SimProJobR
     Stage: "Pending",
     Sections: [
       {
-        Name: "Main",
         CostCenters: [{ CostCenter: input.costCenterId }],
       },
     ],
@@ -222,7 +221,6 @@ export async function createSimProQuote(input: SimProQuoteInput): Promise<SimPro
     Stage: "InProgress",
     Sections: [
       {
-        Name: "Main",
         CostCenters: [{ CostCenter: input.costCenterId }],
       },
     ],
