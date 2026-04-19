@@ -221,10 +221,16 @@ export async function POST(
 
       const costCenterId = simProCostCentreForDepot(existing.depot);
 
+      // Site name: "{Client Ref} - {Project Name + Address}" (dedup if same)
+      const simproClientRef = existing.clientReference?.trim() || "";
+      const simproSiteName = simproClientRef && simproClientRef.toLowerCase() !== projectNameAddress.toLowerCase()
+        ? `${simproClientRef} - ${projectNameAddress}`
+        : projectNameAddress;
+
       if (finalJobType === "DIRECT_WORK_ORDER") {
         const simproResult = await createSimProJob({
           customerId: simproCustomerId,
-          siteName: projectNameAddress,
+          siteName: simproSiteName,
           description: existing.emailContent || "",
           orderNo: existing.clientReference || existing.financePONumber || "",
           costCenterId,
@@ -239,7 +245,7 @@ export async function POST(
           : undefined;
         const simproResult = await createSimProQuote({
           customerId: simproCustomerId,
-          siteName: projectNameAddress,
+          siteName: simproSiteName,
           description: existing.emailContent || "",
           dueDate: quoteDueDate,
           costCenterId,
