@@ -117,15 +117,23 @@ export function simProCostCentreForDepot(depot: string): number {
  * Create a new SimPRO site and return its ID.
  * SimPRO Service Quotes/Jobs require `Site` to be an integer ID,
  * not an inline `{ Name }` object, so we create the site first.
+ *
+ * `address` (when provided) is sent as the structured Address.Address
+ * field — SimPRO's quote/job PDF templates pull from this, so leaving
+ * it unset causes the site address line to render blank on the PDF.
  */
-async function createSimProSite(name: string): Promise<number> {
+async function createSimProSite(name: string, address?: string): Promise<number> {
+  const body: Record<string, unknown> = { Name: name };
+  if (address && address.trim()) {
+    body.Address = { Address: address.trim() };
+  }
   const res = await simproFetch("/sites/", {
     method: "POST",
-    body: JSON.stringify({ Name: name }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Failed to create SimPRO site: ${res.status} ${body}`);
+    const responseBody = await res.text();
+    throw new Error(`Failed to create SimPRO site: ${res.status} ${responseBody}`);
   }
   const data = await res.json();
   const siteId = data.ID;
@@ -137,7 +145,9 @@ async function createSimProSite(name: string): Promise<number> {
 
 export interface SimProJobInput {
   customerId: number;          // SimPRO customer ID (from client record)
-  siteName: string;            // Project name / address
+  name: string;                // Job/quote title — shown on PDF
+  siteName: string;            // Site label (project name / address)
+  siteAddress?: string;        // Street address — populates Site.Address on PDF
   description: string;         // Job description (email content)
   orderNo?: string;            // Client reference / PO number
   costCenterId: number;        // SimPRO cost centre / department ID
@@ -152,12 +162,13 @@ export interface SimProJobResult {
  * Create a service job in SimPRO.
  */
 export async function createSimProJob(input: SimProJobInput): Promise<SimProJobResult> {
-  const siteId = await createSimProSite(input.siteName);
+  const siteId = await createSimProSite(input.siteName, input.siteAddress);
 
   const jobBody = {
     Customer: input.customerId,
     Site: siteId,
     Type: "Service",
+    Name: input.name,
     Description: input.description || "",
     OrderNo: input.orderNo || "",
     Stage: "Pending",
@@ -196,7 +207,9 @@ export async function createSimProJob(input: SimProJobInput): Promise<SimProJobR
 
 export interface SimProQuoteInput {
   customerId: number;          // SimPRO customer ID (from client record)
-  siteName: string;            // Project name / address
+  name: string;                // Quote title — shown on PDF
+  siteName: string;            // Site label (project name / address)
+  siteAddress?: string;        // Street address — populates Site.Address on PDF
   description: string;         // Job description (email content)
   dueDate?: string;            // Quote submission due date (YYYY-MM-DD)
   costCenterId: number;        // SimPRO cost centre / department ID
@@ -211,12 +224,13 @@ export interface SimProQuoteResult {
  * Create a quote in SimPRO.
  */
 export async function createSimProQuote(input: SimProQuoteInput): Promise<SimProQuoteResult> {
-  const siteId = await createSimProSite(input.siteName);
+  const siteId = await createSimProSite(input.siteName, input.siteAddress);
 
   const quoteBody: Record<string, unknown> = {
     Customer: input.customerId,
     Site: siteId,
     Type: "Service",
+    Name: input.name,
     Description: input.description || "",
     Stage: "InProgress",
     Sections: [

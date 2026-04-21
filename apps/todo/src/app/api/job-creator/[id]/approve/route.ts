@@ -230,7 +230,9 @@ export async function POST(
       if (finalJobType === "DIRECT_WORK_ORDER") {
         const simproResult = await createSimProJob({
           customerId: simproCustomerId,
+          name: projectName,
           siteName: simproSiteName,
+          siteAddress: siteAddress || undefined,
           description: existing.emailContent || "",
           orderNo: existing.clientReference || existing.financePONumber || "",
           costCenterId,
@@ -245,7 +247,9 @@ export async function POST(
           : undefined;
         const simproResult = await createSimProQuote({
           customerId: simproCustomerId,
+          name: projectName,
           siteName: simproSiteName,
+          siteAddress: siteAddress || undefined,
           description: existing.emailContent || "",
           dueDate: quoteDueDate,
           costCenterId,
