@@ -170,8 +170,33 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
 
   async function handleCreateClient() {
     const name = newClientName.trim();
+    const abn = newClientAbn.trim();
+    const phone = newClientPhone.trim();
+    const email = newClientEmail.trim();
+    const address = newClientAddress.trim();
     if (!name) {
       setNewClientError("Client name is required");
+      return;
+    }
+    if (!abn) {
+      setNewClientError("ABN is required");
+      return;
+    }
+    if (!phone) {
+      setNewClientError("Phone is required");
+      return;
+    }
+    if (!email) {
+      setNewClientError("Email is required");
+      return;
+    }
+    // Basic email shape check — full validation happens server-side
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setNewClientError("Please enter a valid email address");
+      return;
+    }
+    if (!address) {
+      setNewClientError("Address is required");
       return;
     }
     setNewClientSaving(true);
@@ -182,10 +207,10 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          abn: newClientAbn.trim() || undefined,
-          contactPhone: newClientPhone.trim() || undefined,
-          contactEmail: newClientEmail.trim() || undefined,
-          address: newClientAddress.trim() || undefined,
+          abn,
+          contactPhone: phone,
+          contactEmail: email,
+          address,
           skipSimPro: !newClientSyncSimPro,
           privateClient: newClientPrivate,
         }),
@@ -423,43 +448,59 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
               />
             </div>
             <div>
-              <label className={labelCls}>ABN</label>
+              <label className={labelCls}>ABN *</label>
               <input
                 type="text"
                 value={newClientAbn}
-                onChange={(e) => setNewClientAbn(e.target.value)}
+                onChange={(e) => {
+                  setNewClientAbn(e.target.value);
+                  if (newClientError) setNewClientError("");
+                }}
                 placeholder="Australian Business Number"
                 className={inputCls}
+                required
               />
             </div>
             <div>
-              <label className={labelCls}>Phone</label>
+              <label className={labelCls}>Phone *</label>
               <input
                 type="tel"
                 value={newClientPhone}
-                onChange={(e) => setNewClientPhone(e.target.value)}
+                onChange={(e) => {
+                  setNewClientPhone(e.target.value);
+                  if (newClientError) setNewClientError("");
+                }}
                 placeholder="Phone number"
                 className={inputCls}
+                required
               />
             </div>
             <div>
-              <label className={labelCls}>Email</label>
+              <label className={labelCls}>Email *</label>
               <input
                 type="email"
                 value={newClientEmail}
-                onChange={(e) => setNewClientEmail(e.target.value)}
+                onChange={(e) => {
+                  setNewClientEmail(e.target.value);
+                  if (newClientError) setNewClientError("");
+                }}
                 placeholder="Email address"
                 className={inputCls}
+                required
               />
             </div>
             <div className="md:col-span-2">
-              <label className={labelCls}>Address</label>
+              <label className={labelCls}>Address *</label>
               <input
                 type="text"
                 value={newClientAddress}
-                onChange={(e) => setNewClientAddress(e.target.value)}
+                onChange={(e) => {
+                  setNewClientAddress(e.target.value);
+                  if (newClientError) setNewClientError("");
+                }}
                 placeholder="Business address"
                 className={inputCls}
+                required
               />
             </div>
           </div>

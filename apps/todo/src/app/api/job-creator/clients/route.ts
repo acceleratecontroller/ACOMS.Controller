@@ -28,9 +28,28 @@ export async function POST(request: NextRequest) {
   }
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name) {
+  const abn = typeof body.abn === "string" ? body.abn.trim() : "";
+  const contactPhone =
+    typeof body.contactPhone === "string" ? body.contactPhone.trim() : "";
+  const contactEmail =
+    typeof body.contactEmail === "string" ? body.contactEmail.trim() : "";
+  const address = typeof body.address === "string" ? body.address.trim() : "";
+
+  const missing: string[] = [];
+  if (!name) missing.push("name");
+  if (!abn) missing.push("abn");
+  if (!contactPhone) missing.push("phone");
+  if (!contactEmail) missing.push("email");
+  if (!address) missing.push("address");
+  if (missing.length) {
     return NextResponse.json(
-      { error: "Client name is required" },
+      { error: `Required field(s) missing: ${missing.join(", ")}` },
+      { status: 400 },
+    );
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    return NextResponse.json(
+      { error: "Please enter a valid email address" },
       { status: 400 },
     );
   }
@@ -44,12 +63,10 @@ export async function POST(request: NextRequest) {
           : null,
       contactName:
         typeof body.contactName === "string" ? body.contactName : undefined,
-      contactEmail:
-        typeof body.contactEmail === "string" ? body.contactEmail : undefined,
-      contactPhone:
-        typeof body.contactPhone === "string" ? body.contactPhone : undefined,
-      abn: typeof body.abn === "string" ? body.abn : undefined,
-      address: typeof body.address === "string" ? body.address : undefined,
+      contactEmail,
+      contactPhone,
+      abn,
+      address,
       skipSimPro: body.skipSimPro === true,
       privateClient: body.privateClient === true,
     });

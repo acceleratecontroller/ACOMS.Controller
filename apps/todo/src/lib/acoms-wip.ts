@@ -79,6 +79,8 @@ export interface WipClient {
   contactName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
+  abn: string | null;
+  address: string | null;
   contracts: WipContract[];
 }
 
