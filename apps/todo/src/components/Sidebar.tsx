@@ -9,8 +9,11 @@ const baseNavItems = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/tasks", label: "Task Manager" },
   { href: "/materials", label: "Materials" },
-  { href: "/job-creator", label: "Job Creator" },
   { href: "/diary", label: "Diary" },
+];
+
+const adminNavItems = [
+  { href: "/job-creator", label: "Job Creator" },
 ];
 
 export default function Sidebar() {
@@ -18,16 +21,21 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [showEmailDigest, setShowEmailDigest] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch("/api/dashboard")
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.emailDigest) setShowEmailDigest(true); })
+      .then((d) => {
+        if (d?.isAdmin) setIsAdmin(true);
+        if (d?.isAdmin && d?.emailDigest) setShowEmailDigest(true);
+      })
       .catch(() => {});
   }, []);
 
   const navItems = [
     ...baseNavItems,
+    ...(isAdmin ? adminNavItems : []),
     ...(showEmailDigest ? [{ href: "/email-digest", label: "Email Digest" }] : []),
   ];
 

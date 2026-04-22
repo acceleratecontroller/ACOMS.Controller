@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { approveJobRequestSchema } from "@/modules/job-creator/validation";
-import { requireAuth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { pushJobToSheet, pushQuoteTabRow, pushConstructionTabRow } from "@/lib/google-sheets";
@@ -16,7 +16,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { session, error: authErr } = await requireAuth();
+  const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
   const { id } = await params;

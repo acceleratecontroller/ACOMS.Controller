@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { updateJobRequestSchema } from "@/modules/job-creator/validation";
-import { requireAuth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { audit, diff } from "@/lib/audit";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 
@@ -10,7 +10,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { error: authErr } = await requireAuth();
+  const { error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
   const { id } = await params;
@@ -28,7 +28,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { session, error: authErr } = await requireAuth();
+  const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
   const { id } = await params;

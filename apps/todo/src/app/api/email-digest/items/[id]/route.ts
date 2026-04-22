@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { parseBody, withPrismaError } from "@/lib/api-helpers";
 import { updateEmailDigestItemSchema } from "@/modules/email-digest/validation";
 import { TIER_PRIORITY_MAP } from "@/modules/email-digest/constants";
@@ -14,7 +14,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { session, error: authErr } = await requireAuth();
+  const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
   const ownerId = process.env.EMAIL_DIGEST_OWNER_ID;

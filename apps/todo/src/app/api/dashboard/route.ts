@@ -336,7 +336,10 @@ export async function GET() {
     }
   }
 
+  const isAdmin = session.user.role === "ADMIN";
+
   return NextResponse.json({
+    isAdmin,
     // Task summary counts
     activeTaskCount,
     pendingTaskCount,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { WINDOW_DISPLAY_ORDER } from "@/modules/email-digest/constants";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ function todayDateString(): string {
 
 // GET /api/email-digest — Query today's digest for the dashboard
 export async function GET(request: NextRequest) {
-  const { session, error: authErr } = await requireAuth();
+  const { session, error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
   const ownerId = process.env.EMAIL_DIGEST_OWNER_ID;

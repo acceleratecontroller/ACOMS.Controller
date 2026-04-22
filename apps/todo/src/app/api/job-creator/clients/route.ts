@@ -2,11 +2,11 @@
 // POST /api/job-creator/clients — create a new client in ACOMS.WIP
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { getWipClients, createWipClient } from "@/lib/acoms-wip";
 
 export async function GET(request: NextRequest) {
-  const { error: authErr } = await requireAuth();
+  const { error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
   const { searchParams } = new URL(request.url);
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { error: authErr } = await requireAuth();
+  const { error: authErr } = await requireAdmin();
   if (authErr) return authErr;
 
   let body: Record<string, unknown>;
