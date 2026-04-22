@@ -79,6 +79,13 @@ export default function JobsPage() {
   const [archiving, setArchiving] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
+  // Unlinked "Create Job" modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
+  const [createForm, setCreateForm] = useState({ projectId: "", name: "", client: "", contact: "", locationId: "" });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
   // Archive disposition modal state
   const [archiveJob, setArchiveJob] = useState<Job | null>(null);
   const [archiveDetail, setArchiveDetail] = useState<JobDetailForArchive | null>(null);
@@ -119,6 +126,44 @@ export default function JobsPage() {
     setFormError(null);
     setShowModal(true);
     fetchWipProjects();
+  }
+
+  function openCreateModal() {
+    setCreateForm({ projectId: "", name: "", client: "", contact: "", locationId: "" });
+    setCreateError(null);
+    setShowCreateModal(true);
+    if (locations.length === 0) {
+      fetch("/api/materials/locations").then((r) => r.json()).then(setLocations).catch(() => {});
+    }
+  }
+
+  async function handleCreateJob(e: React.FormEvent) {
+    e.preventDefault();
+    setCreating(true);
+    setCreateError(null);
+
+    const payload: Record<string, string> = {
+      projectId: createForm.projectId.trim(),
+      name: createForm.name.trim(),
+      client: createForm.client.trim(),
+      contact: createForm.contact.trim(),
+    };
+    if (createForm.locationId) payload.locationId = createForm.locationId;
+
+    const res = await fetch("/api/materials/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      setShowCreateModal(false);
+      fetchJobs();
+    } else {
+      const data = await res.json().catch(() => ({ error: "Failed to create job" }));
+      setCreateError(data.error || "Failed to create job");
+    }
+    setCreating(false);
   }
 
   async function handleLinkWipJob(wipProjectId: string) {
@@ -255,9 +300,14 @@ export default function JobsPage() {
         </label>
         <div className="flex-1" />
         {!showArchived && (
-          <button onClick={openLinkModal} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full sm:w-auto">
-            Link WIP Job
-          </button>
+          <>
+            <button onClick={openCreateModal} className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 w-full sm:w-auto">
+              Create Job
+            </button>
+            <button onClick={openLinkModal} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full sm:w-auto">
+              Link WIP Job
+            </button>
+          </>
         )}
       </div>
 
@@ -380,6 +430,88 @@ export default function JobsPage() {
           </div>
         </>
       )}
+
+      {/* Create Unlinked Job Modal */}
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Create Job">
+        <form onSubmit={handleCreateJob} className="space-y-4">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Creates a standalone job that isn&apos;t linked to ACOMS WIP. You can link it to WIP later once that integration is ready.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project ID *</label>
+            <input
+              type="text"
+              value={createForm.projectId}
+              onChange={(e) => setCreateForm({ ...createForm, projectId: e.target.value })}
+              placeholder="e.g. 1234 or JOB-001"
+              required
+              autoFocus
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job Name *</label>
+            <input
+              type="text"
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              required
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client *</label>
+              <input
+                type="text"
+                value={createForm.client}
+                onChange={(e) => setCreateForm({ ...createForm, client: e.target.value })}
+                required
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact</label>
+              <input
+                type="text"
+                value={createForm.contact}
+                onChange={(e) => setCreateForm({ ...createForm, contact: e.target.value })}
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Depot / Location</label>
+            <select
+              value={createForm.locationId}
+              onChange={(e) => setCreateForm({ ...createForm, locationId: e.target.value })}
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+            >
+              <option value="">None</option>
+              {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          </div>
+
+          {createError && <div className="p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{createError}</div>}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={creating}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {creating ? "Creating..." : "Create Job"}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Link WIP Job Modal */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Link WIP Job" wide>
