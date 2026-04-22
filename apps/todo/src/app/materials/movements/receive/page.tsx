@@ -274,6 +274,7 @@ export default function ReceivePage() {
     jobId: "",
     reference: "",
     notes: "",
+    dateReceived: new Date().toISOString().slice(0, 10),
   });
 
   const [lines, setLines] = useState<ReceiveLine[]>([makeLine()]);
@@ -386,6 +387,7 @@ export default function ReceivePage() {
           jobId: header.jobId || null,
           reference: header.reference || null,
           notes: header.notes || null,
+          dateReceived: header.dateReceived || null,
         }),
       });
 
@@ -473,7 +475,7 @@ export default function ReceivePage() {
                 <span className="text-xs text-gray-400 dark:text-gray-500">Items will go into unallocated stock at the selected location</span>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {receiveMode === "job" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job *</label>
@@ -484,8 +486,17 @@ export default function ReceivePage() {
                   />
                 </div>
               ) : (
-                <div />
+                <div className="hidden lg:block" />
               )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date Received</label>
+                <input
+                  type="date"
+                  value={header.dateReceived}
+                  onChange={(e) => setHeader({ ...header, dateReceived: e.target.value })}
+                  className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reference (PO, Docket, etc.)</label>
                 <input type="text" value={header.reference} onChange={(e) => setHeader({ ...header, reference: e.target.value })} className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 text-sm" />

@@ -18,6 +18,7 @@ interface Movement {
   notes: string | null;
   createdById: string;
   createdAt: string;
+  dateReceived: string | null;
   item: { code: string; description: string; unitOfMeasure: string };
   fromLocation: { name: string } | null;
   toLocation: { name: string } | null;
@@ -59,6 +60,10 @@ export default function MovementHistoryPage() {
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function formatDateOnly(d: string) {
+    return new Date(d).toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" });
   }
 
   return (
@@ -109,7 +114,8 @@ export default function MovementHistoryPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Date</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Logged</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Date Received</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Type</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Item</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Qty</th>
@@ -124,6 +130,7 @@ export default function MovementHistoryPage() {
                 {movements.map((m) => (
                   <tr key={m.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(m.createdAt)}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">{m.dateReceived ? formatDateOnly(m.dateReceived) : "—"}</td>
                     <td className="px-4 py-3">
                       <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                         {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}

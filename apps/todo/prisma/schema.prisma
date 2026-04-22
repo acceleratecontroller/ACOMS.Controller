@@ -418,6 +418,9 @@ model StockMovement {
   notes                 String?
   attachmentPlaceholder String?
 
+  // Physical date stock was received (user-supplied, may differ from createdAt).
+  dateReceived DateTime?
+
   createdById String
   createdAt   DateTime @default(now())
 
@@ -440,6 +443,7 @@ model StockMovement {
   @@index([projectCode])
   @@index([jobId])
   @@index([createdAt])
+  @@index([dateReceived])
 }
 
 // ─── Client Returns ─────────────────────────────────────

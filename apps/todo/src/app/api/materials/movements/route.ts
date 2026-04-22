@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
           reference: data.reference,
           notes: data.notes,
           attachmentPlaceholder: data.attachmentPlaceholder,
+          dateReceived: data.dateReceived ? new Date(data.dateReceived) : null,
           createdById: session.user.id,
         },
         include: {

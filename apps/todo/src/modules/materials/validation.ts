@@ -72,6 +72,12 @@ export const createMovementSchema = z.object({
   reference: optionalString,
   notes: optionalString,
   attachmentPlaceholder: optionalString,
+
+  // Physical date stock was received (ISO date/datetime string, e.g. "2026-04-22")
+  dateReceived: z
+    .union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)])
+    .optional()
+    .nullable(),
 });
 
 // ─── Movement Type Location Requirements ────────────────
