@@ -5,14 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
 
-const baseNavItems = [
+type NavItem = { href: string; label: string; exact?: boolean };
+
+const baseNavItems: NavItem[] = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/tasks", label: "Task Manager" },
   { href: "/materials", label: "Materials" },
   { href: "/diary", label: "Diary" },
 ];
 
-const adminNavItems = [
+const adminNavItems: NavItem[] = [
   { href: "/job-creator", label: "Job Creator" },
 ];
 
@@ -33,7 +35,7 @@ export default function Sidebar() {
       .catch(() => {});
   }, []);
 
-  const navItems = [
+  const navItems: NavItem[] = [
     ...baseNavItems,
     ...(isAdmin ? adminNavItems : []),
     ...(showEmailDigest ? [{ href: "/email-digest", label: "Email Digest" }] : []),
