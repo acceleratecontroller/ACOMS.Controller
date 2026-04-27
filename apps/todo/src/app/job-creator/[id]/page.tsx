@@ -200,7 +200,7 @@ export default function JobRequestDetailPage() {
 
         {/* Action buttons */}
         <div className="flex gap-2 shrink-0">
-          {job.status === "DRAFT" && (
+          {(job.status === "DRAFT" || job.status === "REJECTED") && (
             <>
               <Link
                 href={`/job-creator/${job.id}/edit`}
@@ -213,7 +213,11 @@ export default function JobRequestDetailPage() {
                 disabled={actionLoading}
                 className="px-3 py-2 text-sm font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 transition-colors"
               >
-                {actionLoading ? "Submitting..." : "Submit for Review"}
+                {actionLoading
+                  ? "Submitting..."
+                  : job.status === "REJECTED"
+                    ? "Resubmit for Review"
+                    : "Submit for Review"}
               </button>
             </>
           )}

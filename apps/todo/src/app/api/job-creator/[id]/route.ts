@@ -37,9 +37,9 @@ export async function PUT(
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if (existing.status !== "DRAFT") {
+  if (existing.status !== "DRAFT" && existing.status !== "REJECTED") {
     return NextResponse.json(
-      { error: "Only draft job requests can be edited" },
+      { error: "Only draft or rejected job requests can be edited" },
       { status: 400 },
     );
   }

@@ -18,9 +18,9 @@ export async function POST(
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if (existing.status !== "DRAFT") {
+  if (existing.status !== "DRAFT" && existing.status !== "REJECTED") {
     return NextResponse.json(
-      { error: "Only draft job requests can be submitted for review" },
+      { error: "Only draft or rejected job requests can be submitted for review" },
       { status: 400 },
     );
   }
@@ -39,7 +39,7 @@ export async function POST(
     action: "UPDATE",
     entityLabel: `${job.acomsNumber} — ${job.client}`,
     performedById: session.user.id,
-    changes: { status: { from: "DRAFT", to: "PENDING_REVIEW" } },
+    changes: { status: { from: existing.status, to: "PENDING_REVIEW" } },
   });
 
   return NextResponse.json(job);

@@ -57,10 +57,7 @@ export default function JobCreatorPage() {
     REJECTED: jobs.filter((j) => j.status === "REJECTED").length,
   };
 
-  // When we have a status filter, show all jobs; otherwise show only active (non-rejected)
-  const filtered = statusFilter
-    ? jobs
-    : jobs.filter((j) => j.status !== "REJECTED");
+  const filtered = jobs;
 
   return (
     <div>

@@ -21,8 +21,8 @@ export default function EditJobRequestPage() {
           return;
         }
         const job = await res.json();
-        if (job.status !== "DRAFT") {
-          setError("Only draft job requests can be edited");
+        if (job.status !== "DRAFT" && job.status !== "REJECTED") {
+          setError("Only draft or rejected job requests can be edited");
           return;
         }
         setInitial({

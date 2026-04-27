@@ -45,9 +45,6 @@ export async function POST(
         rejectionReason: parsed.data.rejectionReason,
         reviewedById: session.user.id,
         reviewedAt: new Date(),
-        isArchived: true,
-        archivedAt: new Date(),
-        archivedById: session.user.id,
       },
     }),
   );
