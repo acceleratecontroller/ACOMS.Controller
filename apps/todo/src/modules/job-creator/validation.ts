@@ -7,7 +7,7 @@ export const createJobRequestSchema = z.object({
   contract: z.string().min(1, "Contract is required"),
   jobType: z.enum(["QUOTE", "DIRECT_WORK_ORDER"]),
   financePONumber: optionalString,
-  clientReference: optionalString,
+  clientReference: z.string().min(1, "Client reference number is required"),
   projectName: z.string().min(1, "Project name is required"),
   address: optionalString,
   jobReceivedDate: z.string().min(1, "Job received date is required"),

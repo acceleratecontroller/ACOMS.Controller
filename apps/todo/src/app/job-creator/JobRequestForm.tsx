@@ -138,6 +138,7 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
     if (!form.contract.trim()) errs.contract = "Contract is required";
     if (!form.jobType) errs.jobType = "Job type is required";
     if (!form.projectName.trim()) errs.projectName = "Project name is required";
+    if (!form.clientReference.trim()) errs.clientReference = "Client reference number is required";
     if (form.jobType === "QUOTE" && !form.quoteReceivedDate) {
       errs.quoteReceivedDate = "Quote received date is required";
     }
@@ -362,8 +363,12 @@ export function JobRequestForm({ initial, onSubmit, onCancel, saving, submitLabe
         </div>
 
         <div>
-          <label className={labelCls}>Client Reference Number</label>
+          <label className={labelCls}>Client Reference Number *</label>
           <input type="text" value={form.clientReference} onChange={(e) => set("clientReference", e.target.value)} placeholder="Client ref" className={inputCls} />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            If no client reference number, use the next available ACOMS number from WIP.
+          </p>
+          {errors.clientReference && <p className={errorCls}>{errors.clientReference}</p>}
         </div>
       </div>
 
