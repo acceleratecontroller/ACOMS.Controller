@@ -186,17 +186,11 @@ export async function POST(
       const categoryName = `${existing.client} - ${existing.contract}`;
       const sm8Address = siteAddress || projectName;
 
-      let companyName: string;
-      if (finalJobType === "DIRECT_WORK_ORDER") {
-        // Company name: "{Client Ref} - {Project Name}" (dedup if same)
-        const clientRef = existing.clientReference?.trim() || "";
-        companyName = clientRef && clientRef.toLowerCase() !== projectName.toLowerCase()
-          ? `${clientRef} - ${projectName}`
-          : projectName;
-      } else {
-        // Quotes: just the project name (+ address if different)
-        companyName = projectNameAddress;
-      }
+      // Company name: "{Client Ref} - {Project Name}" (dedup if same, fall back to project name if no ref)
+      const clientRef = existing.clientReference?.trim() || "";
+      const companyName = clientRef && clientRef.toLowerCase() !== projectName.toLowerCase()
+        ? `${clientRef} - ${projectName}`
+        : projectName;
 
       const sm8Result = await createServiceM8Job({
         companyName,
