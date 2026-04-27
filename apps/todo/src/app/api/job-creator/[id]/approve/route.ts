@@ -47,12 +47,17 @@ export async function POST(
   // Determine the final job type (reviewer may have changed it)
   const finalJobType = parsed.data.jobType || existing.jobType;
 
+  // Reviewer can opt out of individual integrations (e.g. when a quote
+  // already exists in SimPRO and we don't want a duplicate).
+  const { googleSheets: runGoogleSheets, serviceM8: runServiceM8, simPro: runSimPro } =
+    parsed.data.integrations;
+
   // ─── Run integrations BEFORE updating status ─────────────
-  // All are blocking — if any fail, approval does not proceed.
+  // All enabled integrations are blocking — if any fail, approval does not proceed.
   // Retry: steps marked "success" in the prior integrationLog are
   // skipped so retries don't duplicate records in external systems.
 
-  type IntegrationLogEntry = { status: string; error?: string; details?: Record<string, unknown> };
+  type IntegrationLogEntry = { status: string; error?: string; reason?: string; details?: Record<string, unknown> };
   const prior = (existing.integrationLog as Record<string, IntegrationLogEntry> | null) || {};
   const integrationLog: Record<string, IntegrationLogEntry> = {};
 
@@ -81,6 +86,11 @@ export async function POST(
   if (prior.googleSheets?.status === "success") {
     integrationLog.googleSheets = prior.googleSheets;
     sheetRow = prior.googleSheets.details?.row as number | undefined;
+  } else if (!runGoogleSheets) {
+    integrationLog.googleSheets = {
+      status: "skipped",
+      reason: "Skipped by reviewer",
+    };
   } else {
     try {
       const sheetResult = await pushJobToSheet({
@@ -114,6 +124,11 @@ export async function POST(
   const subTabKey = finalJobType === "QUOTE" ? "quoteTab" : "constructionTab";
   if (prior[subTabKey]?.status === "success") {
     integrationLog[subTabKey] = prior[subTabKey];
+  } else if (!runGoogleSheets) {
+    integrationLog[subTabKey] = {
+      status: "skipped",
+      reason: "Skipped by reviewer",
+    };
   } else if (sheetRow !== undefined) {
     try {
       const todayFormatted = new Date().toLocaleDateString("en-AU", {
@@ -161,6 +176,11 @@ export async function POST(
   // 2. ServiceM8 — Work Order or Quote (both create a job, different status)
   if (prior.serviceM8?.status === "success") {
     integrationLog.serviceM8 = prior.serviceM8;
+  } else if (!runServiceM8) {
+    integrationLog.serviceM8 = {
+      status: "skipped",
+      reason: "Skipped by reviewer",
+    };
   } else {
     try {
       const categoryName = `${existing.client} - ${existing.contract}`;
@@ -203,6 +223,11 @@ export async function POST(
   // 3. SimPRO — Work Order creates a Job, Quote creates a Quote
   if (prior.simPro?.status === "success") {
     integrationLog.simPro = prior.simPro;
+  } else if (!runSimPro) {
+    integrationLog.simPro = {
+      status: "skipped",
+      reason: "Skipped by reviewer",
+    };
   } else {
     try {
       // Look up the client's simproCustomerId from WIP

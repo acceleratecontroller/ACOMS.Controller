@@ -29,6 +29,13 @@ export const rejectJobRequestSchema = z.object({
 
 export const approveJobRequestSchema = z.object({
   jobType: z.enum(["QUOTE", "DIRECT_WORK_ORDER"]).optional(),
+  integrations: z
+    .object({
+      googleSheets: z.boolean().default(true),
+      serviceM8: z.boolean().default(true),
+      simPro: z.boolean().default(true),
+    })
+    .default({}),
 });
 
 export type CreateJobRequestInput = z.infer<typeof createJobRequestSchema>;

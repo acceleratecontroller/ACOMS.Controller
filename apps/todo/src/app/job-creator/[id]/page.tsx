@@ -17,6 +17,7 @@ import {
 interface IntegrationEntry {
   status: string;
   error?: string;
+  reason?: string;
   details?: Record<string, unknown>;
 }
 
@@ -71,9 +72,12 @@ export default function JobRequestDetailPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [rejectError, setRejectError] = useState("");
 
-  // Approve modal (allows changing job type)
+  // Approve modal (allows changing job type and toggling integrations)
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approveJobType, setApproveJobType] = useState("");
+  const [runGoogleSheets, setRunGoogleSheets] = useState(true);
+  const [runServiceM8, setRunServiceM8] = useState(true);
+  const [runSimPro, setRunSimPro] = useState(true);
 
   useEffect(() => {
     fetch(`/api/job-creator/${id}`)
@@ -104,7 +108,13 @@ export default function JobRequestDetailPage() {
   async function handleApprove() {
     setActionLoading(true);
     setError("");
-    const body: Record<string, string> = {};
+    const body: Record<string, unknown> = {
+      integrations: {
+        googleSheets: runGoogleSheets,
+        serviceM8: runServiceM8,
+        simPro: runSimPro,
+      },
+    };
     if (approveJobType !== job?.jobType) body.jobType = approveJobType;
     const res = await fetch(`/api/job-creator/${id}/approve`, {
       method: "POST",
@@ -275,7 +285,9 @@ export default function JobRequestDetailPage() {
                         : "text-gray-500 dark:text-gray-400"
                   }`}>
                     {INTEGRATION_NAMES[key] || key}
-                    {entry.status === "skipped" && <span className="font-normal"> — Skipped (Quotes only)</span>}
+                    {entry.status === "skipped" && (
+                      <span className="font-normal"> — {entry.reason || "Skipped"}</span>
+                    )}
                   </p>
                   {entry.error && (
                     <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{entry.error}</p>
@@ -457,6 +469,61 @@ export default function JobRequestDetailPage() {
                     className="sr-only"
                   />
                   {t.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Run integrations
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              Untick anything that has already been created manually so we don&apos;t make a duplicate.
+            </p>
+            <div className="space-y-2">
+              {([
+                {
+                  key: "googleSheets" as const,
+                  label: "Google Sheets",
+                  checked: runGoogleSheets,
+                  setChecked: setRunGoogleSheets,
+                  alreadyDone: integrationLog?.googleSheets?.status === "success",
+                },
+                {
+                  key: "serviceM8" as const,
+                  label: "ServiceM8",
+                  checked: runServiceM8,
+                  setChecked: setRunServiceM8,
+                  alreadyDone: integrationLog?.serviceM8?.status === "success",
+                },
+                {
+                  key: "simPro" as const,
+                  label: "SimPRO",
+                  checked: runSimPro,
+                  setChecked: setRunSimPro,
+                  alreadyDone: integrationLog?.simPro?.status === "success",
+                },
+              ]).map((opt) => (
+                <label
+                  key={opt.key}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                    opt.alreadyDone
+                      ? "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 cursor-not-allowed"
+                      : "border-gray-300 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={opt.alreadyDone ? true : opt.checked}
+                    disabled={opt.alreadyDone}
+                    onChange={(e) => opt.setChecked(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{opt.label}</span>
+                  {opt.alreadyDone && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">already created</span>
+                  )}
                 </label>
               ))}
             </div>
